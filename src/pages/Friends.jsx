@@ -118,11 +118,13 @@ export default function Friends() {
         (u) =>
           u.id !== user.id &&
           (u.full_name?.toLowerCase().includes(q) || 
-              u.data?.username?.toLowerCase().includes(q) ||
+              u.username?.toLowerCase().includes(q) ||
               u.email?.toLowerCase().includes(q))
       );
+      console.log("Search results:", results);
       setSearchResults(results);
       setTab("search");
+      console.log("Tab set to: search");
       if (results.length === 0) {
         toast.info("No users found");
       }
@@ -289,8 +291,11 @@ export default function Friends() {
         </div>
       ) : tab === "search" ? (
         <div className="space-y-3">
-          <p className="text-xs text-muted-foreground mb-2">{searchResults.length} results</p>
-          {searchResults.map((u) => {
+          <p className="text-xs text-muted-foreground mb-2">{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</p>
+          {searchResults.length === 0 ? (
+            <p className="text-center text-muted-foreground text-sm py-10">No users found</p>
+          ) : (
+          searchResults.map((u) => {
             const isFriend = friends.some((f) => f.id === u.id);
             const isOutgoing = sentRequests.some((p) => p.receiver_id === u.id);
             const isIncoming = receivedRequests.some((p) => p.sender_id === u.id);
@@ -311,7 +316,7 @@ export default function Friends() {
                   </div>
                   <div>
                     <p className="font-medium text-sm">{u.full_name || "Unknown"}</p>
-                    <p className="text-xs text-muted-foreground">{u.data?.username ? `@${u.data.username}` : u.email || "No email"}</p>
+                    <p className="text-xs text-muted-foreground">{u.username ? `@${u.username}` : u.email || "No email"}</p>
                   </div>
                 </div>
                 {isFriend ? (
@@ -336,7 +341,8 @@ export default function Friends() {
                 )}
               </div>
             );
-          })}
+          }))
+          )}
         </div>
       ) : tab === "requests" ? (
         <div className="space-y-3">
