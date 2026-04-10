@@ -1,0 +1,42 @@
+{
+  "name": "TripLink",
+  "type": "object",
+  "properties": {
+    "trip_id": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "note": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "food",
+        "cafe",
+        "activity",
+        "hotel",
+        "shopping",
+        "nightlife",
+        "other"
+      ],
+      "default": "other"
+    },
+    "shared_by_email": {
+      "type": "string"
+    },
+    "shared_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "trip_id",
+    "url",
+    "shared_by_email"
+  ]
+}

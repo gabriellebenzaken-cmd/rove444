@@ -10,12 +10,14 @@ import TripStay from "../components/trip/TripStay";
 import TripItinerary from "../components/trip/TripItinerary";
 import TripCosts from "../components/trip/TripCosts";
 import TripAira from "../components/trip/TripAira";
+import TripLinks from "../components/trip/TripLinks";
 
 const tripTabs = [
   { key: "plan", label: "Plan" },
   { key: "stay", label: "Stay" },
   { key: "itinerary", label: "Itinerary" },
   { key: "costs", label: "Costs" },
+  { key: "links", label: "Links" },
   { key: "aira", label: "Aira" },
 ];
 
@@ -133,6 +135,7 @@ export default function TripDetail() {
         {tab === "stay" && <TripStay trip={trip} user={user} />}
         {tab === "itinerary" && <TripItinerary trip={trip} user={user} />}
         {tab === "costs" && <TripCosts trip={trip} user={user} />}
+        {tab === "links" && <TripLinks trip={trip} user={user} />}
         {tab === "aira" && <TripAira trip={trip} />}
       </div>
     </div>
