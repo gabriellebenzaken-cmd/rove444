@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Link2, MapPin, Calendar, Users, ImageIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ArrowLeft, Link2, MapPin, Calendar, Users, ImageIcon, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import TripPlan from "../components/trip/TripPlan";
@@ -14,6 +15,7 @@ import TripLinks from "../components/trip/TripLinks";
 import TripChat from "../components/trip/TripChat";
 import TripPolls from "../components/trip/TripPolls";
 import TripCoverEditor from "../components/trip/TripCoverEditor";
+import EditTripDialog from "../components/trip/EditTripDialog";
 
 const tripTabs = [
   { key: "plan", label: "Plan" },
@@ -33,6 +35,9 @@ export default function TripDetail() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState("plan");
   const [showCoverEditor, setShowCoverEditor] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,6 +52,14 @@ export default function TripDetail() {
     setTrip(t);
     setLoading(false);
   }
+
+  async function deleteTrip() {
+    await base44.entities.Trip.delete(trip.id);
+    toast.success("Trip deleted");
+    navigate("/");
+  }
+
+  const isAdmin = user && (trip?.admin_email === user.email);
 
   async function copyInviteLink() {
     const link = `${window.location.origin}/join/trip/${trip.invite_code}`;
@@ -93,22 +106,17 @@ export default function TripDetail() {
           </Button>
         </div>
         <div className="absolute top-4 right-4 flex gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full bg-black/30 text-white hover:bg-black/50 h-9 w-9"
-            onClick={() => setShowCoverEditor(true)}
-          >
+          <Button variant="ghost" size="icon" className="rounded-full bg-black/30 text-white hover:bg-black/50 h-9 w-9" onClick={() => setShowCoverEditor(true)}>
             <ImageIcon className="h-5 w-5" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full bg-black/30 text-white hover:bg-black/50 h-9 w-9"
-            onClick={copyInviteLink}
-          >
+          <Button variant="ghost" size="icon" className="rounded-full bg-black/30 text-white hover:bg-black/50 h-9 w-9" onClick={copyInviteLink}>
             <Link2 className="h-5 w-5" />
           </Button>
+          {isAdmin && (
+            <Button variant="ghost" size="icon" className="rounded-full bg-black/30 text-white hover:bg-black/50 h-9 w-9" onClick={() => setShowMenu(true)}>
+              <MoreHorizontal className="h-5 w-5" />
+            </Button>
+          )}
         </div>
         <div className="absolute bottom-4 left-5 right-5">
           <h1 className="text-white text-2xl font-bold mb-1">{trip.name}</h1>
@@ -154,12 +162,35 @@ export default function TripDetail() {
         {tab === "chat" && <TripChat trip={trip} user={user} />}
         {tab === "aira" && <TripAira trip={trip} />}
 
-        <TripCoverEditor
-          open={showCoverEditor}
-          onOpenChange={setShowCoverEditor}
-          trip={trip}
-          onUpdated={loadData}
-        />
+        <TripCoverEditor open={showCoverEditor} onOpenChange={setShowCoverEditor} trip={trip} onUpdated={loadData} />
+        <EditTripDialog open={showEdit} onOpenChange={setShowEdit} trip={trip} onUpdated={loadData} />
+
+        {/* Trip menu */}
+        <Dialog open={showMenu} onOpenChange={setShowMenu}>
+          <DialogContent className="mx-4 rounded-2xl max-w-sm p-3">
+            <DialogHeader><DialogTitle className="px-2 pt-1 text-sm">Trip Options</DialogTitle></DialogHeader>
+            <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-muted transition-colors text-left" onClick={() => { setShowMenu(false); setShowEdit(true); }}>
+              <Pencil className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Edit Trip</span>
+            </button>
+            <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-destructive/10 transition-colors text-left" onClick={() => { setShowMenu(false); setShowDeleteConfirm(true); }}>
+              <Trash2 className="h-4 w-4 text-destructive" />
+              <span className="text-sm font-medium text-destructive">Delete Trip</span>
+            </button>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete confirm */}
+        <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <DialogContent className="mx-4 rounded-2xl max-w-sm">
+            <DialogHeader><DialogTitle>Delete Trip?</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground">This will permanently delete "{trip.name}" and all associated data. This cannot be undone.</p>
+            <div className="flex gap-2 mt-2">
+              <Button variant="outline" className="flex-1 rounded-full" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+              <Button variant="destructive" className="flex-1 rounded-full" onClick={deleteTrip}>Delete</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
