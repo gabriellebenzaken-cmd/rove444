@@ -61,9 +61,9 @@ export default function TripDetail() {
   const themeStyle = themeColor ? { '--trip-primary': themeColor } : {};
 
   async function copyInviteLink() {
-    const link = `${window.location.origin}/join/trip/${trip.invite_code}`;
+    const link = `${window.location.origin}/trip/${trip.id}`;
     await navigator.clipboard.writeText(link);
-    toast.success("Invite link copied!");
+    toast.success("Trip link copied!");
   }
 
   if (loading) {
@@ -123,11 +123,11 @@ export default function TripDetail() {
               <MapPin className="h-3.5 w-3.5" /> {trip.destination}
             </span>
             {trip.start_date && (
-              <span className="flex items-center gap-1 text-white/80 text-xs">
-                <Calendar className="h-3.5 w-3.5" />
-                {format(new Date(trip.start_date), "MMM d")}
-                {trip.end_date && ` – ${format(new Date(trip.end_date), "MMM d")}`}
-              </span>
+             <span className="flex items-center gap-1 text-white/80 text-xs">
+               <Calendar className="h-3.5 w-3.5" />
+               {format(new Date(trip.start_date + 'T00:00:00'), "MMM d")}
+               {trip.end_date && ` – ${format(new Date(trip.end_date + 'T00:00:00'), "MMM d")}`}
+             </span>
             )}
             <span className="flex items-center gap-1 text-white/80 text-xs">
               <Users className="h-3.5 w-3.5" /> {trip.member_emails?.length || 1}
