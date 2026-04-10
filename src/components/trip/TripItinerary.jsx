@@ -128,38 +128,38 @@ export default function TripItinerary({ trip, user }) {
       )}
 
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
-        <DialogContent className="mx-4 rounded-2xl max-w-md">
+        <DialogContent className="mx-4 rounded-2xl max-w-md p-5">
           <DialogHeader>
-            <DialogTitle>Add Activity</DialogTitle>
+            <DialogTitle className="text-base">Add Activity</DialogTitle>
           </DialogHeader>
-          <form onSubmit={addItem} className="space-y-4">
+          <form onSubmit={addItem} className="space-y-3 mt-1">
             <div>
-              <Label>Activity</Label>
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Visit the Colosseum" className="mt-1" />
+              <Label className="text-xs font-medium mb-1 block">Activity</Label>
+              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Visit the Colosseum" className="h-9 text-sm" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <Label>Date</Label>
-                <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="mt-1" />
+                <Label className="text-xs font-medium mb-1 block">Date</Label>
+                <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="h-9 text-sm" />
               </div>
               <div>
-                <Label>Time</Label>
-                <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="mt-1" />
+                <Label className="text-xs font-medium mb-1 block">Time</Label>
+                <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="h-9 text-sm" />
               </div>
             </div>
             <div>
-              <Label>Location</Label>
-              <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Rome, Italy" className="mt-1" />
+              <Label className="text-xs font-medium mb-1 block">Location</Label>
+              <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Rome, Italy" className="h-9 text-sm" />
             </div>
             <div>
-              <Label>Notes</Label>
-              <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Any details..." className="mt-1" rows={2} />
+              <Label className="text-xs font-medium mb-1 block">Notes</Label>
+              <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Any details..." className="text-sm" rows={2} />
             </div>
             <div className="flex items-center gap-3">
               <Switch checked={form.is_required} onCheckedChange={(v) => setForm({ ...form, is_required: v })} />
-              <Label>Required activity</Label>
+              <Label className="text-xs">Required activity</Label>
             </div>
-            <Button type="submit" className="w-full rounded-full">Add Activity</Button>
+            <Button type="submit" className="w-full rounded-full h-9 text-sm" style={{ background: "#C8A27C", color: "white" }}>Add Activity</Button>
           </form>
         </DialogContent>
       </Dialog>

@@ -3,10 +3,9 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   DollarSign, Plus, Trash2, ArrowRight, Clock, CheckCircle2,
-  XCircle, Send, ChevronDown, ChevronUp, Receipt
+  XCircle, Send, ChevronDown, ChevronUp, Receipt, SplitSquareHorizontal
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -41,13 +40,13 @@ export default function TripCosts({ trip, user }) {
   const [showAdd, setShowAdd] = useState(false);
   const [expandedExpense, setExpandedExpense] = useState(null);
   const [selectedMethod, setSelectedMethod] = useState({});
+  const [splitMode, setSplitMode] = useState("equal"); // "equal" | "custom"
   const [form, setForm] = useState({
     description: "", amount: "", category: "other", split_among: [],
   });
+  const [customAmounts, setCustomAmounts] = useState({});
 
-  useEffect(() => {
-    loadData();
-  }, [trip.id]);
+  useEffect(() => { loadData(); }, [trip.id]);
 
   async function loadData() {
     const [allExpenses, allPayments, allUsers] = await Promise.all([
@@ -60,22 +59,38 @@ export default function TripCosts({ trip, user }) {
     setMembers(allUsers.filter((u) => trip.member_emails?.includes(u.email)));
   }
 
-  // Returns payment record for a given expense + sender pair
   function getPayment(expenseId, senderEmail) {
-    return payments.find(
-      (p) => p.expense_id === expenseId && p.sender_email === senderEmail
-    );
+    return payments.find((p) => p.expense_id === expenseId && p.sender_email === senderEmail);
   }
 
   function getShareAmount(expense, email) {
+    if (expense.custom_split_amounts && expense.custom_split_amounts[email] !== undefined) {
+      return parseFloat(expense.custom_split_amounts[email]);
+    }
     const count = expense.split_among?.length || 1;
     return expense.amount / count;
+  }
+
+  const activeSplitList = form.split_among.length > 0 ? form.split_among : (trip.member_emails || []);
+
+  function equalShare() {
+    if (!form.amount || activeSplitList.length === 0) return 0;
+    return parseFloat(form.amount) / activeSplitList.length;
   }
 
   async function addExpense(e) {
     e.preventDefault();
     if (!form.description || !form.amount) return;
     const splitList = form.split_among.length > 0 ? form.split_among : trip.member_emails;
+
+    let custom_split_amounts = null;
+    if (splitMode === "custom") {
+      custom_split_amounts = {};
+      for (const email of splitList) {
+        custom_split_amounts[email] = parseFloat(customAmounts[email] || 0);
+      }
+    }
+
     await base44.entities.Expense.create({
       description: form.description,
       amount: parseFloat(form.amount),
@@ -83,17 +98,19 @@ export default function TripCosts({ trip, user }) {
       paid_by: user.email,
       paid_by_name: user.full_name,
       split_among: splitList,
+      custom_split_amounts,
       trip_id: trip.id,
       is_settled: false,
     });
     setForm({ description: "", amount: "", category: "other", split_among: [] });
+    setCustomAmounts({});
+    setSplitMode("equal");
     setShowAdd(false);
     loadData();
   }
 
   async function deleteExpense(id) {
     await base44.entities.Expense.delete(id);
-    // also delete related payments
     const related = payments.filter((p) => p.expense_id === id);
     await Promise.all(related.map((p) => base44.entities.Payment.delete(p.id)));
     loadData();
@@ -104,34 +121,26 @@ export default function TripCosts({ trip, user }) {
     const existing = getPayment(expense.id, user.email);
     if (existing) {
       await base44.entities.Payment.update(existing.id, {
-        status: "pending",
-        payment_method: method || "other",
+        status: "pending", payment_method: method || "other",
         timestamp_sent: new Date().toISOString(),
       });
     } else {
       await base44.entities.Payment.create({
-        expense_id: expense.id,
-        trip_id: trip.id,
-        sender_email: user.email,
-        sender_name: user.full_name,
-        receiver_email: expense.paid_by,
-        receiver_name: expense.paid_by_name,
-        amount: share,
-        payment_method: method || "other",
-        status: "pending",
-        timestamp_sent: new Date().toISOString(),
+        expense_id: expense.id, trip_id: trip.id,
+        sender_email: user.email, sender_name: user.full_name,
+        receiver_email: expense.paid_by, receiver_name: expense.paid_by_name,
+        amount: share, payment_method: method || "other",
+        status: "pending", timestamp_sent: new Date().toISOString(),
       });
     }
-    toast.success("Payment marked as sent — waiting for confirmation");
+    toast.success("Payment marked as sent");
     loadData();
   }
 
   async function confirmPayment(payment) {
     await base44.entities.Payment.update(payment.id, {
-      status: "confirmed",
-      timestamp_confirmed: new Date().toISOString(),
+      status: "confirmed", timestamp_confirmed: new Date().toISOString(),
     });
-    // check if all shares are confirmed for this expense
     const expense = expenses.find((e) => e.id === payment.expense_id);
     if (expense) {
       const otherOwers = (expense.split_among || []).filter((e) => e !== expense.paid_by);
@@ -148,10 +157,9 @@ export default function TripCosts({ trip, user }) {
 
   async function rejectPayment(payment) {
     await base44.entities.Payment.update(payment.id, {
-      status: "rejected",
-      timestamp_confirmed: new Date().toISOString(),
+      status: "rejected", timestamp_confirmed: new Date().toISOString(),
     });
-    toast.error("Payment rejected — sender has been notified");
+    toast.error("Payment rejected");
     loadData();
   }
 
@@ -171,9 +179,7 @@ export default function TripCosts({ trip, user }) {
     .filter((e) => e.split_among?.includes(user.email) && e.paid_by !== user.email)
     .reduce((s, e) => {
       const pay = getPayment(e.id, user.email);
-      if (!pay || pay.status === "rejected" || pay.status === "unpaid") {
-        return s + getShareAmount(e, user.email);
-      }
+      if (!pay || pay.status === "rejected" || pay.status === "unpaid") return s + getShareAmount(e, user.email);
       return s;
     }, 0);
 
@@ -185,81 +191,64 @@ export default function TripCosts({ trip, user }) {
     <div className="pb-24">
       {/* Summary */}
       <div className="grid grid-cols-3 gap-2 mb-5">
-        <div className="bg-card rounded-xl border border-border p-3 text-center">
-          <p className="text-[10px] text-muted-foreground">Total</p>
-          <p className="text-base font-bold">${total.toFixed(2)}</p>
-        </div>
-        <div className={`rounded-xl border p-3 text-center ${iOwe > 0 ? "bg-rose-50 border-rose-200" : "bg-card border-border"}`}>
-          <p className="text-[10px] text-muted-foreground">You Owe</p>
-          <p className={`text-base font-bold ${iOwe > 0 ? "text-rose-600" : ""}`}>${iOwe.toFixed(2)}</p>
-        </div>
-        <div className={`rounded-xl border p-3 text-center ${pendingConfirmation > 0 ? "bg-amber-50 border-amber-200" : "bg-card border-border"}`}>
-          <p className="text-[10px] text-muted-foreground">Pending</p>
-          <p className={`text-base font-bold ${pendingConfirmation > 0 ? "text-amber-600" : ""}`}>{pendingConfirmation}</p>
-        </div>
+        {[
+          { label: "Total", value: `$${total.toFixed(2)}`, accent: false },
+          { label: "You Owe", value: `$${iOwe.toFixed(2)}`, accent: iOwe > 0, accentClass: "text-rose-500" },
+          { label: "Pending", value: pendingConfirmation, accent: pendingConfirmation > 0, accentClass: "text-amber-500" },
+        ].map(({ label, value, accent, accentClass }) => (
+          <div key={label} className="rounded-2xl p-3 text-center" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.15)" }}>
+            <p className="text-[10px] mb-1" style={{ color: "#B0A090" }}>{label}</p>
+            <p className={`text-sm font-semibold ${accent && accentClass ? accentClass : ""}`} style={!accent ? { color: "#2A2018" } : {}}>{value}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Confirm pending payments I should receive */}
-      {payments.filter((p) => p.receiver_email === user.email && p.status === "pending").length > 0 && (
-        <div className="mb-5">
-          <h4 className="text-xs font-semibold text-amber-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5" /> Payments awaiting your confirmation
-          </h4>
-          {payments
-            .filter((p) => p.receiver_email === user.email && p.status === "pending")
-            .map((pay) => {
-              const exp = expenses.find((e) => e.id === pay.expense_id);
-              return (
-                <div key={pay.id} className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <p className="text-sm font-medium">{exp?.description || "Expense"}</p>
-                      <p className="text-xs text-amber-700">
-                        {pay.sender_name || pay.sender_email?.split("@")[0]} sent ${pay.amount?.toFixed(2)} via {paymentMethods.find((m) => m.value === pay.payment_method)?.label || "Other"}
-                      </p>
-                      {pay.timestamp_sent && (
-                        <p className="text-[10px] text-amber-600 mt-0.5">
-                          Sent {format(new Date(pay.timestamp_sent), "MMM d, h:mm a")}
-                        </p>
-                      )}
-                    </div>
-                    <span className="text-base font-bold text-amber-700">${pay.amount?.toFixed(2)}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      className="flex-1 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white"
-                      onClick={() => confirmPayment(pay)}
-                    >
-                      <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Confirm Received
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="rounded-full border-rose-300 text-rose-600 hover:bg-rose-50"
-                      onClick={() => rejectPayment(pay)}
-                    >
-                      <XCircle className="h-3.5 w-3.5 mr-1" /> Reject
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-        </div>
-      )}
+      {/* Payments awaiting confirmation */}
+      {payments.filter((p) => p.receiver_email === user.email && p.status === "pending").map((pay) => {
+        const exp = expenses.find((e) => e.id === pay.expense_id);
+        return (
+          <div key={pay.id} className="rounded-2xl p-3 mb-3" style={{ background: "rgba(255,213,100,0.1)", border: "1px solid rgba(255,193,50,0.25)" }}>
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <p className="text-xs font-semibold" style={{ color: "#2A2018" }}>{exp?.description || "Expense"}</p>
+                <p className="text-[11px] mt-0.5" style={{ color: "#9A7840" }}>
+                  {pay.sender_name} sent ${pay.amount?.toFixed(2)} via {paymentMethods.find((m) => m.value === pay.payment_method)?.label || "Other"}
+                </p>
+              </div>
+              <span className="text-sm font-semibold" style={{ color: "#9A7840" }}>${pay.amount?.toFixed(2)}</span>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" className="flex-1 rounded-full text-xs h-7" style={{ background: "#6BAE8A", color: "white" }} onClick={() => confirmPayment(pay)}>
+                <CheckCircle2 className="h-3 w-3 mr-1" /> Confirm
+              </Button>
+              <Button size="sm" variant="outline" className="rounded-full text-xs h-7 text-rose-500 border-rose-200" onClick={() => rejectPayment(pay)}>
+                Reject
+              </Button>
+            </div>
+          </div>
+        );
+      })}
 
       {/* Expenses list */}
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold flex items-center gap-2">
-          <Receipt className="h-4 w-4" /> Expenses
-        </h3>
-        <Button variant="outline" size="sm" className="rounded-full" onClick={() => setShowAdd(true)}>
-          <Plus className="h-3.5 w-3.5 mr-1" /> Add
-        </Button>
+        <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#C8A27C" }}>Expenses</h3>
+        <button
+          onClick={() => setShowAdd(true)}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium"
+          style={{ background: "#C8A27C", color: "white" }}
+        >
+          <Plus className="h-3.5 w-3.5" /> Add
+        </button>
       </div>
 
       {expenses.length === 0 ? (
-        <p className="text-xs text-muted-foreground py-8 text-center">No expenses yet</p>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgba(200,162,124,0.1)" }}>
+            <Receipt className="h-5 w-5" style={{ color: "#C8A27C" }} />
+          </div>
+          <p className="text-sm font-medium" style={{ color: "#3A3028" }}>No expenses yet</p>
+          <p className="text-xs mt-1" style={{ color: "#B0A090" }}>Tap Add to log a shared cost</p>
+        </div>
       ) : (
         <div className="space-y-2">
           {expenses.map((exp) => {
@@ -271,152 +260,113 @@ export default function TripCosts({ trip, user }) {
             const myShare = getShareAmount(exp, user.email);
 
             return (
-              <div
-                key={exp.id}
-                className={`bg-card rounded-2xl border transition-all ${
-                  settled ? "border-border opacity-60" : "border-border"
-                }`}
-              >
-                {/* Expense header */}
-                <div
-                  className="p-3 cursor-pointer"
-                  onClick={() => setExpandedExpense(isExpanded ? null : exp.id)}
-                >
+              <div key={exp.id} className="rounded-2xl overflow-hidden transition-all" style={{ background: settled ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.9)", border: `1px solid ${settled ? "rgba(200,162,124,0.08)" : "rgba(200,162,124,0.18)"}`, opacity: settled ? 0.7 : 1 }}>
+                <div className="p-3 cursor-pointer" onClick={() => setExpandedExpense(isExpanded ? null : exp.id)}>
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <span className="text-sm">{categories.find((c) => c.value === exp.category)?.label?.split(" ")[0] || "📦"}</span>
+                    <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                      <span className="text-base">{categories.find((c) => c.value === exp.category)?.label?.split(" ")[0] || "📦"}</span>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium truncate ${settled ? "line-through text-muted-foreground" : ""}`}>
-                          {exp.description}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground">
-                          Paid by {exp.paid_by_name || exp.paid_by?.split("@")[0]} · {exp.split_among?.length || 0} people
+                        <p className={`text-sm font-medium truncate ${settled ? "line-through" : ""}`} style={{ color: settled ? "#B0A090" : "#2A2018" }}>{exp.description}</p>
+                        <p className="text-[10px] mt-0.5" style={{ color: "#B0A090" }}>
+                          {exp.paid_by_name || exp.paid_by?.split("@")[0]} paid · {exp.split_among?.length || 0} people
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <div className="text-right">
-                        <p className={`text-sm font-semibold ${settled ? "line-through text-muted-foreground" : ""}`}>
-                          ${exp.amount?.toFixed(2)}
-                        </p>
+                        <p className={`text-sm font-semibold ${settled ? "line-through" : ""}`} style={{ color: settled ? "#B0A090" : "#2A2018" }}>${exp.amount?.toFixed(2)}</p>
                         {settled ? (
-                          <Badge className="text-[9px] py-0 px-1.5 bg-emerald-100 text-emerald-700 border-emerald-200">Paid</Badge>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: "rgba(107,174,138,0.15)", color: "#5A9E7A" }}>Settled</span>
                         ) : status === "partial_pending" ? (
-                          <Badge className="text-[9px] py-0 px-1.5 bg-amber-100 text-amber-700 border-amber-200">Pending</Badge>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: "rgba(255,193,50,0.15)", color: "#9A7840" }}>Pending</span>
                         ) : iOweThis ? (
-                          <Badge className="text-[9px] py-0 px-1.5 bg-rose-100 text-rose-600 border-rose-200">You owe ${myShare.toFixed(2)}</Badge>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: "rgba(220,80,80,0.1)", color: "#B04040" }}>−${myShare.toFixed(2)}</span>
                         ) : null}
                       </div>
-                      {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                      {isExpanded ? <ChevronUp className="h-3.5 w-3.5" style={{ color: "#C8A27C" }} /> : <ChevronDown className="h-3.5 w-3.5" style={{ color: "#C0B0A0" }} />}
                     </div>
                   </div>
                 </div>
 
-                {/* Expanded details */}
                 {isExpanded && (
-                  <div className="px-3 pb-3 border-t border-border pt-3 space-y-3">
-                    {/* Split breakdown */}
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Split breakdown</p>
-                      <div className="space-y-1.5">
-                        {(exp.split_among || []).filter((e) => e !== exp.paid_by).map((email) => {
-                          const pay = getPayment(exp.id, email);
-                          const share = getShareAmount(exp, email);
-                          const memberName = members.find((m) => m.email === email)?.full_name || email.split("@")[0];
-                          return (
-                            <div key={email} className="flex items-center justify-between text-xs">
-                              <div className="flex items-center gap-1.5">
-                                <div className="w-5 h-5 rounded-full bg-accent flex items-center justify-center text-[9px] font-bold text-primary">
-                                  {memberName[0]}
-                                </div>
-                                <span>{memberName}</span>
-                                <ArrowRight className="h-2.5 w-2.5 text-muted-foreground" />
-                                <span className="text-muted-foreground">{exp.paid_by_name || exp.paid_by?.split("@")[0]}</span>
+                  <div className="px-3 pb-3 space-y-3" style={{ borderTop: "1px solid rgba(200,162,124,0.1)" }}>
+                    <div className="pt-3 space-y-1.5">
+                      {(exp.split_among || []).filter((e) => e !== exp.paid_by).map((email) => {
+                        const pay = getPayment(exp.id, email);
+                        const share = getShareAmount(exp, email);
+                        const memberName = members.find((m) => m.email === email)?.full_name || email.split("@")[0];
+                        return (
+                          <div key={email} className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white" style={{ background: "#C8A27C" }}>
+                                {memberName[0]}
                               </div>
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-medium">${share.toFixed(2)}</span>
-                                {pay?.status === "confirmed" ? (
-                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                                ) : pay?.status === "pending" ? (
-                                  <Clock className="h-3.5 w-3.5 text-amber-500" />
-                                ) : pay?.status === "rejected" ? (
-                                  <XCircle className="h-3.5 w-3.5 text-rose-500" />
-                                ) : (
-                                  <div className="h-3.5 w-3.5 rounded-full border-2 border-muted-foreground/30" />
-                                )}
-                              </div>
+                              <span className="text-xs" style={{ color: "#3A3028" }}>{memberName}</span>
+                              <ArrowRight className="h-2.5 w-2.5" style={{ color: "#C0B0A0" }} />
+                              <span className="text-xs" style={{ color: "#B0A090" }}>{exp.paid_by_name || exp.paid_by?.split("@")[0]}</span>
                             </div>
-                          );
-                        })}
-                      </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-medium" style={{ color: "#2A2018" }}>${share.toFixed(2)}</span>
+                              {pay?.status === "confirmed" ? (
+                                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                              ) : pay?.status === "pending" ? (
+                                <Clock className="h-3.5 w-3.5 text-amber-500" />
+                              ) : pay?.status === "rejected" ? (
+                                <XCircle className="h-3.5 w-3.5 text-rose-400" />
+                              ) : (
+                                <div className="h-3 w-3 rounded-full border border-dashed" style={{ borderColor: "#C0B0A0" }} />
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
 
-                    {/* Payment action for current user if they owe */}
                     {iOweThis && !settled && (
-                      <div className="bg-muted/50 rounded-xl p-3">
+                      <div className="rounded-xl p-3" style={{ background: "rgba(200,162,124,0.06)" }}>
                         {!myPayment || myPayment.status === "rejected" ? (
                           <div>
                             {myPayment?.status === "rejected" && (
-                              <p className="text-xs text-rose-600 mb-2 font-medium">
-                                ⚠ Your payment was rejected. Please try again.
-                              </p>
+                              <p className="text-xs mb-2" style={{ color: "#B04040" }}>⚠ Payment rejected — try again</p>
                             )}
-                            <p className="text-xs font-semibold mb-2">
+                            <p className="text-xs font-medium mb-2" style={{ color: "#3A3028" }}>
                               You owe ${myShare.toFixed(2)} to {exp.paid_by_name || exp.paid_by?.split("@")[0]}
                             </p>
                             <div className="flex gap-2">
-                              <Select
-                                value={selectedMethod[exp.id] || "other"}
-                                onValueChange={(v) => setSelectedMethod({ ...selectedMethod, [exp.id]: v })}
-                              >
-                                <SelectTrigger className="h-8 text-xs rounded-full flex-1">
+                              <Select value={selectedMethod[exp.id] || "other"} onValueChange={(v) => setSelectedMethod({ ...selectedMethod, [exp.id]: v })}>
+                                <SelectTrigger className="h-8 text-xs rounded-full flex-1 border-0" style={{ background: "rgba(200,162,124,0.12)" }}>
                                   <SelectValue placeholder="Method" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {paymentMethods.map((m) => (
-                                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                                  ))}
+                                  {paymentMethods.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
                                 </SelectContent>
                               </Select>
-                              <Button
-                                size="sm"
-                                className="rounded-full shrink-0"
-                                onClick={() => markPaymentSent(exp, selectedMethod[exp.id])}
-                              >
-                                <Send className="h-3 w-3 mr-1" /> Mark Sent
+                              <Button size="sm" className="rounded-full shrink-0 h-8 text-xs px-3" style={{ background: "#C8A27C", color: "white" }} onClick={() => markPaymentSent(exp, selectedMethod[exp.id])}>
+                                <Send className="h-3 w-3 mr-1" /> Sent
                               </Button>
                             </div>
                           </div>
                         ) : myPayment.status === "pending" ? (
-                          <div className="flex items-center gap-2 text-amber-700">
-                            <Clock className="h-4 w-4 shrink-0" />
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 shrink-0" style={{ color: "#9A7840" }} />
                             <div>
-                              <p className="text-xs font-semibold">Payment Sent – Waiting for Confirmation</p>
-                              <p className="text-[10px] text-amber-600">
-                                via {paymentMethods.find((m) => m.value === myPayment.payment_method)?.label}
-                                {myPayment.timestamp_sent && ` · ${format(new Date(myPayment.timestamp_sent), "MMM d, h:mm a")}`}
-                              </p>
+                              <p className="text-xs font-medium" style={{ color: "#9A7840" }}>Sent · Awaiting confirmation</p>
+                              <p className="text-[10px]" style={{ color: "#B09050" }}>via {paymentMethods.find((m) => m.value === myPayment.payment_method)?.label}</p>
                             </div>
                           </div>
                         ) : myPayment.status === "confirmed" ? (
-                          <div className="flex items-center gap-2 text-emerald-700">
-                            <CheckCircle2 className="h-4 w-4 shrink-0" />
-                            <p className="text-xs font-semibold">Payment Confirmed – Settled ✓</p>
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                            <p className="text-xs font-medium text-emerald-600">Confirmed · Settled</p>
                           </div>
                         ) : null}
                       </div>
                     )}
 
-                    {/* Delete button */}
                     {exp.paid_by === user.email && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-muted-foreground hover:text-destructive rounded-full w-full"
-                        onClick={() => deleteExpense(exp.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete expense
-                      </Button>
+                      <button className="flex items-center gap-1.5 text-xs w-full justify-center py-1.5 rounded-full transition-colors hover:bg-rose-50" style={{ color: "#C0A0A0" }} onClick={() => deleteExpense(exp.id)}>
+                        <Trash2 className="h-3.5 w-3.5" /> Remove expense
+                      </button>
                     )}
                   </div>
                 )}
@@ -428,66 +378,88 @@ export default function TripCosts({ trip, user }) {
 
       {/* Add Expense Dialog */}
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
-        <DialogContent className="mx-4 rounded-2xl max-w-md">
+        <DialogContent className="mx-4 rounded-2xl max-w-md p-5">
           <DialogHeader>
-            <DialogTitle>Add Expense</DialogTitle>
+            <DialogTitle className="text-base">Add Expense</DialogTitle>
           </DialogHeader>
-          <form onSubmit={addExpense} className="space-y-4">
+          <form onSubmit={addExpense} className="space-y-3 mt-1">
             <div>
-              <Label>What for?</Label>
-              <Input
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Dinner at La Piazza"
-                className="mt-1"
-              />
+              <Label className="text-xs font-medium mb-1 block">Description</Label>
+              <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Dinner at La Piazza" className="h-9 text-sm" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <Label>Amount ($)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                  className="mt-1"
-                />
+                <Label className="text-xs font-medium mb-1 block">Amount ($)</Label>
+                <Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className="h-9 text-sm" />
               </div>
               <div>
-                <Label>Category</Label>
+                <Label className="text-xs font-medium mb-1 block">Category</Label>
                 <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                    ))}
-                  </SelectContent>
+                  <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>{categories.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
+
+            {/* Split among */}
             <div>
-              <Label className="mb-2 block">Split among</Label>
-              <p className="text-xs text-muted-foreground mb-2">Leave unchecked to split with everyone</p>
-              <div className="space-y-2">
+              <Label className="text-xs font-medium mb-1.5 block">Split among</Label>
+              <div className="space-y-1.5 mb-2">
                 {members.map((m) => (
-                  <label key={m.email} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <label key={m.email} className="flex items-center gap-2 text-xs cursor-pointer">
                     <Checkbox
-                      checked={form.split_among.includes(m.email)}
+                      checked={form.split_among.length === 0 || form.split_among.includes(m.email)}
                       onCheckedChange={(checked) =>
                         setForm({
                           ...form,
-                          split_among: checked
-                            ? [...form.split_among, m.email]
-                            : form.split_among.filter((e) => e !== m.email),
+                          split_among: checked ? [...form.split_among, m.email] : form.split_among.filter((e) => e !== m.email),
                         })
                       }
                     />
-                    {m.full_name} {m.email === user.email && "(You)"}
+                    <span>{m.full_name}{m.email === user.email ? " (You)" : ""}</span>
                   </label>
                 ))}
               </div>
             </div>
-            <Button type="submit" className="w-full rounded-full">Add Expense</Button>
+
+            {/* Split mode toggle */}
+            <div className="flex gap-2 p-1 rounded-full" style={{ background: "rgba(200,162,124,0.08)" }}>
+              {[{ key: "equal", label: "Equal split" }, { key: "custom", label: "Custom split" }].map(({ key, label }) => (
+                <button type="button" key={key} onClick={() => setSplitMode(key)} className="flex-1 py-1.5 text-xs font-medium rounded-full transition-all" style={splitMode === key ? { background: "white", color: "#C8A27C", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" } : { color: "#9A8A7A" }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {splitMode === "equal" && form.amount && activeSplitList.length > 0 && (
+              <p className="text-xs text-center" style={{ color: "#B0A090" }}>
+                ${equalShare().toFixed(2)} per person
+              </p>
+            )}
+
+            {splitMode === "custom" && (
+              <div className="space-y-1.5">
+                <p className="text-[11px]" style={{ color: "#B0A090" }}>Set each person's share (must total ${parseFloat(form.amount || 0).toFixed(2)})</p>
+                {activeSplitList.map((email) => {
+                  const m = members.find(m => m.email === email);
+                  return (
+                    <div key={email} className="flex items-center gap-2">
+                      <span className="text-xs flex-1" style={{ color: "#3A3028" }}>{m?.full_name || email.split("@")[0]}{email === user.email ? " (You)" : ""}</span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={customAmounts[email] || ""}
+                        onChange={(e) => setCustomAmounts({ ...customAmounts, [email]: e.target.value })}
+                        className="h-8 w-24 text-xs text-right"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <Button type="submit" className="w-full rounded-full h-9 text-sm" style={{ background: "#C8A27C", color: "white" }}>Add Expense</Button>
           </form>
         </DialogContent>
       </Dialog>

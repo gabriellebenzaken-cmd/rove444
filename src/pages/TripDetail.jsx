@@ -13,11 +13,13 @@ import TripCosts from "../components/trip/TripCosts";
 import TripChat from "../components/trip/TripChat";
 import TripCoverEditor from "../components/trip/TripCoverEditor";
 import EditTripDialog from "../components/trip/EditTripDialog";
+import TripMap from "../components/trip/TripMap";
 
 const tripTabs = [
   { key: "plan", label: "Plan" },
   { key: "stay", label: "Stay" },
   { key: "itinerary", label: "Itinerary" },
+  { key: "map", label: "Map" },
   { key: "costs", label: "Costs" },
   { key: "chat", label: "Chat" },
 ];
@@ -154,6 +156,7 @@ export default function TripDetail() {
         {tab === "plan" && <TripPlan trip={trip} user={user} onUpdate={loadData} />}
         {tab === "stay" && <TripStay trip={trip} user={user} />}
         {tab === "itinerary" && <TripItinerary trip={trip} user={user} />}
+        {tab === "map" && <TripMap trip={trip} />}
         {tab === "costs" && <TripCosts trip={trip} user={user} />}
         {tab === "chat" && <TripChat trip={trip} user={user} />}
 
