@@ -96,7 +96,7 @@ export default function CreateDecisionPromptSheet({ open, onClose, trip, user, o
           </Label>
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger className="h-9 text-xs" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}>
-              <SelectValue />
+              <SelectValue placeholder="Select a category" />
             </SelectTrigger>
             <SelectContent>
               {categories.map((c) => (
