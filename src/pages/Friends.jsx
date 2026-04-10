@@ -301,7 +301,7 @@ export default function Friends() {
         <div className="flex justify-center py-20">
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : searchResults.length > 0 ? (
+      ) : tab === "search" && searchResults.length > 0 ? (
         <div className="space-y-3">
           <p className="text-xs text-muted-foreground mb-2">{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</p>
           {searchResults.length === 0 ? (
