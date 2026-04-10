@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Link2, Users, UserMinus, LogOut, MapPin, Crown } from "lucide-react";
+import GroupPendingInvites from "@/components/group/GroupPendingInvites";
 import { toast } from "sonner";
 
 export default function GroupDetail() {
@@ -76,6 +77,7 @@ export default function GroupDetail() {
 
   return (
     <div className="px-5 pt-10">
+      {isAdmin && <GroupPendingInvites group={group} isAdmin={isAdmin} onUpdate={loadData} />}
       <div className="flex items-center gap-3 mb-6">
         <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate("/groups")}>
           <ArrowLeft className="h-5 w-5" />

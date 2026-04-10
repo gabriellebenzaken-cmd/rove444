@@ -81,40 +81,7 @@ export default function JoinInvite() {
       setRequesting(true);
 
       if (type === "group") {
-        // Check if already pending or accepted
-        const existing = await base44.entities.GroupInvite.filter(
-          { group_id: entity.id, invitee_email: user.email },
-          "-created_date",
-          1
-        );
-
-        if (existing.length > 0) {
-          const inv = existing[0];
-          if (inv.status === "pending") {
-            toast.error("Invite already sent");
-            setRequesting(false);
-            return;
-          } else if (inv.status === "accepted") {
-            toast.error("Already a member");
-            setRequesting(false);
-            return;
-          }
-        }
-
-        // Accept pending invite
-        if (existing.length > 0 && existing[0].status === "pending") {
-          await base44.entities.GroupInvite.update(existing[0].id, { status: "accepted" });
-          const updated = [...(entity.member_emails || []), user.email];
-          await base44.entities.Group.update(entity.id, { member_emails: updated });
-          console.log("[Group] Invite accepted:", existing[0].id);
-          toast.success("Joined group!");
-          setIsMember(true);
-          setShowConfirm(false);
-          setRequesting(false);
-          return;
-        }
-
-        // No invite - create one
+        // Create pending invite request (user sends request to admin)
         const groupInv = await base44.entities.GroupInvite.create({
           group_id: entity.id,
           invitee_email: user.email,

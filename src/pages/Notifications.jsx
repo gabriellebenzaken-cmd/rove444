@@ -11,7 +11,9 @@ const TYPE_CONFIG = {
   friend_accepted: { icon: Check, color: "#6BAE8A", bg: "rgba(107,174,138,0.12)" },
   trip_added: { icon: MapPin, color: "#7090B0", bg: "rgba(112,144,176,0.12)" },
   group_added: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)" },
-  group_invite: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)", actionable: true },
+  group_invite: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)" },
+  group_accepted: { icon: Check, color: "#6BAE8A", bg: "rgba(107,174,138,0.12)" },
+  group_declined: { icon: X, color: "#EF4444", bg: "rgba(239,68,68,0.12)" },
 };
 
 export default function Notifications() {
@@ -204,15 +206,6 @@ export default function Notifications() {
                            <Check className="h-3 w-3" />
                          </Button>
                          <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs rounded-full" onClick={() => declineFriendRequest(n)}>
-                           <X className="h-3 w-3" />
-                         </Button>
-                       </>
-                     ) : n.type === "group_invite" ? (
-                       <>
-                         <Button size="sm" className="h-7 px-2.5 text-xs rounded-full" onClick={() => acceptGroupInvite(n)}>
-                           <Check className="h-3 w-3" />
-                         </Button>
-                         <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs rounded-full" onClick={() => declineGroupInvite(n)}>
                            <X className="h-3 w-3" />
                          </Button>
                        </>
