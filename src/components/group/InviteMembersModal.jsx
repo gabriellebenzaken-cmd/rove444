@@ -21,32 +21,36 @@ export default function InviteMembersModal({ group, user, isOpen, onClose, onSuc
   async function loadFriends() {
     try {
       setLoading(true);
-      const allRequests = await base44.entities.FriendRequest.filter(
-        { status: "accepted" },
-        "-created_date",
-        200
-      );
 
+      // Load all accepted friend requests (same as Friends.jsx)
+      const allRequests = await base44.entities.FriendRequest.list("-created_date", 200);
+      const accepted = allRequests.filter((r) => r.status === "accepted");
+      console.log("[InviteModal] Loaded accepted friend requests:", accepted.length);
+
+      // Build friends map using same logic as Friends.jsx
       const friendsMap = new Map();
-      allRequests.forEach((r) => {
+      accepted.forEach((r) => {
         if (r.sender_id === user.id) {
-          friendsMap.set(r.receiver_id, {
+          friendsMap.set(r.receiver_email, {
             id: r.receiver_id,
             email: r.receiver_email,
             name: r.receiver_name,
+            user_id: r.receiver_id,
           });
         } else if (r.receiver_id === user.id) {
-          friendsMap.set(r.sender_id, {
+          friendsMap.set(r.sender_email, {
             id: r.sender_id,
             email: r.sender_email,
             name: r.sender_name,
+            user_id: r.sender_id,
           });
         }
       });
 
       let friendList = Array.from(friendsMap.values());
+      console.log("[InviteModal] Mapped friends:", friendList.length);
 
-      // Enrich with UserProfile data
+      // Enrich with UserProfile data (non-critical)
       try {
         const profiles = await base44.entities.UserProfile.list("-created_date", 200);
         friendList = friendList.map((f) => {
@@ -59,8 +63,11 @@ export default function InviteMembersModal({ group, user, isOpen, onClose, onSuc
           };
         });
       } catch (err) {
-        console.warn("Failed to enrich friend data:", err);
+        console.warn("[InviteModal] UserProfile enrichment failed:", err);
+        // Continue with FriendRequest data only
       }
+
+      console.log("[InviteModal] Friends before filtering:", friendList);
 
       // Filter out already invited or members
       const existingInvites = await base44.entities.GroupInvite.filter(
@@ -71,14 +78,27 @@ export default function InviteMembersModal({ group, user, isOpen, onClose, onSuc
       const existingEmails = new Set(existingInvites.map((inv) => inv.invitee_email));
       const memberEmails = new Set(group.member_emails || []);
 
-      const filtered = friendList.filter(
-        (f) => !memberEmails.has(f.email) && !existingEmails.has(f.email)
-      );
+      console.log("[InviteModal] Member emails:", Array.from(memberEmails));
+      console.log("[InviteModal] Existing invite emails:", Array.from(existingEmails));
+
+      const filtered = friendList.filter((f) => {
+        const isAlreadyMember = memberEmails.has(f.email);
+        const isAlreadyInvited = existingEmails.has(f.email);
+        const shouldInclude = !isAlreadyMember && !isAlreadyInvited;
+        
+        if (!shouldInclude) {
+          console.log(`[InviteModal] Filtering out ${f.email}: member=${isAlreadyMember}, invited=${isAlreadyInvited}`);
+        }
+        
+        return shouldInclude;
+      });
+
+      console.log("[InviteModal] Filtered friends ready to invite:", filtered);
 
       setFriends(filtered);
       setSelectedFriends([]);
     } catch (err) {
-      console.error("Failed to load friends:", err);
+      console.error("[InviteModal] Failed to load friends:", err);
       toast.error("Failed to load friends");
     } finally {
       setLoading(false);
