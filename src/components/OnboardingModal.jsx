@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,21 +14,39 @@ export default function OnboardingModal({ user, onComplete }) {
   const [saving, setSaving] = useState(false);
   const [usernameError, setUsernameError] = useState("");
 
+  useEffect(() => {
+    if (!saving) return;
+    const timeoutId = setTimeout(() => {
+      setSaving(false);
+      toast.error("Setup is taking too long. Please try again.");
+    }, 8000);
+    return () => clearTimeout(timeoutId);
+  }, [saving]);
+
   async function handleSubmit(e) {
     e.preventDefault();
     if (!username.trim()) return;
+    
     setSaving(true);
     setUsernameError("");
-    // Check uniqueness
-    const allUsers = await base44.entities.User.list("-created_date", 500);
-    const taken = allUsers.find(u => u.username?.toLowerCase() === username.trim().toLowerCase() && u.email !== user.email);
-    if (taken) {
-      setUsernameError("Username already taken");
+    
+    try {
+      const allUsers = await base44.entities.User.list("-created_date", 500);
+      const taken = allUsers.find(u => u.username?.toLowerCase() === username.trim().toLowerCase() && u.email !== user.email);
+      
+      if (taken) {
+        setUsernameError("Username already taken");
+        return;
+      }
+      
+      await base44.auth.updateMe({ username: username.trim(), bio: bio.trim(), onboarded: true });
+      onComplete();
+    } catch (error) {
+      console.error("Onboarding error:", error);
+      toast.error("Setup failed. Please try again.");
+    } finally {
       setSaving(false);
-      return;
     }
-    await base44.auth.updateMe({ username: username.trim(), bio: bio.trim(), onboarded: true });
-    onComplete();
   }
 
   return (
@@ -70,7 +89,14 @@ export default function OnboardingModal({ user, onComplete }) {
             />
           </div>
           <Button type="submit" className="w-full rounded-full" disabled={saving || !username.trim()}>
-            {saving ? "Setting up..." : "Let's go 🚀"}
+           {saving ? (
+             <div className="flex items-center gap-2">
+               <div className="w-4 h-4 border-2 border-t-transparent border-current rounded-full animate-spin" />
+               Setting up...
+             </div>
+           ) : (
+             "Let's go 🚀"
+           )}
           </Button>
         </form>
       </DialogContent>
