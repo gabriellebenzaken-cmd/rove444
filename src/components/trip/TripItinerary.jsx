@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
+import WeatherWidget from "./WeatherWidget";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -65,6 +66,7 @@ export default function TripItinerary({ trip, user }) {
 
   return (
     <div className="pb-24">
+      <WeatherWidget trip={trip} />
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold flex items-center gap-2">
           <CalendarDays className="h-4 w-4" /> Itinerary
