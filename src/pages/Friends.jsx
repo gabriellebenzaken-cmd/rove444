@@ -18,6 +18,9 @@ export default function Friends() {
   const [tab, setTab] = useState("friends");
   const [searchClicked, setSearchClicked] = useState(false);
   const [searchClickCount, setSearchClickCount] = useState(0);
+  const [debugUsers, setDebugUsers] = useState([]);
+  const [totalUsersFetched, setTotalUsersFetched] = useState(0);
+  const [filteredResultsCount, setFilteredResultsCount] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -126,6 +129,8 @@ export default function Friends() {
 
       const users = await base44.entities.User.list("-created_date", 200);
       console.log("users fetched:", users.length);
+      setTotalUsersFetched(users.length);
+      setDebugUsers(users.slice(0, 3));
 
       const filtered = users.filter(
         (u) =>
@@ -137,6 +142,7 @@ export default function Friends() {
           )
       );
       console.log("filtered results:", filtered);
+      setFilteredResultsCount(filtered.length);
 
       setSearchResults(filtered);
       setTab("search");
@@ -285,6 +291,26 @@ export default function Friends() {
         <div>CLICK COUNT: {searchClickCount}</div>
         <div>QUERY: "{searchQuery}"</div>
       </div>
+
+      {searchClicked && (
+        <div style={{ background: "#fff3cd", color: "#333", padding: "12px", borderRadius: "8px", marginBottom: "16px", fontSize: "13px", border: "1px solid #ffc107" }}>
+          <div style={{ fontWeight: "bold", marginBottom: "8px" }}>TOTAL USERS FETCHED: {totalUsersFetched}</div>
+          <div style={{ marginBottom: "8px" }}>FILTERED RESULTS: {filteredResultsCount}</div>
+          <div style={{ fontWeight: "bold", marginTop: "8px", marginBottom: "4px" }}>First 3 Users:</div>
+          {debugUsers.length === 0 ? (
+            <div>No users returned yet</div>
+          ) : (
+            debugUsers.map((u, idx) => (
+              <div key={idx} style={{ marginTop: "6px", paddingLeft: "8px", borderLeft: "2px solid #ffc107" }}>
+                <div>ID: {u.id}</div>
+                <div>Username: {u.username || "(undefined)"}</div>
+                <div>Email: {u.email || "(undefined)"}</div>
+                <div>Full Name: {u.full_name || "(undefined)"}</div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
 
 
