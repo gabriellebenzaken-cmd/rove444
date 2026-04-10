@@ -127,18 +127,18 @@ export default function Friends() {
       const q = searchQuery.trim().toLowerCase();
       if (!q) return;
 
-      const users = await base44.entities.User.list("-created_date", 200);
-      console.log("users fetched:", users.length);
-      setTotalUsersFetched(users.length);
-      setDebugUsers(users.slice(0, 3));
+      const profiles = await base44.entities.UserProfile.list("-created_date", 200);
+      console.log("profiles fetched:", profiles.length);
+      setTotalUsersFetched(profiles.length);
+      setDebugUsers(profiles.slice(0, 3));
 
-      const filtered = users.filter(
-        (u) =>
-          u.id !== user.id &&
+      const filtered = profiles.filter(
+        (p) =>
+          p.user_id !== user.id &&
           (
-            u.username?.toLowerCase().includes(q) ||
-            u.email?.toLowerCase().includes(q) ||
-            u.full_name?.toLowerCase().includes(q)
+            p.username?.toLowerCase().includes(q) ||
+            p.user_email?.toLowerCase().includes(q) ||
+            p.full_name?.toLowerCase().includes(q)
           )
       );
       console.log("filtered results:", filtered);
@@ -300,12 +300,12 @@ export default function Friends() {
           {debugUsers.length === 0 ? (
             <div>No users returned yet</div>
           ) : (
-            debugUsers.map((u, idx) => (
+            debugUsers.map((p, idx) => (
               <div key={idx} style={{ marginTop: "6px", paddingLeft: "8px", borderLeft: "2px solid #ffc107" }}>
-                <div>ID: {u.id}</div>
-                <div>Username: {u.username || "(undefined)"}</div>
-                <div>Email: {u.email || "(undefined)"}</div>
-                <div>Full Name: {u.full_name || "(undefined)"}</div>
+                <div>User ID: {p.user_id}</div>
+                <div>Username: {p.username || "(undefined)"}</div>
+                <div>Email: {p.user_email || "(undefined)"}</div>
+                <div>Full Name: {p.full_name || "(undefined)"}</div>
               </div>
             ))
           )}
@@ -346,49 +346,49 @@ export default function Friends() {
             <p className="text-center text-muted-foreground text-sm py-10">No users found</p>
           ) : (
             searchResults.map((u) => {
-            const isFriend = friends.some((f) => f.id === u.id);
-            const isOutgoing = sentRequests.some((p) => p.receiver_id === u.id);
-            const isIncoming = receivedRequests.some((p) => p.sender_id === u.id);
+            const isFriend = friends.some((f) => f.id === u.user_id);
+            const isOutgoing = sentRequests.some((p) => p.receiver_id === u.user_id);
+            const isIncoming = receivedRequests.some((p) => p.sender_id === u.user_id);
             const incomingReq = receivedRequests.find((p) => p.sender_id === u.id);
 
             return (
               <div
-                key={u.id}
+                key={u.user_id}
                 className="bg-white rounded-[18px] p-4 shadow-[0_1px_8px_rgba(0,0,0,0.06)] flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary shrink-0">
-                    {u.data?.profile_photo ? (
-                      <img src={u.data.profile_photo} className="w-10 h-10 rounded-full object-cover" alt="" />
-                    ) : (
-                      u.full_name?.[0] || "?"
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm">{u.full_name || "Unknown"}</p>
-                    <p className="text-xs text-muted-foreground">{u.username ? `@${u.username}` : u.email || "No email"}</p>
-                  </div>
+                 <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary shrink-0">
+                   {u.profile_photo ? (
+                     <img src={u.profile_photo} className="w-10 h-10 rounded-full object-cover" alt="" />
+                   ) : (
+                     u.full_name?.[0] || "?"
+                   )}
+                 </div>
+                 <div>
+                   <p className="font-medium text-sm">{u.full_name || "Unknown"}</p>
+                   <p className="text-xs text-muted-foreground">{u.username ? `@${u.username}` : u.user_email || "No email"}</p>
+                 </div>
                 </div>
                 {isFriend ? (
-                  <span className="text-xs text-primary font-medium px-3 py-1 rounded-full" style={{ background: "rgba(200,162,124,0.1)" }}>
-                    Friends
-                  </span>
-                ) : isIncoming ? (
-                  <div className="flex gap-1.5">
-                    <Button size="sm" className="rounded-full h-8 px-3 text-xs" onClick={() => acceptRequest(incomingReq)}>
-                      Accept
-                    </Button>
-                    <Button size="sm" variant="outline" className="rounded-full h-8 px-3 text-xs" onClick={() => declineRequest(incomingReq)}>
-                      Decline
-                    </Button>
-                  </div>
-                ) : isOutgoing ? (
-                  <span className="text-xs text-muted-foreground">Sent</span>
-                ) : (
-                  <Button size="sm" variant="outline" className="rounded-full" onClick={() => sendRequest(u)}>
-                    <UserPlus className="h-3.5 w-3.5 mr-1" /> Add
-                  </Button>
-                )}
+                   <span className="text-xs text-primary font-medium px-3 py-1 rounded-full" style={{ background: "rgba(200,162,124,0.1)" }}>
+                     Friends
+                   </span>
+                 ) : isIncoming ? (
+                   <div className="flex gap-1.5">
+                     <Button size="sm" className="rounded-full h-8 px-3 text-xs" onClick={() => acceptRequest(incomingReq)}>
+                       Accept
+                     </Button>
+                     <Button size="sm" variant="outline" className="rounded-full h-8 px-3 text-xs" onClick={() => declineRequest(incomingReq)}>
+                       Decline
+                     </Button>
+                   </div>
+                 ) : isOutgoing ? (
+                   <span className="text-xs text-muted-foreground">Sent</span>
+                 ) : (
+                   <Button size="sm" variant="outline" className="rounded-full" onClick={() => sendRequest({ id: u.user_id, email: u.user_email, full_name: u.full_name })}>
+                     <UserPlus className="h-3.5 w-3.5 mr-1" /> Add
+                   </Button>
+                 )}
               </div>
             );
             })

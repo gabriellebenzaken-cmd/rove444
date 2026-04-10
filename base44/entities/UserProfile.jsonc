@@ -1,0 +1,30 @@
+{
+  "name": "UserProfile",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID of the authenticated user"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user"
+    },
+    "username": {
+      "type": "string",
+      "description": "Username for search and display"
+    },
+    "full_name": {
+      "type": "string",
+      "description": "Full name of the user"
+    },
+    "profile_photo": {
+      "type": "string",
+      "description": "URL to profile photo"
+    }
+  },
+  "required": [
+    "user_id",
+    "user_email"
+  ]
+}

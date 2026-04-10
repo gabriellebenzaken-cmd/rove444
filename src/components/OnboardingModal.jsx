@@ -36,6 +36,27 @@ export default function OnboardingModal({ user, onComplete }) {
         console.error("Profile save failed, allowing user through anyway:", profileErr);
       }
 
+      // Create or update UserProfile for search
+      try {
+        const existing = await base44.entities.UserProfile.filter({ user_id: user.id }, "-created_date", 1);
+        if (existing.length > 0) {
+          await base44.entities.UserProfile.update(existing[0].id, {
+            username: normalizedUsername,
+            user_email: user.email,
+            full_name: user.full_name,
+          });
+        } else {
+          await base44.entities.UserProfile.create({
+            user_id: user.id,
+            user_email: user.email,
+            username: normalizedUsername,
+            full_name: user.full_name,
+          });
+        }
+      } catch (profileEntityErr) {
+        console.error("Failed to create/update UserProfile:", profileEntityErr);
+      }
+
       onComplete();
     } catch (err) {
       console.error("Onboarding error:", err);
