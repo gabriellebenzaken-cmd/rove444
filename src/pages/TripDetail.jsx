@@ -12,6 +12,7 @@ import TripCosts from "../components/trip/TripCosts";
 import TripAira from "../components/trip/TripAira";
 import TripLinks from "../components/trip/TripLinks";
 import TripChat from "../components/trip/TripChat";
+import TripPolls from "../components/trip/TripPolls";
 import TripCoverEditor from "../components/trip/TripCoverEditor";
 
 const tripTabs = [
@@ -20,6 +21,7 @@ const tripTabs = [
   { key: "itinerary", label: "Itinerary" },
   { key: "costs", label: "Costs" },
   { key: "links", label: "Links" },
+  { key: "polls", label: "Polls" },
   { key: "chat", label: "Chat" },
   { key: "aira", label: "Aira" },
 ];
@@ -148,6 +150,7 @@ export default function TripDetail() {
         {tab === "itinerary" && <TripItinerary trip={trip} user={user} />}
         {tab === "costs" && <TripCosts trip={trip} user={user} />}
         {tab === "links" && <TripLinks trip={trip} user={user} />}
+        {tab === "polls" && <TripPolls trip={trip} user={user} />}
         {tab === "chat" && <TripChat trip={trip} user={user} />}
         {tab === "aira" && <TripAira trip={trip} />}
 

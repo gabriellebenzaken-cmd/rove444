@@ -1,0 +1,35 @@
+{
+  "name": "TripPoll",
+  "type": "object",
+  "properties": {
+    "trip_id": {
+      "type": "string"
+    },
+    "question": {
+      "type": "string"
+    },
+    "options": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of option labels"
+    },
+    "created_by_email": {
+      "type": "string"
+    },
+    "created_by_name": {
+      "type": "string"
+    },
+    "is_closed": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "trip_id",
+    "question",
+    "options",
+    "created_by_email"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "TripPollVote",
+  "type": "object",
+  "properties": {
+    "poll_id": {
+      "type": "string"
+    },
+    "trip_id": {
+      "type": "string"
+    },
+    "voter_email": {
+      "type": "string"
+    },
+    "voter_name": {
+      "type": "string"
+    },
+    "option_index": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "poll_id",
+    "trip_id",
+    "voter_email",
+    "option_index"
+  ]
+}
