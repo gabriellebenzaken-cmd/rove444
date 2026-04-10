@@ -1,0 +1,31 @@
+{
+  "name": "DecisionVote",
+  "type": "object",
+  "properties": {
+    "prompt_id": {
+      "type": "string"
+    },
+    "option_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "vote_type": {
+      "type": "string",
+      "enum": [
+        "vibe",
+        "not_it"
+      ]
+    }
+  },
+  "required": [
+    "prompt_id",
+    "option_id",
+    "user_email",
+    "vote_type"
+  ]
+}

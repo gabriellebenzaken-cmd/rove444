@@ -14,14 +14,12 @@ import TripChat from "../components/trip/TripChat";
 import TripCoverEditor from "../components/trip/TripCoverEditor";
 import EditTripDialog from "../components/trip/EditTripDialog";
 import TripMap from "../components/trip/TripMap";
-import TripSwipe from "../components/trip/TripSwipe";
 
 const tripTabs = [
   { key: "plan", label: "Plan" },
   { key: "stay", label: "Stay" },
   { key: "itinerary", label: "Schedule" },
   { key: "map", label: "Map" },
-  { key: "swipe", label: "Decide" },
   { key: "costs", label: "Costs" },
   { key: "chat", label: "Chat" },
 ];
@@ -173,7 +171,6 @@ export default function TripDetail() {
         {tab === "stay" && <TripStay trip={trip} user={user} />}
         {tab === "itinerary" && <TripItinerary trip={trip} user={user} />}
         {tab === "map" && <TripMap trip={trip} />}
-        {tab === "swipe" && <TripSwipe trip={trip} user={user} />}
         {tab === "costs" && <TripCosts trip={trip} user={user} />}
         {tab === "chat" && <TripChat trip={trip} user={user} />}
 

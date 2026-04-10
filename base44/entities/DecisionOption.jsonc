@@ -1,0 +1,28 @@
+{
+  "name": "DecisionOption",
+  "type": "object",
+  "properties": {
+    "prompt_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "link_url": {
+      "type": "string"
+    },
+    "icon": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "prompt_id",
+    "title"
+  ]
+}

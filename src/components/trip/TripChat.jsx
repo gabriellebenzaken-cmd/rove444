@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
-import { Send, BarChart2, X, Plus, Menu, ExternalLink, MessageCircle } from "lucide-react";
+import { Send, BarChart2, X, Plus, Menu, ExternalLink, MessageCircle, Zap } from "lucide-react";
+import CreateDecisionPromptSheet from "./CreateDecisionPromptSheet";
+import DecisionPromptCard from "./DecisionPromptCard";
 import { format } from "date-fns";
 
 const URL_REGEX = /https?:\/\/[^\s]+/gi;
@@ -113,7 +115,7 @@ function PollCard({ msg, user, onVote }) {
   );
 }
 
-function HubPanel({ messages, user, onVote, onClose }) {
+function HubPanel({ messages, user, prompts, onVote, onClose, onStartVote }) {
   const [section, setSection] = useState("links");
   const links = messages.filter(m => m.message_type === "link");
   const polls = messages.filter(m => m.message_type === "poll");
@@ -129,9 +131,9 @@ function HubPanel({ messages, user, onVote, onClose }) {
           </button>
         </div>
         <div style={{ display: "flex", gap: 4, margin: "0 20px 16px", padding: 4, background: "rgba(200,162,124,0.1)", borderRadius: 999 }}>
-          {["links", "polls"].map(s => (
+          {["links", "polls", "votes"].map(s => (
             <button key={s} onClick={() => setSection(s)} style={{ flex: 1, padding: "6px 0", fontSize: 12, fontWeight: 500, borderRadius: 999, border: "none", cursor: "pointer", textTransform: "capitalize", background: section === s ? "#C8A27C" : "transparent", color: section === s ? "white" : "#9A8A7A", transition: "all 0.2s" }}>
-              {s} ({s === "links" ? links.length : polls.length})
+              {s === "votes" ? `votes (${prompts?.length || 0})` : `${s} (${s === "links" ? links.length : polls.length})`}
             </button>
           ))}
         </div>
@@ -147,11 +149,23 @@ function HubPanel({ messages, user, onVote, onClose }) {
             </div>
           )))}
           {section === "polls" && (polls.length === 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 160, textAlign: "center" }}>
-              <p style={{ margin: 0, fontSize: 12, color: "#C0B0A0" }}>No polls yet</p>
-            </div>
+           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 160, textAlign: "center" }}>
+             <p style={{ margin: 0, fontSize: 12, color: "#C0B0A0" }}>No polls yet</p>
+           </div>
           ) : polls.map(msg => (
-            <PollCard key={msg.id} msg={msg} user={user} onVote={onVote} />
+           <PollCard key={msg.id} msg={msg} user={user} onVote={onVote} />
+          )))}
+          {section === "votes" && (prompts?.length === 0 ? (
+           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 160, textAlign: "center" }}>
+             <p style={{ margin: 0, fontSize: 12, color: "#C0B0A0" }}>No votes yet</p>
+             <button onClick={onStartVote} style={{ marginTop: 12, fontSize: 11, padding: "6px 14px", borderRadius: 999, background: "#C8A27C", color: "white", border: "none", cursor: "pointer", fontWeight: 500 }}>
+               Start one
+             </button>
+           </div>
+          ) : prompts.map(prompt => (
+           <div key={prompt.id} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+             <DecisionPromptCard prompt={prompt} />
+           </div>
           )))}
         </div>
       </div>
@@ -175,16 +189,23 @@ export default function TripChat({ trip, user }) {
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState(["", ""]);
   const [showPanel, setShowPanel] = useState(false);
+  const [showCreateVote, setShowCreateVote] = useState(false);
+  const [prompts, setPrompts] = useState([]);
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef(null);
 
   useEffect(() => {
     setLoading(true);
-    base44.entities.TripMessage.filter({ trip_id: trip.id }, "created_date", 200)
-      .then(all => { setMessages(all || []); setLoading(false); })
-      .catch(() => setLoading(false));
+    Promise.all([
+      base44.entities.TripMessage.filter({ trip_id: trip.id }, "created_date", 200),
+      base44.entities.DecisionPrompt.filter({ trip_id: trip.id }, "-created_date", 200),
+    ]).then(([msgs, prts]) => {
+      setMessages(msgs || []);
+      setPrompts(prts || []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
 
-    const unsub = base44.entities.TripMessage.subscribe((event) => {
+    const unsub1 = base44.entities.TripMessage.subscribe((event) => {
       if (event.data?.trip_id === trip.id) {
         setMessages(prev => {
           if (event.type === "create") return [...prev, event.data];
@@ -194,7 +215,19 @@ export default function TripChat({ trip, user }) {
         });
       }
     });
-    return unsub;
+
+    const unsub2 = base44.entities.DecisionPrompt.subscribe((event) => {
+      if (event.data?.trip_id === trip.id) {
+        setPrompts(prev => {
+          if (event.type === "create") return [...prev, event.data];
+          if (event.type === "update") return prev.map(p => p.id === event.id ? event.data : p);
+          if (event.type === "delete") return prev.filter(p => p.id !== event.id);
+          return prev;
+        });
+      }
+    });
+
+    return () => { unsub1?.(); unsub2?.(); };
   }, [trip.id]);
 
   useEffect(() => {
@@ -282,9 +315,14 @@ export default function TripChat({ trip, user }) {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#C8A27C" }}>Group Chat</p>
-        <button onClick={() => setShowPanel(true)} style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(200,162,124,0.1)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Menu size={16} color="#C8A27C" />
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={() => setShowCreateVote(true)} style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(200,162,124,0.1)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Zap size={16} color="#C8A27C" />
+          </button>
+          <button onClick={() => setShowPanel(true)} style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(200,162,124,0.1)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Menu size={16} color="#C8A27C" />
+          </button>
+        </div>
       </div>
 
       {/* Messages */}
@@ -418,7 +456,9 @@ export default function TripChat({ trip, user }) {
         </form>
       )}
 
-      {showPanel && <HubPanel messages={messages} user={user} onVote={handleVote} onClose={() => setShowPanel(false)} />}
+      {showPanel && <HubPanel messages={messages} user={user} prompts={prompts} onVote={handleVote} onClose={() => setShowPanel(false)} onStartVote={() => { setShowPanel(false); setShowCreateVote(true); }} />}
+
+      <CreateDecisionPromptSheet open={showCreateVote} onClose={() => setShowCreateVote(false)} trip={trip} user={user} onCreated={() => { setShowCreateVote(false); setShowPanel(true); }} />
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
