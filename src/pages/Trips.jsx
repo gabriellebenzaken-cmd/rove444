@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Plus, MapPin } from "lucide-react";
+import { Plus, MapPin, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import CreateTripDialog from "../components/trips/CreateTripDialog";
