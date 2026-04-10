@@ -37,7 +37,7 @@ export default function Trips() {
   return (
     <div className="px-5 pt-12">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-[28px] font-bold tracking-tight leading-none">Trips</h1>
+        <h1 className="text-[26px] font-medium tracking-tight leading-none" style={{color:'#111111', letterSpacing:'-0.02em'}}>Trips</h1>
         <Button
           onClick={() => setShowCreate(true)}
           size="sm"
@@ -66,14 +66,14 @@ export default function Trips() {
         <div className="space-y-3">
           {trips.map((trip, i) => (
             <Link key={trip.id} to={`/trip/${trip.id}`} className="block active:scale-[0.98] transition-transform duration-150">
-              <div className="bg-white rounded-[20px] overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.11)] transition-shadow duration-300">
+              <div className="rounded-[20px] overflow-hidden transition-shadow duration-300" style={{background:'rgba(255,255,255,0.82)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', border:'1px solid rgba(255,255,255,0.6)', boxShadow:'0 2px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)'}}>
                 <div
                   className="h-44 bg-cover bg-center relative"
                   style={{ backgroundImage: `url(${trip.cover_image || coverImages[i % coverImages.length]})` }}
                 >
                   <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 className="text-white font-bold text-[17px] leading-tight">{trip.name}</h3>
+                    <h3 className="text-white font-medium text-[17px] leading-tight" style={{letterSpacing:'-0.01em'}}>{trip.name}</h3>
                     <div className="flex items-center gap-1 mt-0.5">
                       <MapPin className="h-3 w-3 text-white/70" />
                       <span className="text-white/75 text-xs font-medium">{trip.destination}</span>
@@ -81,7 +81,7 @@ export default function Trips() {
                   </div>
                 </div>
                 <div className="px-4 py-3">
-                  <p className="text-[12px] text-slate-400 font-medium">
+                  <p className="text-[11.5px] font-normal" style={{color:'#9CA3AF', letterSpacing:'0.005em'}}>
                     {trip.start_date && trip.end_date
                       ? `${format(new Date(trip.start_date), "MMM d")}–${format(new Date(trip.end_date), "MMM d")} • ${trip.member_emails?.length || 1} ${trip.member_emails?.length === 1 ? "person" : "people"}`
                       : `${trip.member_emails?.length || 1} ${trip.member_emails?.length === 1 ? "person" : "people"}`}

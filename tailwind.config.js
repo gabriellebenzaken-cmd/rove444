@@ -7,6 +7,18 @@ module.exports = {
   		fontFamily: {
   			sans: ['var(--font-sans)'],
   		},
+  		letterSpacing: {
+  			tight: '-0.02em',
+  			snug: '-0.01em',
+  			normal: '0em',
+  			airy: '0.01em',
+  		},
+  		backdropBlur: {
+  			xs: '4px',
+  			sm: '8px',
+  			md: '12px',
+  			lg: '16px',
+  		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',

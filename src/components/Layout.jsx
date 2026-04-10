@@ -18,7 +18,7 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-border/50 z-50">
+      <nav className="fixed bottom-0 left-0 right-0 z-50" style={{background: 'rgba(255,255,255,0.78)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderTop: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 -1px 20px rgba(0,0,0,0.06)'}}>
         <div className="max-w-lg mx-auto flex items-center justify-around h-[60px] px-2">
           {navItems.map((item) => {
             const isActive = item.path === "/"
