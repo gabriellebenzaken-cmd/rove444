@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Link2, Users, UserMinus, LogOut, MapPin, Crown } from "lucide-react";
+import { ArrowLeft, Link2, Users, UserMinus, LogOut, MapPin, Crown, UserPlus } from "lucide-react";
 import GroupPendingInvites from "@/components/group/GroupPendingInvites";
+import InviteMembersModal from "@/components/group/InviteMembersModal";
 import { toast } from "sonner";
 
 export default function GroupDetail() {
@@ -14,6 +15,7 @@ export default function GroupDetail() {
   const [members, setMembers] = useState([]);
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -92,6 +94,11 @@ export default function GroupDetail() {
         <Button variant="outline" className="flex-1 rounded-full" onClick={copyInviteLink}>
           <Link2 className="h-4 w-4 mr-1.5" /> Copy Invite
         </Button>
+        {isAdmin && (
+          <Button className="flex-1 rounded-full" onClick={() => setShowInviteModal(true)}>
+            <UserPlus className="h-4 w-4 mr-1.5" /> Add Members
+          </Button>
+        )}
         {!isAdmin && (
           <Button variant="outline" className="rounded-full text-destructive" onClick={leaveGroup}>
             <LogOut className="h-4 w-4 mr-1.5" /> Leave
@@ -161,6 +168,14 @@ export default function GroupDetail() {
           </div>
         </div>
       )}
+
+      <InviteMembersModal
+        group={group}
+        user={user}
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        onSuccess={loadData}
+      />
     </div>
   );
 }

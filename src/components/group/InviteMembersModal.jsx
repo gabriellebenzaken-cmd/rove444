@@ -1,0 +1,236 @@
+import { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { X, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+export default function InviteMembersModal({ group, user, isOpen, onClose, onSuccess }) {
+  const [friends, setFriends] = useState([]);
+  const [selectedFriends, setSelectedFriends] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) loadFriends();
+  }, [isOpen]);
+
+  async function loadFriends() {
+    try {
+      setLoading(true);
+      const allRequests = await base44.entities.FriendRequest.filter(
+        { status: "accepted" },
+        "-created_date",
+        200
+      );
+
+      const friendsMap = new Map();
+      allRequests.forEach((r) => {
+        if (r.sender_id === user.id) {
+          friendsMap.set(r.receiver_id, {
+            id: r.receiver_id,
+            email: r.receiver_email,
+            name: r.receiver_name,
+          });
+        } else if (r.receiver_id === user.id) {
+          friendsMap.set(r.sender_id, {
+            id: r.sender_id,
+            email: r.sender_email,
+            name: r.sender_name,
+          });
+        }
+      });
+
+      let friendList = Array.from(friendsMap.values());
+
+      // Enrich with UserProfile data
+      try {
+        const profiles = await base44.entities.UserProfile.list("-created_date", 200);
+        friendList = friendList.map((f) => {
+          const profile = profiles.find((p) => p.user_id === f.id);
+          return {
+            ...f,
+            username: profile?.username,
+            profile_photo: profile?.profile_photo,
+            full_name: profile?.full_name || f.name,
+          };
+        });
+      } catch (err) {
+        console.warn("Failed to enrich friend data:", err);
+      }
+
+      // Filter out already invited or members
+      const existingInvites = await base44.entities.GroupInvite.filter(
+        { group_id: group.id },
+        "-created_date",
+        200
+      );
+      const existingEmails = new Set(existingInvites.map((inv) => inv.invitee_email));
+      const memberEmails = new Set(group.member_emails || []);
+
+      const filtered = friendList.filter(
+        (f) => !memberEmails.has(f.email) && !existingEmails.has(f.email)
+      );
+
+      setFriends(filtered);
+      setSelectedFriends([]);
+    } catch (err) {
+      console.error("Failed to load friends:", err);
+      toast.error("Failed to load friends");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleInvite() {
+    if (selectedFriends.length === 0) {
+      toast.error("Select at least one friend");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      for (const friend of selectedFriends) {
+        // Create invite
+        await base44.entities.GroupInvite.create({
+          group_id: group.id,
+          invitee_email: friend.email,
+          inviter_email: user.email,
+          inviter_name: user.full_name,
+          status: "pending",
+        });
+
+        // Send notification
+        await base44.entities.Notification.create({
+          user_email: friend.email,
+          type: "group_invite",
+          message: `${user.full_name} invited you to join ${group.name}`,
+          related_user_email: user.email,
+          related_user_name: user.full_name,
+          related_group_id: group.id,
+          is_read: false,
+        });
+      }
+
+      toast.success(`Invited ${selectedFriends.length} friend${selectedFriends.length !== 1 ? "s" : ""}`);
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      console.error("Failed to invite friends:", err);
+      toast.error("Failed to invite friends");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const filteredFriends = friends.filter(
+    (f) =>
+      f.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      f.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      f.username?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="mx-4 rounded-2xl max-w-sm p-6 max-h-[90vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Add Members</DialogTitle>
+        </DialogHeader>
+
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <>
+            <Input
+              placeholder="Search friends..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="rounded-lg mb-4"
+            />
+
+            <div className="flex-1 overflow-y-auto space-y-2 mb-4 -mx-2 px-2">
+              {filteredFriends.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">
+                  {friends.length === 0 ? "No friends to invite" : "No results"}
+                </p>
+              ) : (
+                filteredFriends.map((friend) => (
+                  <div
+                    key={friend.id}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer"
+                    onClick={() =>
+                      setSelectedFriends((prev) =>
+                        prev.find((f) => f.id === friend.id)
+                          ? prev.filter((f) => f.id !== friend.id)
+                          : [...prev, friend]
+                      )
+                    }
+                  >
+                    <Checkbox
+                      checked={selectedFriends.some((f) => f.id === friend.id)}
+                      onChange={() => {}}
+                      className="pointer-events-none"
+                    />
+                    <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-xs font-semibold text-primary shrink-0">
+                      {friend.profile_photo ? (
+                        <img
+                          src={friend.profile_photo}
+                          className="w-9 h-9 rounded-full object-cover"
+                          alt=""
+                        />
+                      ) : (
+                        friend.full_name?.[0] || "?"
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{friend.full_name || friend.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {friend.username ? `@${friend.username}` : friend.email}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {selectedFriends.length > 0 && (
+              <div className="text-xs text-muted-foreground mb-4 text-center">
+                {selectedFriends.length} selected
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1 rounded-full"
+                onClick={onClose}
+                disabled={submitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 rounded-full"
+                onClick={handleInvite}
+                disabled={submitting || selectedFriends.length === 0}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Inviting...
+                  </>
+                ) : (
+                  `Invite (${selectedFriends.length})`
+                )}
+              </Button>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
