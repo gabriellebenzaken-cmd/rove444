@@ -10,6 +10,7 @@ import TripPlan from "../components/trip/TripPlan";
 import TripStay from "../components/trip/TripStay";
 import TripItinerary from "../components/trip/TripItinerary";
 import TripCosts from "../components/trip/TripCosts";
+import TripChat from "../components/trip/TripChat";
 import TripCoverEditor from "../components/trip/TripCoverEditor";
 import EditTripDialog from "../components/trip/EditTripDialog";
 
@@ -154,7 +155,7 @@ export default function TripDetail() {
         {tab === "stay" && <TripStay trip={trip} user={user} />}
         {tab === "itinerary" && <TripItinerary trip={trip} user={user} />}
         {tab === "costs" && <TripCosts trip={trip} user={user} />}
-
+        {tab === "chat" && <TripChat trip={trip} user={user} />}
 
         <TripCoverEditor open={showCoverEditor} onOpenChange={setShowCoverEditor} trip={trip} onUpdated={loadData} />
         <EditTripDialog open={showEdit} onOpenChange={setShowEdit} trip={trip} onUpdated={loadData} />

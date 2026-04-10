@@ -127,6 +127,14 @@ function HubPanel({ messages, user, onVote, onClose }) {
 }
 
 export default function TripChat({ trip, user }) {
+  if (!trip || !user) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}>
+        <div style={{ width: 24, height: 24, border: "2px solid rgba(200,162,124,0.3)", borderTopColor: "#C8A27C", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+        <style>{"@keyframes spin { to { transform: rotate(360deg); } }"}</style>
+      </div>
+    );
+  }
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -140,7 +148,8 @@ export default function TripChat({ trip, user }) {
   useEffect(() => {
     setLoading(true);
     base44.entities.TripMessage.filter({ trip_id: trip.id }, "created_date", 200)
-      .then(all => { setMessages(all); setLoading(false); });
+      .then(all => { setMessages(all || []); setLoading(false); })
+      .catch(() => setLoading(false));
 
     const unsub = base44.entities.TripMessage.subscribe((event) => {
       if (event.data?.trip_id === trip.id) {
@@ -230,6 +239,7 @@ export default function TripChat({ trip, user }) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}>
         <div style={{ width: 24, height: 24, border: "2px solid rgba(200,162,124,0.3)", borderTopColor: "#C8A27C", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+        <style>{"@keyframes spin { to { transform: rotate(360deg); } }"}</style>
       </div>
     );
   }
