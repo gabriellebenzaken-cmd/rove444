@@ -5,22 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2 } from "lucide-react";
 import BottomSheet from "../BottomSheet";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
-} from "@/components/ui/select";
 import { toast } from "sonner";
 
-const categories = [
-  { value: "lodging", label: "🏨 Lodging" },
-  { value: "restaurant", label: "🍽️ Restaurant" },
-  { value: "activity", label: "🎯 Activity" },
-  { value: "transport", label: "🚕 Transport" },
-  { value: "general", label: "❓ General" },
-];
+
 
 export default function CreateDecisionPromptSheet({ open, onClose, trip, user, onCreated }) {
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("general");
+  const [category, setCategory] = useState("");
   const [options, setOptions] = useState([]);
   const [optionInput, setOptionInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -62,7 +53,7 @@ export default function CreateDecisionPromptSheet({ open, onClose, trip, user, o
 
       toast.success("Vote started!");
       setTitle("");
-      setCategory("general");
+      setCategory("");
       setOptions([]);
       setOptionInput("");
       onClose();
@@ -92,18 +83,15 @@ export default function CreateDecisionPromptSheet({ open, onClose, trip, user, o
 
         <div>
           <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>
-            Category
+            Category (optional)
           </Label>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="h-9 text-xs" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}>
-              <SelectValue placeholder="Select a category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((c) => (
-                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Input
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            placeholder="e.g., hotel, museum, beach, food"
+            className="h-9 text-sm"
+            style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}
+          />
         </div>
 
         <div>
