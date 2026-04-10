@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Search, UserPlus, Check, X, UserMinus, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 export default function Friends() {
@@ -16,6 +17,8 @@ export default function Friends() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState("friends");
+  const [friendToRemove, setFriendToRemove] = useState(null);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -239,6 +242,8 @@ export default function Friends() {
       if (friendship) {
         await base44.entities.FriendRequest.delete(friendship.id);
         toast.success("Friend removed");
+        setShowRemoveConfirm(false);
+        setFriendToRemove(null);
         loadData();
       }
     } catch (err) {
@@ -435,7 +440,7 @@ export default function Friends() {
                     <p className="text-xs text-muted-foreground">{f.username ? `@${f.username}` : f.email || "No contact"}</p>
                   </div>
                 </div>
-                <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => removeFriend(f)}>
+                <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => { setFriendToRemove(f); setShowRemoveConfirm(true); }}>
                   <UserMinus className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </div>
@@ -443,6 +448,31 @@ export default function Friends() {
           )}
         </div>
       )}
+
+      <Dialog open={showRemoveConfirm} onOpenChange={setShowRemoveConfirm}>
+        <DialogContent className="mx-4 rounded-2xl max-w-sm p-6">
+          <DialogHeader>
+            <DialogTitle>Remove {friendToRemove?.full_name || friendToRemove?.display_name}?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-6">This will remove them from your friends list.</p>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1 rounded-full"
+              onClick={() => setShowRemoveConfirm(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1 rounded-full"
+              onClick={() => removeFriend(friendToRemove)}
+            >
+              Remove
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
