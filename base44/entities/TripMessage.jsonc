@@ -13,6 +13,34 @@
     },
     "content": {
       "type": "string"
+    },
+    "message_type": {
+      "type": "string",
+      "enum": [
+        "text",
+        "link",
+        "poll"
+      ],
+      "default": "text"
+    },
+    "link_url": {
+      "type": "string"
+    },
+    "link_title": {
+      "type": "string"
+    },
+    "poll_question": {
+      "type": "string"
+    },
+    "poll_options": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "poll_votes": {
+      "type": "object",
+      "description": "Map of option_index -> array of voter emails"
     }
   },
   "required": [

@@ -10,10 +10,6 @@ import TripPlan from "../components/trip/TripPlan";
 import TripStay from "../components/trip/TripStay";
 import TripItinerary from "../components/trip/TripItinerary";
 import TripCosts from "../components/trip/TripCosts";
-import TripAira from "../components/trip/TripAira";
-import TripLinks from "../components/trip/TripLinks";
-import TripChat from "../components/trip/TripChat";
-import TripPolls from "../components/trip/TripPolls";
 import TripCoverEditor from "../components/trip/TripCoverEditor";
 import EditTripDialog from "../components/trip/EditTripDialog";
 
@@ -22,10 +18,7 @@ const tripTabs = [
   { key: "stay", label: "Stay" },
   { key: "itinerary", label: "Itinerary" },
   { key: "costs", label: "Costs" },
-  { key: "links", label: "Links" },
-  { key: "polls", label: "Polls" },
   { key: "chat", label: "Chat" },
-  { key: "aira", label: "Aira" },
 ];
 
 export default function TripDetail() {
@@ -161,10 +154,7 @@ export default function TripDetail() {
         {tab === "stay" && <TripStay trip={trip} user={user} />}
         {tab === "itinerary" && <TripItinerary trip={trip} user={user} />}
         {tab === "costs" && <TripCosts trip={trip} user={user} />}
-        {tab === "links" && <TripLinks trip={trip} user={user} />}
-        {tab === "polls" && <TripPolls trip={trip} user={user} />}
-        {tab === "chat" && <TripChat trip={trip} user={user} />}
-        {tab === "aira" && <TripAira trip={trip} />}
+
 
         <TripCoverEditor open={showCoverEditor} onOpenChange={setShowCoverEditor} trip={trip} onUpdated={loadData} />
         <EditTripDialog open={showEdit} onOpenChange={setShowEdit} trip={trip} onUpdated={loadData} />
