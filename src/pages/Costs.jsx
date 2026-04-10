@@ -63,9 +63,8 @@ export default function Costs() {
   const balances = user ? calculateBalances() : {};
 
   return (
-    <div className="px-5 pt-14">
-      <h1 className="text-2xl font-bold tracking-tight mb-2">Costs</h1>
-      <p className="text-sm text-muted-foreground mb-6">All your trip expenses</p>
+    <div className="px-5 pt-12">
+      <h1 className="text-[28px] font-bold tracking-tight mb-5 leading-none">Costs</h1>
 
       {loading ? (
         <div className="flex justify-center py-20">
@@ -81,25 +80,25 @@ export default function Costs() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <div className="bg-card rounded-2xl border border-border p-4">
-              <p className="text-xs text-muted-foreground mb-1">Total Spent</p>
-              <p className="text-xl font-bold">${totalSpent.toFixed(2)}</p>
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            <div className="bg-white rounded-[18px] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
+              <p className="text-[11px] text-slate-400 font-medium mb-1">Total Spent</p>
+              <p className="text-2xl font-bold tracking-tight">${totalSpent.toFixed(2)}</p>
             </div>
-            <div className="bg-card rounded-2xl border border-border p-4">
-              <p className="text-xs text-muted-foreground mb-1">You Paid</p>
-              <p className="text-xl font-bold">${myTotal.toFixed(2)}</p>
+            <div className="bg-white rounded-[18px] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
+              <p className="text-[11px] text-slate-400 font-medium mb-1">You Paid</p>
+              <p className="text-2xl font-bold tracking-tight">${myTotal.toFixed(2)}</p>
             </div>
           </div>
 
           {Object.keys(balances).length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-sm font-semibold mb-3">Balances</h3>
+            <div className="mb-5">
+              <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest mb-3">Balances</p>
               <div className="space-y-2">
                 {Object.entries(balances).map(([key, amount]) => {
                   const [from, to] = key.split("->");
                   return (
-                    <div key={key} className="bg-card rounded-xl border border-border p-3 flex items-center justify-between">
+                    <div key={key} className="bg-white rounded-[16px] shadow-[0_1px_6px_rgba(0,0,0,0.06)] p-3 flex items-center justify-between">
                       <div className="flex items-center gap-2 text-xs">
                         <span className="font-medium truncate max-w-[100px]">{from.split("@")[0]}</span>
                         <ArrowRight className="h-3 w-3 text-muted-foreground" />
@@ -113,12 +112,12 @@ export default function Costs() {
             </div>
           )}
 
-          <h3 className="text-sm font-semibold mb-3">Recent Expenses</h3>
+          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest mb-3">Recent Expenses</p>
           <div className="space-y-2">
             {expenses.slice(0, 20).map((exp) => {
               const trip = trips.find((t) => t.id === exp.trip_id);
               return (
-                <div key={exp.id} className="bg-card rounded-xl border border-border p-3">
+                <div key={exp.id} className="bg-white rounded-[16px] shadow-[0_1px_6px_rgba(0,0,0,0.06)] p-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium">{exp.description}</p>

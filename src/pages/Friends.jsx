@@ -98,23 +98,23 @@ export default function Friends() {
   ];
 
   return (
-    <div className="px-5 pt-14">
-      <h1 className="text-2xl font-bold tracking-tight mb-6">Friends</h1>
+    <div className="px-5 pt-12">
+      <h1 className="text-[28px] font-bold tracking-tight mb-5 leading-none">Friends</h1>
 
-      <div className="flex gap-2 mb-5">
+      <div className="flex gap-2 mb-4">
         <Input
-          placeholder="Search by name, email, or username..."
+          placeholder="Search name, email, or username..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-          className="rounded-full"
+          className="rounded-full bg-white border-border/60 shadow-sm"
         />
-        <Button size="icon" variant="outline" className="rounded-full shrink-0" onClick={handleSearch}>
+        <Button size="icon" variant="outline" className="rounded-full shrink-0 shadow-sm" onClick={handleSearch}>
           <Search className="h-4 w-4" />
         </Button>
       </div>
 
-      <div className="flex gap-1 mb-5 bg-muted rounded-full p-1">
+      <div className="flex gap-1 mb-5 bg-muted/70 rounded-full p-1">
         {tabs.map((t) => (
           <button
             key={t.key}
@@ -139,10 +139,10 @@ export default function Friends() {
             const isFriend = friends.some((f) => f.email === u.email);
             const isPending = pending.some((p) => p.to_user === u.email);
             return (
-              <div key={u.id} className="bg-card rounded-2xl border border-border p-4 flex items-center justify-between">
+              <div key={u.id} className="bg-white rounded-[18px] p-4 shadow-[0_1px_8px_rgba(0,0,0,0.06)] flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary">
-                    {u.full_name?.[0] || "?"}
+                  <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary shrink-0">
+                    {u.profile_photo ? <img src={u.profile_photo} className="w-10 h-10 rounded-full object-cover" /> : (u.full_name?.[0] || "?")}
                   </div>
                   <div>
                     <p className="font-medium text-sm">{u.full_name}</p>
@@ -170,9 +170,9 @@ export default function Friends() {
             <>
               {incoming.length > 0 && (
                 <div>
-                  <p className="text-xs text-muted-foreground font-medium mb-2 uppercase tracking-wider">Incoming</p>
+                  <p className="text-[10px] text-muted-foreground font-semibold mb-2 uppercase tracking-widest">Incoming</p>
                   {incoming.map((req) => (
-                    <div key={req.id} className="bg-card rounded-2xl border border-border p-4 flex items-center justify-between mb-2">
+                    <div key={req.id} className="bg-white rounded-[18px] shadow-[0_1px_8px_rgba(0,0,0,0.06)] p-4 flex items-center justify-between mb-2">
                       <div>
                         <p className="font-medium text-sm">{req.from_name || req.from_user}</p>
                         <p className="text-xs text-muted-foreground">{req.from_user}</p>
@@ -191,9 +191,9 @@ export default function Friends() {
               )}
               {pending.length > 0 && (
                 <div>
-                  <p className="text-xs text-muted-foreground font-medium mb-2 uppercase tracking-wider">Sent</p>
+                  <p className="text-[10px] text-muted-foreground font-semibold mb-2 uppercase tracking-widest mt-3">Sent</p>
                   {pending.map((req) => (
-                    <div key={req.id} className="bg-card rounded-2xl border border-border p-4 flex items-center justify-between mb-2">
+                    <div key={req.id} className="bg-white rounded-[18px] shadow-[0_1px_8px_rgba(0,0,0,0.06)] p-4 flex items-center justify-between mb-2">
                       <div>
                         <p className="font-medium text-sm">{req.to_name || req.to_user}</p>
                         <p className="text-xs text-muted-foreground">Pending</p>
@@ -217,9 +217,9 @@ export default function Friends() {
             </div>
           ) : (
             friends.map((f) => (
-              <div key={f.id} className="bg-card rounded-2xl border border-border p-4 flex items-center justify-between">
+              <div key={f.id} className="bg-white rounded-[18px] shadow-[0_1px_8px_rgba(0,0,0,0.06)] p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary">
+                  <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary shrink-0">
                     {f.full_name?.[0] || "?"}
                   </div>
                   <div>

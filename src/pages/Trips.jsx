@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Plus, MapPin, Calendar, ChevronRight } from "lucide-react";
+import { Plus, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import CreateTripDialog from "../components/trips/CreateTripDialog";
@@ -35,18 +35,15 @@ export default function Trips() {
   ];
 
   return (
-    <div className="px-5 pt-14">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Trips</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Plan your next adventure</p>
-        </div>
+    <div className="px-5 pt-12">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-[28px] font-bold tracking-tight leading-none">Trips</h1>
         <Button
           onClick={() => setShowCreate(true)}
-          size="icon"
-          className="h-10 w-10 rounded-full shadow-lg"
+          size="sm"
+          className="rounded-full px-4 h-8 text-xs font-semibold shadow-sm"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-3.5 w-3.5 mr-1" /> New Trip
         </Button>
       </div>
 
@@ -55,56 +52,40 @@ export default function Trips() {
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       ) : trips.length === 0 ? (
-        <div className="text-center py-20">
-          <div className="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <MapPin className="h-7 w-7 text-primary" />
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center mb-4">
+            <MapPin className="h-6 w-6 text-primary" />
           </div>
           <h3 className="font-semibold text-lg mb-1">No trips yet</h3>
-          <p className="text-muted-foreground text-sm mb-6">Create your first trip to get started</p>
-          <Button onClick={() => setShowCreate(true)} className="rounded-full px-6">
+          <p className="text-muted-foreground text-sm mb-6">Tap "New Trip" to start planning</p>
+          <Button onClick={() => setShowCreate(true)} className="rounded-full px-6 shadow-sm">
             Create Trip
           </Button>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {trips.map((trip, i) => (
-            <Link
-              key={trip.id}
-              to={`/trip/${trip.id}`}
-              className="block group"
-            >
-              <div className="bg-card rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-md transition-all duration-300">
+            <Link key={trip.id} to={`/trip/${trip.id}`} className="block active:scale-[0.98] transition-transform duration-150">
+              <div className="bg-white rounded-[20px] overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.11)] transition-shadow duration-300">
                 <div
-                  className="h-36 bg-cover bg-center relative"
-                  style={{
-                    backgroundImage: `url(${trip.cover_image || coverImages[i % coverImages.length]})`,
-                  }}
+                  className="h-44 bg-cover bg-center relative"
+                  style={{ backgroundImage: `url(${trip.cover_image || coverImages[i % coverImages.length]})` }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                  <div className="absolute bottom-3 left-4 right-4">
-                    <h3 className="text-white font-semibold text-lg leading-tight">{trip.name}</h3>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <MapPin className="h-3.5 w-3.5 text-white/80" />
-                      <span className="text-white/80 text-xs">{trip.destination}</span>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <h3 className="text-white font-bold text-[17px] leading-tight">{trip.name}</h3>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <MapPin className="h-3 w-3 text-white/70" />
+                      <span className="text-white/75 text-xs font-medium">{trip.destination}</span>
                     </div>
                   </div>
                 </div>
-                <div className="px-4 py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Calendar className="h-3.5 w-3.5" />
-                    {trip.start_date && trip.end_date ? (
-                      <span>
-                        {format(new Date(trip.start_date), "MMM d")} –{" "}
-                        {format(new Date(trip.end_date), "MMM d, yyyy")}
-                      </span>
-                    ) : (
-                      <span>Dates TBD</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <span>{trip.member_emails?.length || 1} members</span>
-                    <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
+                <div className="px-4 py-3">
+                  <p className="text-[12px] text-slate-400 font-medium">
+                    {trip.start_date && trip.end_date
+                      ? `${format(new Date(trip.start_date), "MMM d")}–${format(new Date(trip.end_date), "MMM d")} • ${trip.member_emails?.length || 1} ${trip.member_emails?.length === 1 ? "person" : "people"}`
+                      : `${trip.member_emails?.length || 1} ${trip.member_emails?.length === 1 ? "person" : "people"}`}
+                  </p>
                 </div>
               </div>
             </Link>

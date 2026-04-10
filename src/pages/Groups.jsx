@@ -27,18 +27,11 @@ export default function Groups() {
   }
 
   return (
-    <div className="px-5 pt-14">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Groups</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Your travel circles</p>
-        </div>
-        <Button
-          onClick={() => setShowCreate(true)}
-          size="icon"
-          className="h-10 w-10 rounded-full shadow-lg"
-        >
-          <Plus className="h-5 w-5" />
+    <div className="px-5 pt-12">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-[28px] font-bold tracking-tight leading-none">Groups</h1>
+        <Button size="sm" onClick={() => setShowCreate(true)} className="rounded-full px-4 h-8 text-xs font-semibold shadow-sm">
+          <Plus className="h-3.5 w-3.5 mr-1" /> New Group
         </Button>
       </div>
 
@@ -48,8 +41,8 @@ export default function Groups() {
         </div>
       ) : groups.length === 0 ? (
         <div className="text-center py-20">
-          <div className="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Users className="h-7 w-7 text-primary" />
+          <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Users className="h-6 w-6 text-primary" />
           </div>
           <h3 className="font-semibold text-lg mb-1">No groups yet</h3>
           <p className="text-muted-foreground text-sm mb-6">Create a group to plan trips together</p>
@@ -58,14 +51,14 @@ export default function Groups() {
           </Button>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {groups.map((group) => (
-            <Link key={group.id} to={`/group/${group.id}`} className="block group">
-              <div className="bg-card rounded-2xl border border-border p-4 hover:shadow-md transition-all duration-300">
+            <Link key={group.id} to={`/group/${group.id}`} className="block active:scale-[0.98] transition-transform duration-150">
+              <div className="bg-white rounded-[18px] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-shadow duration-300">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-accent flex items-center justify-center">
-                      <Users className="h-5 w-5 text-primary" />
+                    <div className="w-10 h-10 rounded-2xl bg-accent flex items-center justify-center">
+                      <Users className="h-4.5 w-4.5 text-primary" />
                     </div>
                     <div>
                       <h3 className="font-semibold">{group.name}</h3>

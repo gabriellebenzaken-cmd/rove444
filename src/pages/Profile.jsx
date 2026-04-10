@@ -63,10 +63,10 @@ export default function Profile() {
   }
 
   return (
-    <div className="px-5 pt-14 pb-32">
+    <div className="px-5 pt-12 pb-32">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-[28px] font-bold tracking-tight leading-none">Profile</h1>
         <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setShowSettings(true)}>
           <Settings className="h-5 w-5 text-muted-foreground" />
         </Button>
@@ -99,19 +99,19 @@ export default function Profile() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="bg-card rounded-2xl border border-border p-4 text-center">
-          <p className="text-2xl font-bold">{trips.length}</p>
-          <p className="text-xs text-muted-foreground">Trips</p>
+        <div className="bg-white rounded-[18px] shadow-[0_2px_10px_rgba(0,0,0,0.06)] p-4 text-center">
+          <p className="text-2xl font-bold tracking-tight">{trips.length}</p>
+          <p className="text-[11px] text-slate-400 font-medium">Trips</p>
         </div>
-        <div className="bg-card rounded-2xl border border-border p-4 text-center">
-          <p className="text-2xl font-bold">{groups.length}</p>
-          <p className="text-xs text-muted-foreground">Groups</p>
+        <div className="bg-white rounded-[18px] shadow-[0_2px_10px_rgba(0,0,0,0.06)] p-4 text-center">
+          <p className="text-2xl font-bold tracking-tight">{groups.length}</p>
+          <p className="text-[11px] text-slate-400 font-medium">Groups</p>
         </div>
       </div>
 
       {/* Edit Form */}
       {editing ? (
-        <div className="bg-card rounded-2xl border border-border p-5 mb-4 space-y-4">
+        <div className="bg-white rounded-[18px] shadow-[0_2px_10px_rgba(0,0,0,0.06)] p-5 mb-4 space-y-4">
           <div>
             <Label>Username</Label>
             <div className="flex items-center mt-1">
