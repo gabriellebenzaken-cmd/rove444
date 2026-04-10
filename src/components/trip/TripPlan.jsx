@@ -120,36 +120,36 @@ export default function TripPlan({ trip, user, onUpdate }) {
       </div>
 
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
-        <DialogContent className="mx-4 rounded-2xl max-w-md">
+        <DialogContent className="mx-4 rounded-2xl max-w-md p-5">
           <DialogHeader>
-            <DialogTitle>Add Travel Details</DialogTitle>
+            <DialogTitle className="text-base">My Travel Info</DialogTitle>
           </DialogHeader>
-          <form onSubmit={addArrival} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Arrival Date</Label>
-                <Input type="date" value={form.arrival_date} onChange={(e) => setForm({ ...form, arrival_date: e.target.value })} className="mt-1" />
-              </div>
-              <div>
-                <Label>Arrival Time</Label>
-                <Input type="time" value={form.arrival_time} onChange={(e) => setForm({ ...form, arrival_time: e.target.value })} className="mt-1" />
-              </div>
-            </div>
+          <form onSubmit={addArrival} className="space-y-3 mt-1">
             <div>
-              <Label>Airport / City</Label>
-              <Input value={form.arrival_location} onChange={(e) => setForm({ ...form, arrival_location: e.target.value })} placeholder="JFK, New York" className="mt-1" />
+              <Label className="text-xs font-medium mb-1 block">Arriving from</Label>
+              <Input value={form.arrival_location} onChange={(e) => setForm({ ...form, arrival_location: e.target.value })} placeholder="Airport or city" className="h-9 text-sm" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <Label>Departure Date</Label>
-                <Input type="date" value={form.departure_date} onChange={(e) => setForm({ ...form, departure_date: e.target.value })} className="mt-1" />
+                <Label className="text-xs font-medium mb-1 block">Arrival date</Label>
+                <Input type="date" value={form.arrival_date} onChange={(e) => setForm({ ...form, arrival_date: e.target.value })} className="h-9 text-sm" />
               </div>
               <div>
-                <Label>Departure Time</Label>
-                <Input type="time" value={form.departure_time} onChange={(e) => setForm({ ...form, departure_time: e.target.value })} className="mt-1" />
+                <Label className="text-xs font-medium mb-1 block">Arrival time</Label>
+                <Input type="time" value={form.arrival_time} onChange={(e) => setForm({ ...form, arrival_time: e.target.value })} className="h-9 text-sm" />
               </div>
             </div>
-            <Button type="submit" className="w-full rounded-full">Save</Button>
+            <div className="grid grid-cols-2 gap-2.5">
+              <div>
+                <Label className="text-xs font-medium mb-1 block">Departure date</Label>
+                <Input type="date" value={form.departure_date} onChange={(e) => setForm({ ...form, departure_date: e.target.value })} className="h-9 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs font-medium mb-1 block">Departure time</Label>
+                <Input type="time" value={form.departure_time} onChange={(e) => setForm({ ...form, departure_time: e.target.value })} className="h-9 text-sm" />
+              </div>
+            </div>
+            <Button type="submit" className="w-full rounded-full h-9 text-sm" style={{ background: "#C8A27C", color: "white" }}>Save</Button>
           </form>
         </DialogContent>
       </Dialog>

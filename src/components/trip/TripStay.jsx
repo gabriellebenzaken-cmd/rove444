@@ -94,38 +94,38 @@ export default function TripStay({ trip, user }) {
       )}
 
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
-        <DialogContent className="mx-4 rounded-2xl max-w-md">
+        <DialogContent className="mx-4 rounded-2xl max-w-md p-5">
           <DialogHeader>
-            <DialogTitle>Add Lodging</DialogTitle>
+            <DialogTitle className="text-base">Add Lodging</DialogTitle>
           </DialogHeader>
-          <form onSubmit={addLodging} className="space-y-4">
+          <form onSubmit={addLodging} className="space-y-3 mt-1">
             <div>
-              <Label>Name</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Hotel Ritz, Airbnb Downtown..." className="mt-1" />
+              <Label className="text-xs font-medium mb-1 block">Name</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Hotel name or Airbnb" className="h-9 text-sm" />
             </div>
             <div>
-              <Label>Address</Label>
-              <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="123 Main St" className="mt-1" />
+              <Label className="text-xs font-medium mb-1 block">Address</Label>
+              <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Address" className="h-9 text-sm" />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <Label>$/Night</Label>
-                <Input type="number" value={form.price_per_night} onChange={(e) => setForm({ ...form, price_per_night: e.target.value })} className="mt-1" />
+                <Label className="text-xs font-medium mb-1 block">Check-in</Label>
+                <Input type="date" value={form.check_in} onChange={(e) => setForm({ ...form, check_in: e.target.value })} className="h-9 text-sm" />
               </div>
               <div>
-                <Label>Check-in</Label>
-                <Input type="date" value={form.check_in} onChange={(e) => setForm({ ...form, check_in: e.target.value })} className="mt-1" />
-              </div>
-              <div>
-                <Label>Check-out</Label>
-                <Input type="date" value={form.check_out} onChange={(e) => setForm({ ...form, check_out: e.target.value })} className="mt-1" />
+                <Label className="text-xs font-medium mb-1 block">Check-out</Label>
+                <Input type="date" value={form.check_out} onChange={(e) => setForm({ ...form, check_out: e.target.value })} className="h-9 text-sm" />
               </div>
             </div>
             <div>
-              <Label>Notes</Label>
-              <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Any notes..." className="mt-1" rows={2} />
+              <Label className="text-xs font-medium mb-1 block">$/Night <span style={{color:'#B0A090',fontWeight:400}}>(optional)</span></Label>
+              <Input type="number" value={form.price_per_night} onChange={(e) => setForm({ ...form, price_per_night: e.target.value })} placeholder="0" className="h-9 text-sm" />
             </div>
-            <Button type="submit" className="w-full rounded-full">Add Lodging</Button>
+            <div>
+              <Label className="text-xs font-medium mb-1 block">Notes <span style={{color:'#B0A090',fontWeight:400}}>(optional)</span></Label>
+              <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Check-in code, parking info..." className="text-sm" rows={2} />
+            </div>
+            <Button type="submit" className="w-full rounded-full h-9 text-sm" style={{ background: "#C8A27C", color: "white" }}>Add Lodging</Button>
           </form>
         </DialogContent>
       </Dialog>

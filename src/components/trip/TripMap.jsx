@@ -103,7 +103,7 @@ export default function TripMap({ trip }) {
         </div>
       ) : view === "map" ? (
         <>
-          <div className="rounded-2xl overflow-hidden" style={{ height: 420, border: "1px solid rgba(200,162,124,0.2)" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ height: 360, border: "1px solid rgba(200,162,124,0.2)" }}>
             <MapContainer center={center} zoom={12} style={{ height: "100%", width: "100%" }} zoomControl={false}>
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
