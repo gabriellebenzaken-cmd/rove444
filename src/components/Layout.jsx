@@ -1,5 +1,7 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { Map, Users, UserPlus, DollarSign, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Map, Users, UserPlus, DollarSign, User, Bell } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
 const navItems = [
   { path: "/", icon: Map, label: "Trips" },
@@ -11,6 +13,16 @@ const navItems = [
 
 export default function Layout() {
   const location = useLocation();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    base44.auth.me().then(me => {
+      if (!me) return;
+      base44.entities.Notification.filter({ user_email: me.email, is_read: false }, "-created_date", 50)
+        .then(all => setUnreadCount((all || []).length))
+        .catch(() => {});
+    }).catch(() => {});
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-background font-sans flex flex-col">
@@ -40,6 +52,24 @@ export default function Layout() {
               </Link>
             );
           })}
+          {/* Notifications */}
+          <Link
+            to="/notifications"
+            className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-2xl transition-all duration-200 relative ${
+              location.pathname === "/notifications" ? "" : "text-[#B5A898] hover:text-[#8A7060]"
+            }`}
+            style={location.pathname === "/notifications" ? { color: '#C8A27C' } : {}}
+          >
+            <div className="relative">
+              <Bell className={`h-[19px] w-[19px] ${location.pathname === "/notifications" ? "stroke-[2.2px]" : "stroke-[1.6px]"}`} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1.5 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center text-white" style={{background:'#C8A27C'}}>
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </div>
+            <span className={`text-[9px] tracking-wide ${location.pathname === "/notifications" ? "font-semibold" : "font-medium"}`}>Alerts</span>
+          </Link>
         </div>
       </nav>
     </div>

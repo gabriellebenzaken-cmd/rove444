@@ -11,11 +11,21 @@ export default function OnboardingModal({ user, onComplete }) {
   const [username, setUsername] = useState(user?.full_name?.toLowerCase().replace(/\s+/g, "_") || "");
   const [bio, setBio] = useState("");
   const [saving, setSaving] = useState(false);
+  const [usernameError, setUsernameError] = useState("");
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (!username.trim()) return;
     setSaving(true);
+    setUsernameError("");
+    // Check uniqueness
+    const allUsers = await base44.entities.User.list("-created_date", 500);
+    const taken = allUsers.find(u => u.username?.toLowerCase() === username.trim().toLowerCase() && u.email !== user.email);
+    if (taken) {
+      setUsernameError("Username already taken");
+      setSaving(false);
+      return;
+    }
     await base44.auth.updateMe({ username: username.trim(), bio: bio.trim(), onboarded: true });
     onComplete();
   }
@@ -41,12 +51,13 @@ export default function OnboardingModal({ user, onComplete }) {
               <span className="px-3 py-2 bg-muted text-muted-foreground text-sm rounded-l-md border border-r-0 border-input">@</span>
               <Input
                 value={username}
-                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                onChange={(e) => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "")); setUsernameError(""); }}
                 placeholder="your_username"
-                className="rounded-l-none"
+                className={`rounded-l-none ${usernameError ? "border-destructive" : ""}`}
                 required
               />
             </div>
+            {usernameError && <p className="text-xs text-destructive mt-1">{usernameError}</p>}
           </div>
           <div>
             <Label>Bio <span className="text-muted-foreground text-xs">(optional)</span></Label>

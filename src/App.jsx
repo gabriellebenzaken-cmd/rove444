@@ -16,6 +16,7 @@ import Profile from './pages/Profile';
 import TripDetail from './pages/TripDetail';
 import GroupDetail from './pages/GroupDetail';
 import JoinInvite from './pages/JoinInvite';
+import Notifications from './pages/Notifications';
 import OnboardingModal from './components/OnboardingModal';
 
 const AuthenticatedApp = () => {
@@ -70,6 +71,7 @@ const AuthenticatedApp = () => {
         <Route path="/trip/:id" element={<TripDetail />} />
         <Route path="/group/:id" element={<GroupDetail />} />
       </Route>
+      <Route path="/notifications" element={<Notifications />} />
       <Route path="/join/:type/:code" element={<JoinInvite />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>

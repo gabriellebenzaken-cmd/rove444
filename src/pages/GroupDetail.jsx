@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Link2, Users, UserMinus, LogOut, MapPin } from "lucide-react";
+import { ArrowLeft, Link2, Users, UserMinus, LogOut, MapPin, Crown } from "lucide-react";
 import { toast } from "sonner";
 
 export default function GroupDetail() {
@@ -102,26 +102,38 @@ export default function GroupDetail() {
           <Users className="h-4 w-4" /> Members ({members.length})
         </h3>
         <div className="space-y-2">
-          {members.map((m) => (
-            <div key={m.id} className="bg-card rounded-xl border border-border p-3 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-xs font-semibold text-primary">
-                  {m.full_name?.[0] || "?"}
+          {members.map((m) => {
+            const isGroupAdmin = m.email === group.admin_email;
+            return (
+              <div key={m.id} className="bg-card rounded-xl border border-border p-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-xs font-semibold text-primary">
+                      {m.profile_photo
+                        ? <img src={m.profile_photo} className="w-9 h-9 rounded-full object-cover" alt="" />
+                        : (m.full_name?.[0] || "?")}
+                    </div>
+                    {isGroupAdmin && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center" style={{background:'#C8A27C'}}>
+                        <Crown className="h-2.5 w-2.5 text-white" />
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{m.full_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {m.username ? `@${m.username}` : m.email} · {isGroupAdmin ? "Admin" : "Member"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium">{m.full_name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {m.email === group.admin_email ? "Admin" : "Member"}
-                  </p>
-                </div>
+                {isAdmin && m.email !== user.email && (
+                  <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={() => removeMember(m.email)}>
+                    <UserMinus className="h-3.5 w-3.5 text-muted-foreground" />
+                  </Button>
+                )}
               </div>
-              {isAdmin && m.email !== user.email && (
-                <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={() => removeMember(m.email)}>
-                  <UserMinus className="h-3.5 w-3.5 text-muted-foreground" />
-                </Button>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

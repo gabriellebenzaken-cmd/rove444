@@ -12,20 +12,17 @@
     },
     "username": {
       "type": "string",
-      "description": "Unique display handle"
+      "description": "Unique lowercase username, no spaces"
     },
     "bio": {
-      "type": "string",
-      "description": "Short bio"
+      "type": "string"
     },
     "profile_photo": {
-      "type": "string",
-      "description": "URL to profile photo (Google or uploaded)"
+      "type": "string"
     },
     "onboarded": {
       "type": "boolean",
-      "default": false,
-      "description": "Whether user has completed initial profile setup"
+      "default": false
     }
   }
 }

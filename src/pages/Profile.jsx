@@ -13,6 +13,7 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ username: "", bio: "", profile_photo: "" });
   const [loading, setLoading] = useState(true);
+  const [usernameError, setUsernameError] = useState("");
   const [trips, setTrips] = useState([]);
   const [groups, setGroups] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
@@ -36,6 +37,12 @@ export default function Profile() {
   }
 
   async function handleSave() {
+    setUsernameError("");
+    if (form.username) {
+      const allUsers = await base44.entities.User.list("-created_date", 500);
+      const taken = allUsers.find(u => u.username?.toLowerCase() === form.username.toLowerCase() && u.email !== user.email);
+      if (taken) { setUsernameError("Username already taken"); return; }
+    }
     await base44.auth.updateMe({ username: form.username, bio: form.bio, profile_photo: form.profile_photo });
     setUser({ ...user, ...form });
     setEditing(false);
@@ -118,11 +125,12 @@ export default function Profile() {
               <span className="px-3 py-2 bg-muted text-muted-foreground text-sm rounded-l-md border border-r-0 border-input">@</span>
               <Input
                 value={form.username}
-                onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "") })}
+                onChange={(e) => { setForm({ ...form, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "") }); setUsernameError(""); }}
                 placeholder="your_username"
-                className="rounded-l-none"
+                className={`rounded-l-none ${usernameError ? "border-destructive" : ""}`}
               />
             </div>
+            {usernameError && <p className="text-xs text-destructive mt-1">{usernameError}</p>}
           </div>
           <div>
             <Label>Bio</Label>

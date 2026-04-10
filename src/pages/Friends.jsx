@@ -10,6 +10,7 @@ export default function Friends() {
   const [friends, setFriends] = useState([]);
   const [pending, setPending] = useState([]);
   const [incoming, setIncoming] = useState([]);
+  const [allRequests, setAllRequests] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,9 +23,10 @@ export default function Friends() {
   async function loadData() {
     const me = await base44.auth.me();
     setUser(me);
-    const allRequests = await base44.entities.FriendRequest.list("-created_date", 200);
+    const reqs = await base44.entities.FriendRequest.list("-created_date", 200);
+    setAllRequests(reqs);
 
-    const accepted = allRequests.filter((r) => r.status === "accepted");
+    const accepted = reqs.filter((r) => r.status === "accepted");
     const friendEmails = new Set();
     accepted.forEach((r) => {
       if (r.from_user === me.email) friendEmails.add(r.to_user);
@@ -35,26 +37,32 @@ export default function Friends() {
     const friendList = allUsers.filter((u) => friendEmails.has(u.email));
     setFriends(friendList);
 
-    setPending(allRequests.filter((r) => r.from_user === me.email && r.status === "pending"));
-    setIncoming(allRequests.filter((r) => r.to_user === me.email && r.status === "pending"));
+    setPending(reqs.filter((r) => r.from_user === me.email && r.status === "pending"));
+    setIncoming(reqs.filter((r) => r.to_user === me.email && r.status === "pending"));
     setLoading(false);
   }
 
   async function handleSearch() {
     if (!searchQuery.trim()) return;
     const allUsers = await base44.entities.User.list("-created_date", 200);
+    const q = searchQuery.toLowerCase();
     const results = allUsers.filter(
       (u) =>
         u.email !== user.email &&
-        (u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          u.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          u.username?.toLowerCase().includes(searchQuery.toLowerCase()))
+        (u.full_name?.toLowerCase().includes(q) || u.username?.toLowerCase().includes(q))
     );
     setSearchResults(results);
     setTab("search");
   }
 
   async function sendRequest(toUser) {
+    // Prevent duplicate or self
+    const existing = allRequests.find(r =>
+      r.status !== "declined" &&
+      ((r.from_user === user.email && r.to_user === toUser.email) ||
+       (r.from_user === toUser.email && r.to_user === user.email))
+    );
+    if (existing) return;
     await base44.entities.FriendRequest.create({
       from_user: user.email,
       from_name: user.full_name,
@@ -62,12 +70,30 @@ export default function Friends() {
       to_name: toUser.full_name,
       status: "pending",
     });
+    // Notify recipient
+    await base44.entities.Notification.create({
+      user_email: toUser.email,
+      type: "friend_request",
+      message: `${user.full_name} sent you a friend request`,
+      related_user_email: user.email,
+      related_user_name: user.full_name,
+      is_read: false,
+    });
     toast.success(`Request sent to ${toUser.full_name}`);
     loadData();
   }
 
   async function acceptRequest(req) {
     await base44.entities.FriendRequest.update(req.id, { status: "accepted" });
+    // Notify sender
+    await base44.entities.Notification.create({
+      user_email: req.from_user,
+      type: "friend_accepted",
+      message: `${user.full_name} accepted your friend request`,
+      related_user_email: user.email,
+      related_user_name: user.full_name,
+      is_read: false,
+    });
     toast.success("Friend added!");
     loadData();
   }
@@ -137,22 +163,29 @@ export default function Friends() {
           <p className="text-xs text-muted-foreground mb-2">{searchResults.length} results</p>
           {searchResults.map((u) => {
             const isFriend = friends.some((f) => f.email === u.email);
-            const isPending = pending.some((p) => p.to_user === u.email);
+            const isOutgoing = pending.some((p) => p.to_user === u.email);
+            const isIncoming = incoming.some((p) => p.from_user === u.email);
+            const incomingReq = incoming.find((p) => p.from_user === u.email);
             return (
               <div key={u.id} className="bg-white rounded-[18px] p-4 shadow-[0_1px_8px_rgba(0,0,0,0.06)] flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary shrink-0">
-                    {u.profile_photo ? <img src={u.profile_photo} className="w-10 h-10 rounded-full object-cover" /> : (u.full_name?.[0] || "?")}
+                    {u.profile_photo ? <img src={u.profile_photo} className="w-10 h-10 rounded-full object-cover" alt="" /> : (u.full_name?.[0] || "?")}
                   </div>
                   <div>
                     <p className="font-medium text-sm">{u.full_name}</p>
-                    <p className="text-xs text-muted-foreground">{u.email}</p>
+                    <p className="text-xs text-muted-foreground">{u.username ? `@${u.username}` : u.email}</p>
                   </div>
                 </div>
                 {isFriend ? (
-                  <span className="text-xs text-primary font-medium">Friends</span>
-                ) : isPending ? (
-                  <span className="text-xs text-muted-foreground">Pending</span>
+                  <span className="text-xs text-primary font-medium px-3 py-1 rounded-full" style={{background:"rgba(200,162,124,0.1)"}}>Friends</span>
+                ) : isIncoming ? (
+                  <div className="flex gap-1.5">
+                    <Button size="sm" className="rounded-full h-8 px-3 text-xs" onClick={() => acceptRequest(incomingReq)}>Accept</Button>
+                    <Button size="sm" variant="outline" className="rounded-full h-8 px-3 text-xs" onClick={() => declineRequest(incomingReq)}>Decline</Button>
+                  </div>
+                ) : isOutgoing ? (
+                  <span className="text-xs text-muted-foreground">Sent</span>
                 ) : (
                   <Button size="sm" variant="outline" className="rounded-full" onClick={() => sendRequest(u)}>
                     <UserPlus className="h-3.5 w-3.5 mr-1" /> Add
