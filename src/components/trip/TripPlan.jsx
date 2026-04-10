@@ -3,7 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plane, Clock, MapPin, Plus, Trash2 } from "lucide-react";
+import { Plane, Clock, MapPin, Plus, Trash2, Car, Train, HelpCircle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import TripMembersManager from "./TripMembersManager";
@@ -17,11 +18,15 @@ export default function TripPlan({ trip, user, onUpdate }) {
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
+    travel_type: "Flight",
+    arrival_location: "",
+    destination: "",
     arrival_date: "",
     arrival_time: "",
-    arrival_location: "",
     departure_date: "",
     departure_time: "",
+    airline: "",
+    flight_number: "",
   });
 
   useEffect(() => {
@@ -48,21 +53,45 @@ export default function TripPlan({ trip, user, onUpdate }) {
         user_name: user.full_name,
       });
     }
-    setForm({ arrival_date: "", arrival_time: "", arrival_location: "", departure_date: "", departure_time: "" });
+    setForm({ travel_type: "Flight", arrival_date: "", arrival_time: "", arrival_location: "", destination: "", airline: "", flight_number: "", departure_date: "", departure_time: "" });
     setShowAdd(false);
     loadData();
   }
 
   function editArrival(arrival) {
     setForm({
+      travel_type: arrival.travel_type || "Flight",
+      arrival_location: arrival.arrival_location || "",
+      destination: arrival.destination || "",
       arrival_date: arrival.arrival_date || "",
       arrival_time: arrival.arrival_time || "",
-      arrival_location: arrival.arrival_location || "",
       departure_date: arrival.departure_date || "",
       departure_time: arrival.departure_time || "",
+      airline: arrival.airline || "",
+      flight_number: arrival.flight_number || "",
     });
     setEditingId(arrival.id);
     setShowAdd(true);
+  }
+
+  function isAirportCode(str) {
+    return /^[A-Z]{3}$/.test(str);
+  }
+
+  function formatRoute(arrival) {
+    if (!arrival.arrival_location && !arrival.destination) return null;
+    const from = arrival.arrival_location ? (isAirportCode(arrival.arrival_location) ? arrival.arrival_location : arrival.arrival_location) : "?";
+    const to = arrival.destination ? (isAirportCode(arrival.destination) ? arrival.destination : arrival.destination) : null;
+    return to ? `${from} → ${to}` : from;
+  }
+
+  function getTravelIcon(type) {
+    switch (type) {
+      case "Flight": return <Plane className="h-3 w-3" />;
+      case "Driving": return <Car className="h-3 w-3" />;
+      case "Train": return <Train className="h-3 w-3" />;
+      default: return <HelpCircle className="h-3 w-3" />;
+    }
   }
 
   async function deleteArrival(id) {
@@ -105,26 +134,38 @@ export default function TripPlan({ trip, user, onUpdate }) {
                      </div>
                    )}
                  </div>
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  {a.arrival_date && (
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <Plane className="h-3 w-3" />
-                      <span>Arrives {format(new Date(a.arrival_date), "MMM d")} {a.arrival_time}</span>
-                    </div>
-                  )}
-                  {a.arrival_location && (
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      <span>{a.arrival_location}</span>
-                    </div>
-                  )}
-                  {a.departure_date && (
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      <span>Departs {format(new Date(a.departure_date), "MMM d")} {a.departure_time}</span>
-                    </div>
-                  )}
-                </div>
+                <div className="space-y-2 text-xs text-muted-foreground">
+                   {a.travel_type === "Flight" && (a.airline || a.flight_number) && (
+                     <div className="flex items-center gap-2">
+                       <Plane className="h-3 w-3" />
+                       <span>{a.airline}{a.airline && a.flight_number ? " " : ""}{a.flight_number}</span>
+                     </div>
+                   )}
+                   {a.travel_type !== "Flight" && (
+                     <div className="flex items-center gap-2">
+                       {getTravelIcon(a.travel_type)}
+                       <span className="capitalize">{a.travel_type}</span>
+                     </div>
+                   )}
+                   {formatRoute(a) && (
+                     <div className="flex items-center gap-2">
+                       <MapPin className="h-3 w-3" />
+                       <span>{formatRoute(a)}</span>
+                     </div>
+                   )}
+                   {a.arrival_date && (
+                     <div className="flex items-center gap-2">
+                       <Clock className="h-3 w-3" />
+                       <span>Arrives {format(new Date(a.arrival_date), "MMM d, h:mm a")}</span>
+                     </div>
+                   )}
+                   {a.departure_date && (
+                     <div className="flex items-center gap-2">
+                       <Clock className="h-3 w-3" />
+                       <span>Departs {format(new Date(a.departure_date), "MMM d, h:mm a")}</span>
+                     </div>
+                   )}
+                 </div>
               </div>
             ))}
           </div>
@@ -136,7 +177,7 @@ export default function TripPlan({ trip, user, onUpdate }) {
       <Dialog open={showAdd} onOpenChange={(open) => {
         if (!open) {
           setEditingId(null);
-          setForm({ arrival_date: "", arrival_time: "", arrival_location: "", departure_date: "", departure_time: "" });
+          setForm({ travel_type: "Flight", arrival_date: "", arrival_time: "", arrival_location: "", destination: "", airline: "", flight_number: "", departure_date: "", departure_time: "" });
         }
         setShowAdd(open);
       }}>
@@ -146,9 +187,41 @@ export default function TripPlan({ trip, user, onUpdate }) {
           </DialogHeader>
           <form onSubmit={addArrival} className="space-y-3 mt-1">
             <div>
-              <Label className="text-xs font-medium mb-1 block">Arriving from</Label>
-              <Input value={form.arrival_location} onChange={(e) => setForm({ ...form, arrival_location: e.target.value })} placeholder="Airport or city" className="h-9 text-sm" />
+              <Label className="text-xs font-medium mb-1 block">Travel Type</Label>
+              <Select value={form.travel_type} onValueChange={(val) => setForm({ ...form, travel_type: val })}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Flight">✈️ Flight</SelectItem>
+                  <SelectItem value="Driving">🚗 Driving</SelectItem>
+                  <SelectItem value="Train">🚂 Train</SelectItem>
+                  <SelectItem value="Other">📋 Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+            <div className="grid grid-cols-2 gap-2.5">
+              <div>
+                <Label className="text-xs font-medium mb-1 block">From</Label>
+                <Input value={form.arrival_location} onChange={(e) => setForm({ ...form, arrival_location: e.target.value })} placeholder="City or airport" className="h-9 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs font-medium mb-1 block">To</Label>
+                <Input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} placeholder="Destination" className="h-9 text-sm" />
+              </div>
+            </div>
+            {form.travel_type === "Flight" && (
+              <div className="grid grid-cols-2 gap-2.5 bg-muted/40 p-3 rounded-lg">
+                <div>
+                  <Label className="text-xs font-medium mb-1 block">Airline</Label>
+                  <Input value={form.airline} onChange={(e) => setForm({ ...form, airline: e.target.value })} placeholder="e.g. United" className="h-9 text-sm" />
+                </div>
+                <div>
+                  <Label className="text-xs font-medium mb-1 block">Flight # (optional)</Label>
+                  <Input value={form.flight_number} onChange={(e) => setForm({ ...form, flight_number: e.target.value })} placeholder="e.g. UA123" className="h-9 text-sm" />
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2.5">
               <div>
                 <Label className="text-xs font-medium mb-1 block">Arrival date</Label>
@@ -171,7 +244,7 @@ export default function TripPlan({ trip, user, onUpdate }) {
             </div>
             <div className="flex gap-2">
               <Button type="submit" className="flex-1 rounded-full h-9 text-sm" style={{ background: "#C8A27C", color: "white" }}>{editingId ? "Update" : "Save"}</Button>
-              <Button type="button" variant="outline" className="flex-1 rounded-full h-9 text-sm" onClick={() => setShowAdd(false)}>Cancel</Button>
+              <Button type="button" variant="outline" className="flex-1 rounded-full h-9 text-sm" onClick={() => { setEditingId(null); setShowAdd(false); setForm({ arrival_date: "", arrival_time: "", arrival_location: "", destination: "", airline: "", flight_number: "", departure_date: "", departure_time: "" }); }}>Cancel</Button>
             </div>
           </form>
         </DialogContent>

@@ -18,6 +18,7 @@ export default function JoinInvite() {
   const [requesting, setRequesting] = useState(false);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [showRequests, setShowRequests] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -75,7 +76,7 @@ export default function JoinInvite() {
     }
   }
 
-  async function handleJoinRequest() {
+  async function acceptInvite() {
     try {
       setRequesting(true);
 
@@ -100,7 +101,20 @@ export default function JoinInvite() {
           }
         }
 
-        // Create group invite
+        // Accept pending invite
+        if (existing.length > 0 && existing[0].status === "pending") {
+          await base44.entities.GroupInvite.update(existing[0].id, { status: "accepted" });
+          const updated = [...(entity.member_emails || []), user.email];
+          await base44.entities.Group.update(entity.id, { member_emails: updated });
+          console.log("[Group] Invite accepted:", existing[0].id);
+          toast.success("Joined group!");
+          setIsMember(true);
+          setShowConfirm(false);
+          setRequesting(false);
+          return;
+        }
+
+        // No invite - create one
         const groupInv = await base44.entities.GroupInvite.create({
           group_id: entity.id,
           invitee_email: user.email,
@@ -109,19 +123,20 @@ export default function JoinInvite() {
           status: "pending",
         });
 
-        console.log("[Group] Invite created:", groupInv.id, "invitee:", user.email, "group:", entity.id);
+        console.log("[Group] Invite created:", groupInv.id, "invitee:", user.email);
 
         await base44.entities.Notification.create({
-          user_email: user.email,
+          user_email: entity.admin_email,
           type: "group_invite",
-          message: `You were invited to join ${entity.name}`,
-          related_user_email: entity.admin_email,
-          related_user_name: entity.admin_name || entity.admin_email.split("@")[0],
+          message: `${user.full_name} requested to join ${entity.name}`,
+          related_user_email: user.email,
+          related_user_name: user.full_name,
           related_group_id: entity.id,
           is_read: false,
         });
 
-        toast.success("Group invite sent!");
+        toast.success("Join request sent!");
+        setShowConfirm(false);
       } else {
         // Trip join request (unchanged)
         const existing = await base44.entities.TripJoinRequest.filter(
@@ -168,6 +183,14 @@ export default function JoinInvite() {
       console.error("Failed to send request:", err);
       toast.error("Failed to send request");
       setRequesting(false);
+    }
+  }
+
+  async function handleJoinRequest() {
+    if (type === "group") {
+      setShowConfirm(true);
+    } else {
+      acceptInvite();
     }
   }
 
@@ -369,6 +392,49 @@ export default function JoinInvite() {
               </div>
             )}
           </div>
+        )}
+
+        {/* Group invite confirmation modal */}
+        {type === "group" && (
+          <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+            <DialogContent className="mx-4 rounded-2xl max-w-md p-6">
+              <DialogHeader>
+                <DialogTitle>Join {entity?.name}?</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                <div>
+                  <p className="text-sm font-semibold mb-1">Group</p>
+                  <p className="text-sm text-foreground">{entity?.name}</p>
+                </div>
+                {entity?.description && (
+                  <div>
+                    <p className="text-sm font-semibold mb-1">About</p>
+                    <p className="text-sm text-muted-foreground">{entity.description}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-semibold mb-1">Invited by</p>
+                  <p className="text-sm text-foreground">{entity?.admin_name || entity?.admin_email}</p>
+                </div>
+              </div>
+              <div className="flex gap-3 mt-6">
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-full"
+                  onClick={() => setShowConfirm(false)}
+                >
+                  Decline
+                </Button>
+                <Button
+                  className="flex-1 rounded-full"
+                  onClick={acceptInvite}
+                  disabled={requesting}
+                >
+                  {requesting ? "Accepting..." : "Accept"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
     </div>

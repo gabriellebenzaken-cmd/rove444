@@ -11,6 +11,24 @@
     "user_name": {
       "type": "string"
     },
+    "travel_type": {
+      "type": "string",
+      "enum": [
+        "Flight",
+        "Driving",
+        "Train",
+        "Other"
+      ],
+      "default": "Flight"
+    },
+    "arrival_location": {
+      "type": "string",
+      "description": "City or airport departing from"
+    },
+    "destination": {
+      "type": "string",
+      "description": "Destination city or airport"
+    },
     "arrival_date": {
       "type": "string",
       "format": "date"
@@ -18,20 +36,25 @@
     "arrival_time": {
       "type": "string"
     },
-    "arrival_location": {
-      "type": "string",
-      "description": "Airport or city"
-    },
     "departure_date": {
       "type": "string",
       "format": "date"
     },
     "departure_time": {
       "type": "string"
+    },
+    "airline": {
+      "type": "string",
+      "description": "Airline name (flight only)"
+    },
+    "flight_number": {
+      "type": "string",
+      "description": "Flight number (flight only, optional)"
     }
   },
   "required": [
     "trip_id",
-    "user_email"
+    "user_email",
+    "travel_type"
   ]
 }

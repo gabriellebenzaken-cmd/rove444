@@ -192,7 +192,7 @@ export default function Notifications() {
                    <p className="text-sm leading-snug" style={{ color: "#2A2018", fontWeight: isUnread ? 500 : 400 }}>{n.message}</p>
                    {n.created_date && (
                      <p className="text-[11px] mt-1" style={{ color: "#B0A090" }}>
-                       {formatDistanceToNow(new Date(n.created_date), { addSuffix: true, includeSeconds: false })}
+                       {formatDistanceToNow(new Date(n.created_date), { addSuffix: true })}
                      </p>
                    )}
                 </div>
