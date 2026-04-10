@@ -1,0 +1,34 @@
+{
+  "name": "ActivityVote",
+  "type": "object",
+  "properties": {
+    "trip_id": {
+      "type": "string"
+    },
+    "activity_id": {
+      "type": "string"
+    },
+    "activity_title": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "vote_type": {
+      "type": "string",
+      "enum": [
+        "like",
+        "dislike"
+      ]
+    }
+  },
+  "required": [
+    "trip_id",
+    "activity_id",
+    "user_email",
+    "vote_type"
+  ]
+}

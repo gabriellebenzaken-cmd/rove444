@@ -189,6 +189,24 @@
     gap: 12px;
   }
 
+  /* Fix map z-index so modals/menus appear above the map */
+  .leaflet-pane,
+  .leaflet-tile,
+  .leaflet-marker-icon,
+  .leaflet-marker-shadow,
+  .leaflet-tile-container,
+  .leaflet-pane > svg,
+  .leaflet-pane > canvas,
+  .leaflet-zoom-box,
+  .leaflet-image-layer,
+  .leaflet-layer {
+    z-index: 1 !important;
+  }
+
+  .leaflet-control-container {
+    z-index: 2 !important;
+  }
+
   .custom-pin {
     width: 36px;
     height: 36px;

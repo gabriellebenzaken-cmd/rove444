@@ -80,6 +80,7 @@ export default function TripMap({ trip }) {
   const [view, setView] = useState("map");
   const [center, setCenter] = useState([48.8566, 2.3522]);
   const [loading, setLoading] = useState(true);
+  const [selectedDay, setSelectedDay] = useState(null);
 
   const uniqueDays = [...new Set(items.map(i => i.date).filter(Boolean))].sort();
 
@@ -129,6 +130,28 @@ export default function TripMap({ trip }) {
         </div>
       ) : view === "map" ? (
         <>
+          {/* Day filter */}
+          {uniqueDays.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 mb-3" style={{ scrollbarWidth: 'none' }}>
+              <button
+                onClick={() => setSelectedDay(null)}
+                className="shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all"
+                style={!selectedDay ? { background: "#C8A27C", color: "white" } : { background: "rgba(200,162,124,0.1)", color: "#9A8A7A" }}
+              >
+                All
+              </button>
+              {uniqueDays.map((day, i) => (
+                <button
+                  key={day}
+                  onClick={() => setSelectedDay(day === selectedDay ? null : day)}
+                  className="shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all"
+                  style={selectedDay === day ? { background: DAY_COLORS[i % DAY_COLORS.length], color: "white" } : { background: "rgba(200,162,124,0.1)", color: "#9A8A7A" }}
+                >
+                  Day {i + 1}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="map-card" style={{ border: "1px solid rgba(200,162,124,0.2)" }}>
             <MapContainer center={center} zoom={12} style={{ height: "100%", width: "100%" }} zoomControl={false}>
               <TileLayer
@@ -137,7 +160,7 @@ export default function TripMap({ trip }) {
               />
               <MapInvalidator />
               {markers.length > 0 && <FitBounds markers={markers} />}
-              {markers.map((m) => {
+              {markers.filter(m => !selectedDay || m.date === selectedDay).map((m) => {
                 const emoji = getItemEmoji(m);
                 return (
                   <Marker key={m.id} position={[m.lat, m.lng]} icon={createEmojiIcon(emoji)}>

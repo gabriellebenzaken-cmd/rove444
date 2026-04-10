@@ -183,6 +183,17 @@ export default function TripCosts({ trip, user }) {
       return s;
     }, 0);
 
+  const iAmOwed = expenses
+    .filter((e) => e.paid_by === user.email)
+    .reduce((s, e) => {
+      const owersExcludingMe = (e.split_among || []).filter(em => em !== user.email);
+      return s + owersExcludingMe.reduce((ss, email) => {
+        const pay = getPayment(e.id, email);
+        if (!pay || pay.status === "rejected" || pay.status === "unpaid") return ss + getShareAmount(e, email);
+        return ss;
+      }, 0);
+    }, 0);
+
   const pendingConfirmation = payments.filter(
     (p) => p.receiver_email === user.email && p.status === "pending"
   ).length;
@@ -190,6 +201,24 @@ export default function TripCosts({ trip, user }) {
   return (
     <div className="pb-24">
       {/* Summary */}
+      {iOwe > 0 && (
+        <div className="rounded-2xl p-3 mb-3 flex items-center gap-3" style={{ background: "rgba(220,80,80,0.06)", border: "1px solid rgba(220,80,80,0.15)" }}>
+          <span className="text-xl">💸</span>
+          <div>
+            <p className="text-xs font-semibold" style={{ color: "#B04040" }}>You owe ${iOwe.toFixed(2)}</p>
+            <p className="text-[10px]" style={{ color: "#C07070" }}>across {expenses.filter(e => e.split_among?.includes(user.email) && e.paid_by !== user.email).length} expense(s)</p>
+          </div>
+        </div>
+      )}
+      {iAmOwed > 0 && (
+        <div className="rounded-2xl p-3 mb-3 flex items-center gap-3" style={{ background: "rgba(107,174,138,0.07)", border: "1px solid rgba(107,174,138,0.2)" }}>
+          <span className="text-xl">🤝</span>
+          <div>
+            <p className="text-xs font-semibold" style={{ color: "#4A8E6A" }}>You are owed ${iAmOwed.toFixed(2)}</p>
+            <p className="text-[10px]" style={{ color: "#70A080" }}>awaiting settlement</p>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-3 gap-2 mb-5">
         {[
           { label: "Total", value: `$${total.toFixed(2)}`, accent: false },
