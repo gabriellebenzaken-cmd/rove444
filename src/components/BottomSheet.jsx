@@ -11,7 +11,7 @@ export default function BottomSheet({ open, onClose, title, children }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
+    <div className="fixed inset-0 z-[1100] flex flex-col justify-end">
       {/* Backdrop */}
       <div
         className="absolute inset-0"
@@ -20,11 +20,19 @@ export default function BottomSheet({ open, onClose, title, children }) {
       />
       {/* Sheet */}
       <div
-        className="relative w-full max-w-lg mx-auto rounded-t-[28px] overflow-hidden flex flex-col"
         style={{
+          position: "relative",
+          width: "100%",
+          maxWidth: 430,
+          margin: "0 auto",
+          maxHeight: "85vh",
+          borderRadius: "24px 24px 0 0",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
           background: "rgba(250,246,241,0.98)",
           backdropFilter: "blur(20px)",
-          maxHeight: "85vh",
+          WebkitBackdropFilter: "blur(20px)",
           boxShadow: "0 -8px 40px rgba(0,0,0,0.15)",
         }}
       >
@@ -48,7 +56,7 @@ export default function BottomSheet({ open, onClose, title, children }) {
         )}
 
         {/* Content */}
-        <div className="overflow-y-auto flex-1 px-5 pb-24" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="overflow-y-auto flex-1 px-5" style={{ WebkitOverflowScrolling: 'touch', paddingBottom: 100 }}>
           {children}
         </div>
       </div>
