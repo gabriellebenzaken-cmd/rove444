@@ -60,6 +60,12 @@ export default function TripAira({ trip }) {
 
   return (
     <div className="pb-24">
+      <div className="bg-muted/60 border border-border rounded-xl px-3 py-2.5 mb-4 flex items-start gap-2">
+        <span className="text-muted-foreground text-sm mt-0.5">ⓘ</span>
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          Aira's suggestions are AI-generated for inspiration only. Always verify travel information independently. Use recommendations at your own risk.
+        </p>
+      </div>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
