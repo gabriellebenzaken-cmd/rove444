@@ -48,7 +48,7 @@ export default function BottomSheet({ open, onClose, title, children }) {
         )}
 
         {/* Content */}
-        <div className="overflow-y-auto flex-1 px-5 pb-8">
+        <div className="overflow-y-auto flex-1 px-5 pb-10" style={{ WebkitOverflowScrolling: 'touch' }}>
           {children}
         </div>
       </div>

@@ -65,16 +65,18 @@ export default function WeatherWidget({ trip }) {
   const range = globalMax - globalMin || 1;
 
   if (!expanded) {
+    const today = weather.days[0];
     return (
       <button
         onClick={() => setExpanded(true)}
         className="w-full flex items-center gap-2 mb-4 px-3 py-2.5 rounded-2xl text-left"
         style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(200,162,124,0.15)' }}
       >
-        <span className="text-sm">{weather.days[0]?.emoji || '🌤'}</span>
-        <p className="text-xs flex-1 truncate" style={{ color: '#7A6A5A' }}>
-          {weather.days.slice(0, 4).map((d, i) => `${i === 0 ? 'Today' : d.day} ${d.emoji || '🌤'} ${d.high}`).join('  ·  ')}
-        </p>
+        <span className="text-sm">{today?.emoji || '🌤'}</span>
+        <p className="text-xs font-medium" style={{ color: '#3A3028' }}>Today</p>
+        <span className="text-xs" style={{ color: '#9A8A7A' }}>·</span>
+        <p className="text-xs" style={{ color: '#7A6A5A' }}>{today?.high}{today?.low ? ` / ${today.low}` : ''}</p>
+        <span className="text-xs flex-1" style={{ color: '#C0B0A0' }}>{today?.condition}</span>
         <ChevronDown className="h-3.5 w-3.5 shrink-0" style={{ color: '#C8A27C' }} />
       </button>
     );

@@ -137,20 +137,21 @@ export default function TripDetail() {
       </div>
 
       <div className="px-5">
-        <div className="flex gap-1 mt-4 mb-4 rounded-full p-1 overflow-x-auto" style={{background:'rgba(200,162,124,0.1)'}}>
+        <div className="flex gap-1 mt-4 mb-4 rounded-full p-1 overflow-x-auto" style={{background:'rgba(200,162,124,0.1)', scrollbarWidth:'none'}}>
           {tripTabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className="flex-1 py-2 text-xs font-medium rounded-full transition-all whitespace-nowrap px-3"
+              className="shrink-0 py-2 text-xs font-medium rounded-full transition-all whitespace-nowrap px-4"
               style={tab === t.key
-                ? { background: themeColor || 'white', color: themeColor ? 'white' : undefined, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }
+                ? { background: themeColor || 'white', color: themeColor ? 'white' : '#3A3028', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }
                 : { color: '#9CA3AF' }
               }
             >
               {t.label}
             </button>
           ))}
+          <div className="shrink-0 w-2" />
         </div>
 
         {tab === "plan" && <TripPlan trip={trip} user={user} onUpdate={loadData} />}

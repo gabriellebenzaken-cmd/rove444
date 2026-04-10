@@ -278,7 +278,7 @@ export default function TripChat({ trip, user }) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 300px)", minHeight: 380 }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 340px)", minHeight: 400 }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#C8A27C" }}>Group Chat</p>
@@ -288,7 +288,7 @@ export default function TripChat({ trip, user }) {
       </div>
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", paddingRight: 4 }}>
+      <div style={{ flex: 1, overflowY: "auto", paddingRight: 2 }}>
         {messages.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", textAlign: "center", paddingBottom: 40 }}>
             <div style={{ width: 56, height: 56, borderRadius: 18, background: "rgba(200,162,124,0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
@@ -298,7 +298,7 @@ export default function TripChat({ trip, user }) {
             <p style={{ margin: 0, fontSize: 12, color: "#B0A090" }}>Share ideas, links, and plans with your group.</p>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {grouped.map((item, i) => {
               if (item.type === "date") {
                 return (
@@ -317,7 +317,7 @@ export default function TripChat({ trip, user }) {
 
               if (isPoll) {
                 return (
-                  <div key={msg.id} style={{ marginBottom: 8 }}>
+                  <div key={msg.id} style={{ marginBottom: 6 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
                       <UserAvatar name={msg.sender_name} />
                       <span style={{ fontSize: 10, color: "#B0A090" }}>{msg.sender_name?.split(" ")[0]} · poll</span>
@@ -328,7 +328,7 @@ export default function TripChat({ trip, user }) {
               }
 
               return (
-                <div key={msg.id} style={{ display: "flex", gap: 8, justifyContent: isMe ? "flex-end" : "flex-start", marginBottom: 4 }}>
+                <div key={msg.id} style={{ display: "flex", gap: 6, justifyContent: isMe ? "flex-end" : "flex-start", marginBottom: 2 }}>
                   {!isMe && <div style={{ marginTop: 4 }}><UserAvatar name={msg.sender_name} /></div>}
                   <div style={{ maxWidth: "78%", display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" }}>
                     {!isMe && (
