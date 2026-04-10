@@ -36,5 +36,16 @@
     "sender_id",
     "receiver_id",
     "status"
-  ]
+  ],
+  "permissions": {
+    "create": {
+      "if": "user.is_authenticated"
+    },
+    "read": {
+      "if": "record.sender_email == user.email || record.receiver_email == user.email"
+    },
+    "update": {
+      "if": "record.receiver_email == user.email && record.status == 'pending'"
+    }
+  }
 }
