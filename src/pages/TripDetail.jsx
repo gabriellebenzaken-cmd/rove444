@@ -94,47 +94,46 @@ export default function TripDetail() {
   return (
     <div style={themeStyle}>
       <div
-        className="h-48 bg-cover bg-center relative"
+        className="h-56 bg-cover bg-center relative"
         style={{ backgroundImage: `url(${trip.cover_image || coverImages[0]})` }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-        <div className="absolute top-4 left-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full bg-black/30 text-white hover:bg-black/50 h-9 w-9"
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute top-5 left-4">
+          <button
+            className="rounded-full h-9 w-9 flex items-center justify-center transition-all active:scale-90"
+            style={{background:'rgba(0,0,0,0.28)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)'}}
             onClick={() => navigate("/")}
           >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+            <ArrowLeft className="h-5 w-5 text-white" />
+          </button>
         </div>
-        <div className="absolute top-4 right-4 flex gap-2">
-          <Button variant="ghost" size="icon" className="rounded-full bg-black/30 text-white hover:bg-black/50 h-9 w-9" onClick={() => setShowCoverEditor(true)}>
-            <ImageIcon className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="rounded-full bg-black/30 text-white hover:bg-black/50 h-9 w-9" onClick={copyInviteLink}>
-            <Link2 className="h-5 w-5" />
-          </Button>
+        <div className="absolute top-5 right-4 flex gap-2">
+          <button className="rounded-full h-9 w-9 flex items-center justify-center" style={{background:'rgba(0,0,0,0.28)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)'}} onClick={() => setShowCoverEditor(true)}>
+            <ImageIcon className="h-4.5 w-4.5 text-white" />
+          </button>
+          <button className="rounded-full h-9 w-9 flex items-center justify-center" style={{background:'rgba(0,0,0,0.28)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)'}} onClick={copyInviteLink}>
+            <Link2 className="h-4.5 w-4.5 text-white" />
+          </button>
           {isMember && (
-            <Button variant="ghost" size="icon" className="rounded-full bg-black/30 text-white hover:bg-black/50 h-9 w-9" onClick={() => setShowMenu(true)}>
-              <MoreHorizontal className="h-5 w-5" />
-            </Button>
+            <button className="rounded-full h-9 w-9 flex items-center justify-center" style={{background:'rgba(0,0,0,0.28)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)'}} onClick={() => setShowMenu(true)}>
+              <MoreHorizontal className="h-4.5 w-4.5 text-white" />
+            </button>
           )}
         </div>
-        <div className="absolute bottom-4 left-5 right-5">
-          <h1 className="text-white text-2xl font-bold mb-1">{trip.name}</h1>
-          <div className="flex items-center gap-4 text-white/80 text-xs">
-            <span className="flex items-center gap-1">
+        <div className="absolute bottom-5 left-5 right-5">
+          <h1 className="text-white text-[24px] font-semibold leading-tight mb-1.5" style={{letterSpacing:'-0.02em'}}>{trip.name}</h1>
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="flex items-center gap-1 text-white/80 text-xs">
               <MapPin className="h-3.5 w-3.5" /> {trip.destination}
             </span>
             {trip.start_date && (
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 text-white/80 text-xs">
                 <Calendar className="h-3.5 w-3.5" />
                 {format(new Date(trip.start_date), "MMM d")}
                 {trip.end_date && ` – ${format(new Date(trip.end_date), "MMM d")}`}
               </span>
             )}
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1 text-white/80 text-xs">
               <Users className="h-3.5 w-3.5" /> {trip.member_emails?.length || 1}
             </span>
           </div>
@@ -142,7 +141,7 @@ export default function TripDetail() {
       </div>
 
       <div className="px-5">
-        <div className="flex gap-1 mt-4 mb-4 bg-muted rounded-full p-1 overflow-x-auto">
+        <div className="flex gap-1 mt-4 mb-4 rounded-full p-1 overflow-x-auto" style={{background:'rgba(200,162,124,0.1)'}}>
           {tripTabs.map((t) => (
             <button
               key={t.key}

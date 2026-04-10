@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,40 +6,40 @@
 
 @layer base {
   :root {
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
-    --background: 210 20% 96%;
-    --foreground: 0 0% 7%;
+    --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --background: 30 20% 95%;
+    --foreground: 0 0% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 7%;
+    --card-foreground: 0 0% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 7%;
-    --primary: 155 35% 38%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 28 35% 62%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 15% 93%;
+    --secondary: 30 18% 91%;
     --secondary-foreground: 0 0% 20%;
-    --muted: 210 15% 93%;
-    --muted-foreground: 220 5% 46%;
-    --accent: 155 30% 92%;
-    --accent-foreground: 155 35% 25%;
+    --muted: 30 15% 91%;
+    --muted-foreground: 0 0% 48%;
+    --accent: 28 30% 88%;
+    --accent-foreground: 28 35% 35%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 210 20% 88%;
-    --input: 210 20% 88%;
-    --ring: 155 35% 38%;
-    --chart-1: 168 50% 42%;
-    --chart-2: 200 60% 50%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 50% 55%;
-    --chart-5: 340 60% 55%;
-    --radius: 1rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 168 50% 42%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 168 40% 94%;
-    --sidebar-accent-foreground: 168 50% 25%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 168 50% 42%;
+    --border: 30 20% 86%;
+    --input: 30 20% 86%;
+    --ring: 28 35% 62%;
+    --chart-1: 28 45% 55%;
+    --chart-2: 200 40% 55%;
+    --chart-3: 150 30% 50%;
+    --chart-4: 280 35% 55%;
+    --chart-5: 340 40% 55%;
+    --radius: 1.1rem;
+    --sidebar-background: 30 20% 95%;
+    --sidebar-foreground: 0 0% 20%;
+    --sidebar-primary: 28 35% 62%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 28 30% 88%;
+    --sidebar-accent-foreground: 28 35% 35%;
+    --sidebar-border: 30 20% 86%;
+    --sidebar-ring: 28 35% 62%;
   }
 
   .dark {
