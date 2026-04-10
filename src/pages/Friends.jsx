@@ -66,8 +66,8 @@ export default function Friends() {
         (u) =>
           u.id !== user.id &&
           (u.full_name?.toLowerCase().includes(q) || 
-           u.username?.toLowerCase().includes(q) ||
-           u.email?.toLowerCase().includes(q))
+              u.data?.username?.toLowerCase().includes(q) ||
+              u.email?.toLowerCase().includes(q))
       );
       setSearchResults(results);
       setTab("search");
@@ -251,15 +251,15 @@ export default function Friends() {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary shrink-0">
-                    {u.profile_photo ? (
-                      <img src={u.profile_photo} className="w-10 h-10 rounded-full object-cover" alt="" />
+                    {u.data?.profile_photo ? (
+                      <img src={u.data.profile_photo} className="w-10 h-10 rounded-full object-cover" alt="" />
                     ) : (
                       u.full_name?.[0] || "?"
                     )}
                   </div>
                   <div>
-                    <p className="font-medium text-sm">{u.full_name}</p>
-                    <p className="text-xs text-muted-foreground">{u.username ? `@${u.username}` : u.email}</p>
+                    <p className="font-medium text-sm">{u.full_name || "Unknown"}</p>
+                    <p className="text-xs text-muted-foreground">{u.data?.username ? `@${u.data.username}` : u.email || "No email"}</p>
                   </div>
                 </div>
                 {isFriend ? (
@@ -357,8 +357,8 @@ export default function Friends() {
                     {f.full_name?.[0] || "?"}
                   </div>
                   <div>
-                    <p className="font-medium text-sm">{f.full_name}</p>
-                    <p className="text-xs text-muted-foreground">{f.username || f.email}</p>
+                    <p className="font-medium text-sm">{f.full_name || "Unknown"}</p>
+                    <p className="text-xs text-muted-foreground">{f.data?.username || f.email || "No contact"}</p>
                   </div>
                 </div>
                 <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => removeFriend(f)}>
