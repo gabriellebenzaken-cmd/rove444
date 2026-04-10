@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Bell, UserPlus, Check, MapPin, Users } from "lucide-react";
+import { Bell, UserPlus, Check, MapPin, Users, ArrowLeft } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 const TYPE_CONFIG = {
@@ -14,6 +15,7 @@ export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadData();
@@ -45,7 +47,14 @@ export default function Notifications() {
 
   return (
     <div className="px-5 pt-12 pb-32">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all active:scale-90"
+          style={{ background: "rgba(200,162,124,0.12)" }}
+        >
+          <ArrowLeft className="h-5 w-5" style={{ color: "#C8A27C" }} />
+        </button>
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: "#C8A27C" }}>Activity</p>
           <h1 className="text-[28px] font-semibold tracking-tight leading-tight" style={{ color: "#1A1A1A", letterSpacing: "-0.025em" }}>Notifications</h1>
