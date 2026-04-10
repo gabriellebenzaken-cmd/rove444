@@ -110,10 +110,10 @@ export default function Friends() {
   }
 
   async function handleSearch() {
-    console.log("handleSearch called");
+    console.log("HANDLE SEARCH CALLED");
+    console.log("query:", searchQuery);
     try {
       const q = searchQuery.trim().toLowerCase();
-      console.log("query:", q);
       if (!q) return;
 
       const users = await base44.entities.User.list("-created_date", 200);
@@ -267,10 +267,16 @@ export default function Friends() {
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           className="rounded-full bg-white border-border/60 shadow-sm"
         />
-        <Button size="icon" variant="outline" className="rounded-full shrink-0 shadow-sm" onClick={handleSearch}>
+        <Button size="icon" variant="outline" className="rounded-full shrink-0 shadow-sm" onClick={() => handleSearch()}>
           <Search className="h-4 w-4" />
         </Button>
       </div>
+
+      {searchResults.length > 0 && (
+        <div className="bg-blue-100 border border-blue-300 rounded-lg p-3 mb-4">
+          <p className="text-sm font-semibold text-blue-900">SEARCH TRIGGERED - Results: {searchResults.length}</p>
+        </div>
+      )}
 
       <div className="flex gap-1 mb-5 bg-muted/70 rounded-full p-1">
         {tabs.map((t) => (
@@ -297,7 +303,7 @@ export default function Friends() {
         <div className="flex justify-center py-20">
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : tab === "search" ? (
+      ) : searchResults.length > 0 ? (
         <div className="space-y-3">
           <p className="text-xs text-muted-foreground mb-2">{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</p>
           {searchResults.length === 0 ? (
