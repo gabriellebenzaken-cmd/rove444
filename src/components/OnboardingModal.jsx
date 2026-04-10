@@ -11,41 +11,44 @@ import { Sparkles } from "lucide-react";
 export default function OnboardingModal({ user, onComplete }) {
   const [username, setUsername] = useState(user?.full_name?.toLowerCase().replace(/\s+/g, "_") || "");
   const [bio, setBio] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [usernameError, setUsernameError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!saving) return;
-    const timeoutId = setTimeout(() => {
-      setSaving(false);
-      toast.error("Setup is taking too long. Please try again.");
-    }, 8000);
-    return () => clearTimeout(timeoutId);
-  }, [saving]);
-
-  async function handleSubmit(e) {
+  async function handleProfileSetup(e) {
     e.preventDefault();
-    if (!username.trim()) return;
-    
-    setSaving(true);
-    setUsernameError("");
-    
+    if (loading) return;
+
+    let timeoutId;
+
     try {
-      const allUsers = await base44.entities.User.list("-created_date", 500);
-      const taken = allUsers.find(u => u.username?.toLowerCase() === username.trim().toLowerCase() && u.email !== user.email);
-      
-      if (taken) {
-        setUsernameError("Username already taken");
-        return;
+      setLoading(true);
+      setError("");
+
+      timeoutId = setTimeout(() => {
+        setLoading(false);
+        setError("Setup is taking too long. Please try again.");
+      }, 10000);
+
+      if (!username || !username.trim()) {
+        throw new Error("Username is required");
       }
-      
-      await base44.auth.updateMe({ username: username.trim(), bio: bio.trim(), onboarded: true });
+
+      const normalizedUsername = username.trim().toLowerCase();
+      const allUsers = await base44.entities.User.list("-created_date", 500);
+      const existing = allUsers.find(u => u.username?.toLowerCase() === normalizedUsername && u.email !== user.email);
+
+      if (existing) {
+        throw new Error("Username already taken");
+      }
+
+      await base44.auth.updateMe({ username: normalizedUsername, bio: bio.trim(), onboarded: true });
       onComplete();
-    } catch (error) {
-      console.error("Onboarding error:", error);
-      toast.error("Setup failed. Please try again.");
+    } catch (err) {
+      console.error("Profile setup failed:", err);
+      setError(err?.message || "Something went wrong. Please try again.");
     } finally {
-      setSaving(false);
+      clearTimeout(timeoutId);
+      setLoading(false);
     }
   }
 
@@ -63,20 +66,20 @@ export default function OnboardingModal({ user, onComplete }) {
             </p>
           </div>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleProfileSetup} className="space-y-4">
           <div>
             <Label>Username <span className="text-destructive">*</span></Label>
             <div className="flex items-center mt-1">
               <span className="px-3 py-2 bg-muted text-muted-foreground text-sm rounded-l-md border border-r-0 border-input">@</span>
               <Input
                 value={username}
-                onChange={(e) => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "")); setUsernameError(""); }}
+                onChange={(e) => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "")); setError(""); }}
                 placeholder="your_username"
-                className={`rounded-l-none ${usernameError ? "border-destructive" : ""}`}
+                className={`rounded-l-none ${error ? "border-destructive" : ""}`}
                 required
               />
             </div>
-            {usernameError && <p className="text-xs text-destructive mt-1">{usernameError}</p>}
+            {error && <p className="text-xs text-destructive mt-1">{error}</p>}
           </div>
           <div>
             <Label>Bio <span className="text-muted-foreground text-xs">(optional)</span></Label>
@@ -88,8 +91,8 @@ export default function OnboardingModal({ user, onComplete }) {
               rows={2}
             />
           </div>
-          <Button type="submit" className="w-full rounded-full" disabled={saving || !username.trim()}>
-           {saving ? (
+          <Button type="submit" className="w-full rounded-full" disabled={loading || !username.trim()}>
+           {loading ? (
              <div className="flex items-center gap-2">
                <div className="w-4 h-4 border-2 border-t-transparent border-current rounded-full animate-spin" />
                Setting up...
