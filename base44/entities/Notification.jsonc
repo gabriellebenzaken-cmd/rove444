@@ -12,7 +12,9 @@
         "friend_request",
         "friend_accepted",
         "trip_added",
-        "group_added"
+        "group_added",
+        "group_invite",
+        "trip_request"
       ],
       "description": "Notification type"
     },

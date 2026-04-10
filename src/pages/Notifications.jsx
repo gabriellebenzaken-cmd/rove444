@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Bell, UserPlus, Check, MapPin, Users, ArrowLeft } from "lucide-react";
+import { Bell, UserPlus, Check, MapPin, Users, ArrowLeft, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
 const TYPE_CONFIG = {
-  friend_request: { icon: UserPlus, color: "#C8A27C", bg: "rgba(200,162,124,0.12)" },
+  friend_request: { icon: UserPlus, color: "#C8A27C", bg: "rgba(200,162,124,0.12)", actionable: true },
   friend_accepted: { icon: Check, color: "#6BAE8A", bg: "rgba(107,174,138,0.12)" },
   trip_added: { icon: MapPin, color: "#7090B0", bg: "rgba(112,144,176,0.12)" },
   group_added: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)" },
+  group_invite: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)", actionable: true },
 };
 
 export default function Notifications() {
@@ -35,6 +38,94 @@ export default function Notifications() {
   async function clearAll() {
     await Promise.all(notifications.map(n => base44.entities.Notification.delete(n.id)));
     setNotifications([]);
+  }
+
+  async function acceptFriendRequest(n) {
+    try {
+      const req = await base44.entities.FriendRequest.filter(
+        { sender_email: n.related_user_email, receiver_email: user.email, status: "pending" },
+        "-created_date",
+        1
+      );
+      if (req.length === 0) {
+        toast.error("Request not found");
+        return;
+      }
+      await base44.entities.FriendRequest.update(req[0].id, { status: "accepted" });
+      await base44.entities.Notification.delete(n.id);
+      toast.success("Friend added!");
+      loadData();
+    } catch (err) {
+      toast.error("Failed to accept");
+    }
+  }
+
+  async function declineFriendRequest(n) {
+    try {
+      const req = await base44.entities.FriendRequest.filter(
+        { sender_email: n.related_user_email, receiver_email: user.email, status: "pending" },
+        "-created_date",
+        1
+      );
+      if (req.length === 0) {
+        toast.error("Request not found");
+        return;
+      }
+      await base44.entities.FriendRequest.update(req[0].id, { status: "declined" });
+      await base44.entities.Notification.delete(n.id);
+      toast.success("Request declined");
+      loadData();
+    } catch (err) {
+      toast.error("Failed to decline");
+    }
+  }
+
+  async function acceptGroupInvite(n) {
+    try {
+      const inv = await base44.entities.GroupInvite.filter(
+        { group_id: n.related_group_id, invitee_email: user.email, status: "pending" },
+        "-created_date",
+        1
+      );
+      if (inv.length === 0) {
+        toast.error("Invite not found");
+        return;
+      }
+      const group = await base44.entities.Group.list();
+      const g = group.find(x => x.id === n.related_group_id);
+      if (!g) {
+        toast.error("Group not found");
+        return;
+      }
+      await base44.entities.GroupInvite.update(inv[0].id, { status: "accepted" });
+      const updated = [...(g.member_emails || []), user.email];
+      await base44.entities.Group.update(g.id, { member_emails: updated });
+      await base44.entities.Notification.delete(n.id);
+      toast.success("Joined group!");
+      loadData();
+    } catch (err) {
+      toast.error("Failed to accept");
+    }
+  }
+
+  async function declineGroupInvite(n) {
+    try {
+      const inv = await base44.entities.GroupInvite.filter(
+        { group_id: n.related_group_id, invitee_email: user.email, status: "pending" },
+        "-created_date",
+        1
+      );
+      if (inv.length === 0) {
+        toast.error("Invite not found");
+        return;
+      }
+      await base44.entities.GroupInvite.update(inv[0].id, { status: "declined" });
+      await base44.entities.Notification.delete(n.id);
+      toast.success("Invite declined");
+      loadData();
+    } catch (err) {
+      toast.error("Failed to decline");
+    }
   }
 
   if (loading) {
@@ -105,7 +196,30 @@ export default function Notifications() {
                      </p>
                    )}
                 </div>
-                {isUnread && (
+                {cfg.actionable && (
+                   <div className="flex gap-1.5 shrink-0">
+                     {n.type === "friend_request" ? (
+                       <>
+                         <Button size="sm" className="h-7 px-2.5 text-xs rounded-full" onClick={() => acceptFriendRequest(n)}>
+                           <Check className="h-3 w-3" />
+                         </Button>
+                         <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs rounded-full" onClick={() => declineFriendRequest(n)}>
+                           <X className="h-3 w-3" />
+                         </Button>
+                       </>
+                     ) : n.type === "group_invite" ? (
+                       <>
+                         <Button size="sm" className="h-7 px-2.5 text-xs rounded-full" onClick={() => acceptGroupInvite(n)}>
+                           <Check className="h-3 w-3" />
+                         </Button>
+                         <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs rounded-full" onClick={() => declineGroupInvite(n)}>
+                           <X className="h-3 w-3" />
+                         </Button>
+                       </>
+                     ) : null}
+                   </div>
+                 )}
+                {isUnread && !cfg.actionable && (
                    <div className="w-2 h-2 rounded-full mt-2 shrink-0" style={{ background: "#C8A27C" }} />
                  )}
                 </div>

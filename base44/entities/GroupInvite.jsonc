@@ -1,0 +1,33 @@
+{
+  "name": "GroupInvite",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string"
+    },
+    "invitee_email": {
+      "type": "string"
+    },
+    "inviter_email": {
+      "type": "string"
+    },
+    "inviter_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "declined"
+      ],
+      "default": "pending"
+    }
+  },
+  "required": [
+    "group_id",
+    "invitee_email",
+    "inviter_email",
+    "status"
+  ]
+}

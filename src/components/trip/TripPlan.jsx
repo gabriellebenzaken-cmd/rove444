@@ -15,6 +15,7 @@ export default function TripPlan({ trip, user, onUpdate }) {
   const [arrivals, setArrivals] = useState([]);
   const [members, setMembers] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
     arrival_date: "",
     arrival_time: "",
@@ -36,15 +37,32 @@ export default function TripPlan({ trip, user, onUpdate }) {
 
   async function addArrival(e) {
     e.preventDefault();
-    await base44.entities.Arrival.create({
-      ...form,
-      trip_id: trip.id,
-      user_email: user.email,
-      user_name: user.full_name,
-    });
+    if (editingId) {
+      await base44.entities.Arrival.update(editingId, form);
+      setEditingId(null);
+    } else {
+      await base44.entities.Arrival.create({
+        ...form,
+        trip_id: trip.id,
+        user_email: user.email,
+        user_name: user.full_name,
+      });
+    }
     setForm({ arrival_date: "", arrival_time: "", arrival_location: "", departure_date: "", departure_time: "" });
     setShowAdd(false);
     loadData();
+  }
+
+  function editArrival(arrival) {
+    setForm({
+      arrival_date: arrival.arrival_date || "",
+      arrival_time: arrival.arrival_time || "",
+      arrival_location: arrival.arrival_location || "",
+      departure_date: arrival.departure_date || "",
+      departure_time: arrival.departure_time || "",
+    });
+    setEditingId(arrival.id);
+    setShowAdd(true);
   }
 
   async function deleteArrival(id) {
@@ -75,13 +93,18 @@ export default function TripPlan({ trip, user, onUpdate }) {
             {arrivals.map((a) => (
               <div key={a.id} className="bg-card rounded-xl border border-border p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="font-medium text-sm">{a.user_name || a.user_email?.split("@")[0]}</p>
-                  {a.user_email === user?.email && (
-                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => deleteArrival(a.id)}>
-                      <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-                    </Button>
-                  )}
-                </div>
+                   <p className="font-medium text-sm">{a.user_name || a.user_email?.split("@")[0]}</p>
+                   {a.user_email === user?.email && (
+                     <div className="flex gap-1">
+                       <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => editArrival(a)}>
+                         <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                       </Button>
+                       <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => deleteArrival(a.id)}>
+                         <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                       </Button>
+                     </div>
+                   )}
+                 </div>
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   {a.arrival_date && (
                     <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -110,10 +133,16 @@ export default function TripPlan({ trip, user, onUpdate }) {
 
       <TripMembersManager trip={trip} user={user} isAdmin={isAdmin} onMembersUpdate={loadData} />
 
-      <Dialog open={showAdd} onOpenChange={setShowAdd}>
+      <Dialog open={showAdd} onOpenChange={(open) => {
+        if (!open) {
+          setEditingId(null);
+          setForm({ arrival_date: "", arrival_time: "", arrival_location: "", departure_date: "", departure_time: "" });
+        }
+        setShowAdd(open);
+      }}>
         <DialogContent className="mx-4 rounded-2xl max-w-md p-5">
           <DialogHeader>
-            <DialogTitle className="text-base">My Travel Info</DialogTitle>
+            <DialogTitle className="text-base">{editingId ? "Edit" : "Add"} Travel Info</DialogTitle>
           </DialogHeader>
           <form onSubmit={addArrival} className="space-y-3 mt-1">
             <div>
@@ -140,7 +169,10 @@ export default function TripPlan({ trip, user, onUpdate }) {
                 <Input type="time" value={form.departure_time} onChange={(e) => setForm({ ...form, departure_time: e.target.value })} className="h-9 text-sm" />
               </div>
             </div>
-            <Button type="submit" className="w-full rounded-full h-9 text-sm" style={{ background: "#C8A27C", color: "white" }}>Save</Button>
+            <div className="flex gap-2">
+              <Button type="submit" className="flex-1 rounded-full h-9 text-sm" style={{ background: "#C8A27C", color: "white" }}>{editingId ? "Update" : "Save"}</Button>
+              <Button type="button" variant="outline" className="flex-1 rounded-full h-9 text-sm" onClick={() => setShowAdd(false)}>Cancel</Button>
+            </div>
           </form>
         </DialogContent>
       </Dialog>

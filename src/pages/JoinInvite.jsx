@@ -79,50 +79,94 @@ export default function JoinInvite() {
     try {
       setRequesting(true);
 
-      // Check if already exists
-      const existing = await base44.entities.TripJoinRequest.filter(
-        { trip_id: entity.id, user_id: user.id },
-        "-created_date",
-        1
-      );
+      if (type === "group") {
+        // Check if already pending or accepted
+        const existing = await base44.entities.GroupInvite.filter(
+          { group_id: entity.id, invitee_email: user.email },
+          "-created_date",
+          1
+        );
 
-      if (existing.length > 0) {
-        const req = existing[0];
-        if (req.status === "pending") {
-          toast.error("Request already sent");
-          setRequesting(false);
-          return;
+        if (existing.length > 0) {
+          const inv = existing[0];
+          if (inv.status === "pending") {
+            toast.error("Invite already sent");
+            setRequesting(false);
+            return;
+          } else if (inv.status === "accepted") {
+            toast.error("Already a member");
+            setRequesting(false);
+            return;
+          }
         }
+
+        // Create group invite
+        const groupInv = await base44.entities.GroupInvite.create({
+          group_id: entity.id,
+          invitee_email: user.email,
+          inviter_email: entity.admin_email,
+          inviter_name: entity.admin_name || entity.admin_email.split("@")[0],
+          status: "pending",
+        });
+
+        console.log("[Group] Invite created:", groupInv.id, "invitee:", user.email, "group:", entity.id);
+
+        await base44.entities.Notification.create({
+          user_email: user.email,
+          type: "group_invite",
+          message: `You were invited to join ${entity.name}`,
+          related_user_email: entity.admin_email,
+          related_user_name: entity.admin_name || entity.admin_email.split("@")[0],
+          related_group_id: entity.id,
+          is_read: false,
+        });
+
+        toast.success("Group invite sent!");
+      } else {
+        // Trip join request (unchanged)
+        const existing = await base44.entities.TripJoinRequest.filter(
+          { trip_id: entity.id, user_id: user.id },
+          "-created_date",
+          1
+        );
+
+        if (existing.length > 0) {
+          const req = existing[0];
+          if (req.status === "pending") {
+            toast.error("Request already sent");
+            setRequesting(false);
+            return;
+          }
+        }
+
+        const joinReq = await base44.entities.TripJoinRequest.create({
+          trip_id: entity.id,
+          user_id: user.id,
+          user_email: user.email,
+          user_name: user.full_name,
+          user_profile_photo: user.profile_photo,
+          status: "pending",
+        });
+
+        console.log("[Trip] Join request created:", joinReq.id, "user:", user.id, "trip:", entity.id);
+
+        await base44.entities.Notification.create({
+          user_email: entity.admin_email,
+          type: "trip_request",
+          message: `${user.full_name} requested to join ${entity.name}`,
+          related_user_email: user.email,
+          related_user_name: user.full_name,
+          related_trip_id: entity.id,
+          is_read: false,
+        });
+
+        toast.success("Join request sent! Waiting for approval.");
       }
 
-      // Create join request
-      const joinReq = await base44.entities.TripJoinRequest.create({
-        trip_id: entity.id,
-        user_id: user.id,
-        user_email: user.email,
-        user_name: user.full_name,
-        user_profile_photo: user.profile_photo,
-        status: "pending",
-      });
-
-      console.log("[Trip] Join request created:", joinReq.id, "user:", user.id, "trip:", entity.id);
-
-      // Notify trip admin
-      await base44.entities.Notification.create({
-        user_email: entity.admin_email,
-        type: "trip_request",
-        message: `${user.full_name} requested to join ${entity.name}`,
-        related_user_email: user.email,
-        related_user_name: user.full_name,
-        related_trip_id: entity.id,
-        is_read: false,
-      });
-
-      toast.success("Join request sent! Waiting for approval.");
       setRequesting(false);
     } catch (err) {
-      console.error("Failed to send join request:", err);
-      toast.error("Failed to send join request");
+      console.error("Failed to send request:", err);
+      toast.error("Failed to send request");
       setRequesting(false);
     }
   }
