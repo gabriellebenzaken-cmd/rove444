@@ -16,11 +16,6 @@ export default function Friends() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState("friends");
-  const [searchClicked, setSearchClicked] = useState(false);
-  const [searchClickCount, setSearchClickCount] = useState(0);
-  const [debugUsers, setDebugUsers] = useState([]);
-  const [totalUsersFetched, setTotalUsersFetched] = useState(0);
-  const [filteredResultsCount, setFilteredResultsCount] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -115,22 +110,15 @@ export default function Friends() {
   }
 
   function handleSearchClick() {
-    setSearchClicked(true);
-    setSearchClickCount((prev) => prev + 1);
     handleSearch();
   }
 
   async function handleSearch() {
-    console.log("HANDLE SEARCH CALLED");
-    console.log("query:", searchQuery);
     try {
       const q = searchQuery.trim().toLowerCase();
       if (!q) return;
 
       const profiles = await base44.entities.UserProfile.list("-created_date", 200);
-      console.log("profiles fetched:", profiles.length);
-      setTotalUsersFetched(profiles.length);
-      setDebugUsers(profiles.slice(0, 3));
 
       const filtered = profiles.filter(
         (p) =>
@@ -141,8 +129,6 @@ export default function Friends() {
             p.full_name?.toLowerCase().includes(q)
           )
       );
-      console.log("filtered results:", filtered);
-      setFilteredResultsCount(filtered.length);
 
       setSearchResults(filtered);
       setTab("search");
@@ -286,31 +272,7 @@ export default function Friends() {
         </Button>
       </div>
 
-      <div style={{ background: "#ff6b6b", color: "white", padding: "12px", borderRadius: "8px", marginBottom: "16px", fontWeight: "bold", fontSize: "14px" }}>
-        <div>SEARCH BUTTON CLICKED: {searchClicked ? "YES" : "NO"}</div>
-        <div>CLICK COUNT: {searchClickCount}</div>
-        <div>QUERY: "{searchQuery}"</div>
-      </div>
 
-      {searchClicked && (
-        <div style={{ background: "#fff3cd", color: "#333", padding: "12px", borderRadius: "8px", marginBottom: "16px", fontSize: "13px", border: "1px solid #ffc107" }}>
-          <div style={{ fontWeight: "bold", marginBottom: "8px" }}>TOTAL USERS FETCHED: {totalUsersFetched}</div>
-          <div style={{ marginBottom: "8px" }}>FILTERED RESULTS: {filteredResultsCount}</div>
-          <div style={{ fontWeight: "bold", marginTop: "8px", marginBottom: "4px" }}>First 3 Users:</div>
-          {debugUsers.length === 0 ? (
-            <div>No users returned yet</div>
-          ) : (
-            debugUsers.map((p, idx) => (
-              <div key={idx} style={{ marginTop: "6px", paddingLeft: "8px", borderLeft: "2px solid #ffc107" }}>
-                <div>User ID: {p.user_id}</div>
-                <div>Username: {p.username || "(undefined)"}</div>
-                <div>Email: {p.user_email || "(undefined)"}</div>
-                <div>Full Name: {p.full_name || "(undefined)"}</div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
 
 
 

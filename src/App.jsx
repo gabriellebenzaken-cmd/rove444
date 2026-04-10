@@ -31,6 +31,8 @@ const AuthenticatedApp = () => {
     if (!isLoadingAuth && !authError) {
       base44.auth.me().then((me) => {
         setCurrentUser(me);
+        // Backfill UserProfile for existing users
+        backfillUserProfile(me);
         setCheckingOnboard(false);
       }).catch(() => {
         setCheckingOnboard(false);
@@ -40,6 +42,23 @@ const AuthenticatedApp = () => {
       setCheckingOnboard(false);
     }
   }, [isLoadingAuth, authError]);
+
+  async function backfillUserProfile(me) {
+    try {
+      const existing = await base44.entities.UserProfile.filter({ user_id: me.id }, "-created_date", 1);
+      if (existing.length === 0) {
+        await base44.entities.UserProfile.create({
+          user_id: me.id,
+          user_email: me.email,
+          username: me.data?.username || me.email.split("@")[0],
+          full_name: me.full_name,
+        });
+        console.log("[App] UserProfile backfilled for:", me.email);
+      }
+    } catch (err) {
+      console.error("[App] UserProfile backfill failed:", err);
+    }
+  }
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth || checkingOnboard) {
