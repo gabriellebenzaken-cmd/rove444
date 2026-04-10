@@ -110,22 +110,28 @@ export default function Friends() {
   }
 
   async function handleSearch() {
+    console.log("handleSearch called");
     try {
       if (!searchQuery.trim()) return;
+      console.log("query:", searchQuery);
+      
       const allUsers = await base44.entities.User.list("-created_date", 200) || [];
+      console.log("users fetched:", allUsers.length);
+      
       const q = searchQuery.toLowerCase();
-      const results = allUsers.filter(
+      const filtered = allUsers.filter(
         (u) =>
           u.id !== user.id &&
           (u.full_name?.toLowerCase().includes(q) || 
-              u.username?.toLowerCase().includes(q) ||
+              u.data?.username?.toLowerCase().includes(q) ||
               u.email?.toLowerCase().includes(q))
       );
-      console.log("Search results:", results);
-      setSearchResults(results);
+      console.log("filtered results:", filtered);
+      
+      setSearchResults(filtered);
       setTab("search");
-      console.log("Tab set to: search");
-      if (results.length === 0) {
+      
+      if (filtered.length === 0) {
         toast.info("No users found");
       }
     } catch (err) {
