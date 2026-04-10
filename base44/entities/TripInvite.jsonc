@@ -1,0 +1,24 @@
+{
+  "name": "TripInvite",
+  "type": "object",
+  "properties": {
+    "trip_id": {
+      "type": "string"
+    },
+    "invite_code": {
+      "type": "string"
+    },
+    "created_by_email": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "trip_id",
+    "invite_code",
+    "created_by_email"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "name": "TripJoinRequest",
+  "type": "object",
+  "properties": {
+    "trip_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "declined"
+      ],
+      "default": "pending"
+    }
+  },
+  "required": [
+    "trip_id",
+    "user_email",
+    "status"
+  ]
+}

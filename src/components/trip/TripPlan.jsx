@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Plane, Clock, MapPin, Plus, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
+import TripMembersManager from "./TripMembersManager";
 
 export default function TripPlan({ trip, user, onUpdate }) {
+  const isAdmin = trip?.admin_email === user?.email;
   const [arrivals, setArrivals] = useState([]);
   const [members, setMembers] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
@@ -103,21 +105,7 @@ export default function TripPlan({ trip, user, onUpdate }) {
         )}
       </div>
 
-      <div>
-        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-          <MapPin className="h-4 w-4" /> Trip Members ({members.length})
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {members.map((m) => (
-            <div key={m.id} className="flex items-center gap-2 bg-card rounded-full border border-border px-3 py-1.5">
-              <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-[10px] font-semibold text-primary">
-                {m.full_name?.[0]}
-              </div>
-              <span className="text-xs font-medium">{m.full_name}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <TripMembersManager trip={trip} user={user} isAdmin={isAdmin} onMembersUpdate={loadData} />
 
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
         <DialogContent className="mx-4 rounded-2xl max-w-md p-5">

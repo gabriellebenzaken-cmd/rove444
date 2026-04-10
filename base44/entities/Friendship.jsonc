@@ -1,0 +1,22 @@
+{
+  "name": "Friendship",
+  "type": "object",
+  "properties": {
+    "user1_email": {
+      "type": "string",
+      "description": "Email of first friend"
+    },
+    "user2_email": {
+      "type": "string",
+      "description": "Email of second friend"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "user1_email",
+    "user2_email"
+  ]
+}

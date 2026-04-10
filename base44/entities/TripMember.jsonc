@@ -1,0 +1,42 @@
+{
+  "name": "TripMember",
+  "type": "object",
+  "properties": {
+    "trip_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "member"
+      ],
+      "default": "member"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "invited",
+        "pending",
+        "declined"
+      ],
+      "default": "active"
+    },
+    "invited_by_email": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "trip_id",
+    "user_email",
+    "role",
+    "status"
+  ]
+}
