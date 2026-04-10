@@ -295,7 +295,7 @@ export default function Friends() {
           {searchResults.length === 0 ? (
             <p className="text-center text-muted-foreground text-sm py-10">No users found</p>
           ) : (
-          searchResults.map((u) => {
+            searchResults.map((u) => {
             const isFriend = friends.some((f) => f.id === u.id);
             const isOutgoing = sentRequests.some((p) => p.receiver_id === u.id);
             const isIncoming = receivedRequests.some((p) => p.sender_id === u.id);
@@ -341,7 +341,7 @@ export default function Friends() {
                 )}
               </div>
             );
-          }))
+            })
           )}
         </div>
       ) : tab === "requests" ? (
