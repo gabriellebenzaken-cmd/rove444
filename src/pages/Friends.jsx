@@ -25,23 +25,75 @@ export default function Friends() {
     try {
       setError(null);
       const me = await base44.auth.me();
+      if (!me) throw new Error("User not authenticated");
       setUser(me);
+      console.log("[Friends] Current user:", me.id);
 
       // Load all friend requests
-      const reqs = await base44.entities.FriendRequest.list("-created_date", 200) || [];
+      let reqs = [];
+      try {
+        reqs = await base44.entities.FriendRequest.list("-created_date", 200) || [];
+        console.log("[Friends] FriendRequest.list() loaded:", reqs.length, "records");
+      } catch (err) {
+        console.error("[Friends] Failed to load FriendRequest:", err);
+        throw new Error("Failed to load friend requests");
+      }
       setAllRequests(reqs);
 
-      // Filter accepted friendships
+      // Build friends list from accepted FriendRequest rows (no User.list() dependency)
       const accepted = reqs.filter((r) => r.status === "accepted");
-      const friendIds = new Set();
+      console.log("[Friends] Accepted requests:", accepted.length);
+      
+      const friendsMap = new Map();
       accepted.forEach((r) => {
-        if (r.sender_id === me.id) friendIds.add(r.receiver_id);
-        if (r.receiver_id === me.id) friendIds.add(r.sender_id);
+        if (r.sender_id === me.id) {
+          // I sent the request; friend is receiver
+          friendsMap.set(r.receiver_id, {
+            id: r.receiver_id,
+            email: r.receiver_email,
+            display_name: r.receiver_name,
+            username: null,
+            profile_photo: null,
+          });
+        } else if (r.receiver_id === me.id) {
+          // I received the request; friend is sender
+          friendsMap.set(r.sender_id, {
+            id: r.sender_id,
+            email: r.sender_email,
+            display_name: r.sender_name,
+            username: null,
+            profile_photo: null,
+          });
+        }
       });
+      console.log("[Friends] Normalized friends from FriendRequest:", friendsMap.size);
+      let friendList = Array.from(friendsMap.values());
 
-      const allUsers = await base44.entities.User.list("-created_date", 200);
-      const friendList = allUsers.filter((u) => friendIds.has(u.id));
+      // Optional: Enrich friends with User data (username, profile_photo)
+      // If this fails, still show the friends list
+      try {
+        const allUsers = await base44.entities.User.list("-created_date", 200) || [];
+        console.log("[Friends] User.list() loaded:", allUsers.length, "records");
+        
+        friendList = friendList.map((friend) => {
+          const userData = allUsers.find((u) => u.id === friend.id);
+          if (userData) {
+            return {
+              ...friend,
+              username: userData.data?.username,
+              profile_photo: userData.data?.profile_photo,
+              full_name: userData.full_name, // add full_name from User
+            };
+          }
+          return friend;
+        });
+        console.log("[Friends] Enriched friend data from User records");
+      } catch (err) {
+        console.warn("[Friends] User.list() failed; using FriendRequest data only:", err);
+        // Continue with friends list built from FriendRequest
+      }
       setFriends(friendList);
+      console.log("[Friends] Final friends list:", friendList);
 
       // Sent requests (I initiated, still pending)
       setSentRequests(reqs.filter((r) => r.sender_id === me.id && r.status === "pending"));
@@ -51,8 +103,8 @@ export default function Friends() {
 
       setLoading(false);
     } catch (err) {
-      console.error("Failed to load friends data:", err);
-      setError("Failed to load friends");
+      console.error("[Friends] loadData() failed:", err);
+      setError(err.message || "Failed to load friends");
       setLoading(false);
     }
   }
@@ -354,11 +406,15 @@ export default function Friends() {
               <div key={f.id} className="bg-white rounded-[18px] shadow-[0_1px_8px_rgba(0,0,0,0.06)] p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary shrink-0">
-                    {f.full_name?.[0] || "?"}
+                    {f.profile_photo ? (
+                      <img src={f.profile_photo} className="w-10 h-10 rounded-full object-cover" alt="" />
+                    ) : (
+                      (f.full_name || f.display_name)?.[0] || "?"
+                    )}
                   </div>
                   <div>
-                    <p className="font-medium text-sm">{f.full_name || "Unknown"}</p>
-                    <p className="text-xs text-muted-foreground">{f.data?.username || f.email || "No contact"}</p>
+                    <p className="font-medium text-sm">{f.full_name || f.display_name || "Unknown"}</p>
+                    <p className="text-xs text-muted-foreground">{f.username ? `@${f.username}` : f.email || "No contact"}</p>
                   </div>
                 </div>
                 <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => removeFriend(f)}>
