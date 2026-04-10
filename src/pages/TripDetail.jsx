@@ -60,6 +60,7 @@ export default function TripDetail() {
   }
 
   const isAdmin = user && (trip?.admin_email === user.email);
+  const isMember = user && (trip?.member_emails?.includes(user.email) || isAdmin);
 
   async function copyInviteLink() {
     const link = `${window.location.origin}/join/trip/${trip.invite_code}`;
@@ -112,7 +113,7 @@ export default function TripDetail() {
           <Button variant="ghost" size="icon" className="rounded-full bg-black/30 text-white hover:bg-black/50 h-9 w-9" onClick={copyInviteLink}>
             <Link2 className="h-5 w-5" />
           </Button>
-          {isAdmin && (
+          {isMember && (
             <Button variant="ghost" size="icon" className="rounded-full bg-black/30 text-white hover:bg-black/50 h-9 w-9" onClick={() => setShowMenu(true)}>
               <MoreHorizontal className="h-5 w-5" />
             </Button>
@@ -173,10 +174,12 @@ export default function TripDetail() {
               <Pencil className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Edit Trip</span>
             </button>
-            <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-destructive/10 transition-colors text-left" onClick={() => { setShowMenu(false); setShowDeleteConfirm(true); }}>
-              <Trash2 className="h-4 w-4 text-destructive" />
-              <span className="text-sm font-medium text-destructive">Delete Trip</span>
-            </button>
+            {isAdmin && (
+              <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-destructive/10 transition-colors text-left" onClick={() => { setShowMenu(false); setShowDeleteConfirm(true); }}>
+                <Trash2 className="h-4 w-4 text-destructive" />
+                <span className="text-sm font-medium text-destructive">Delete Trip</span>
+              </button>
+            )}
           </DialogContent>
         </Dialog>
 
