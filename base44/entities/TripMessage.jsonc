@@ -29,6 +29,12 @@
     "link_title": {
       "type": "string"
     },
+    "link_summary": {
+      "type": "string"
+    },
+    "link_category": {
+      "type": "string"
+    },
     "poll_question": {
       "type": "string"
     },
