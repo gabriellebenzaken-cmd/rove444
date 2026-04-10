@@ -1,0 +1,65 @@
+{
+  "name": "Payment",
+  "type": "object",
+  "properties": {
+    "expense_id": {
+      "type": "string"
+    },
+    "trip_id": {
+      "type": "string"
+    },
+    "sender_email": {
+      "type": "string",
+      "description": "Email of person who owes / is sending payment"
+    },
+    "sender_name": {
+      "type": "string"
+    },
+    "receiver_email": {
+      "type": "string",
+      "description": "Email of person who paid / should receive payment"
+    },
+    "receiver_name": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "venmo",
+        "zelle",
+        "paypal",
+        "cashapp",
+        "cash",
+        "other"
+      ],
+      "default": "other"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "unpaid",
+        "pending",
+        "confirmed",
+        "rejected"
+      ],
+      "default": "unpaid"
+    },
+    "timestamp_sent": {
+      "type": "string"
+    },
+    "timestamp_confirmed": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "expense_id",
+    "trip_id",
+    "sender_email",
+    "receiver_email",
+    "amount",
+    "status"
+  ]
+}
