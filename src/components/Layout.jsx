@@ -1,6 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Outlet, Link, useLocation } from "react-router-dom";
 import { Map, Users, UserPlus, Wallet, User, Bell } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
