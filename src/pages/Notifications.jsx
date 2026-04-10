@@ -4,16 +4,18 @@ import { base44 } from "@/api/base44Client";
 import { Bell, UserPlus, Check, MapPin, Users, ArrowLeft, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 
 const TYPE_CONFIG = {
   friend_request: { icon: UserPlus, color: "#C8A27C", bg: "rgba(200,162,124,0.12)", actionable: true },
   friend_accepted: { icon: Check, color: "#6BAE8A", bg: "rgba(107,174,138,0.12)" },
   trip_added: { icon: MapPin, color: "#7090B0", bg: "rgba(112,144,176,0.12)" },
   group_added: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)" },
-  group_invite: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)" },
+  group_invite: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)", actionable: false },
   group_accepted: { icon: Check, color: "#6BAE8A", bg: "rgba(107,174,138,0.12)" },
   group_declined: { icon: X, color: "#EF4444", bg: "rgba(239,68,68,0.12)" },
+  trip_approved: { icon: Check, color: "#6BAE8A", bg: "rgba(107,174,138,0.12)" },
+  trip_denied: { icon: X, color: "#EF4444", bg: "rgba(239,68,68,0.12)" },
 };
 
 export default function Notifications() {
@@ -76,54 +78,6 @@ export default function Notifications() {
       await base44.entities.FriendRequest.update(req[0].id, { status: "declined" });
       await base44.entities.Notification.delete(n.id);
       toast.success("Request declined");
-      loadData();
-    } catch (err) {
-      toast.error("Failed to decline");
-    }
-  }
-
-  async function acceptGroupInvite(n) {
-    try {
-      const inv = await base44.entities.GroupInvite.filter(
-        { group_id: n.related_group_id, invitee_email: user.email, status: "pending" },
-        "-created_date",
-        1
-      );
-      if (inv.length === 0) {
-        toast.error("Invite not found");
-        return;
-      }
-      const group = await base44.entities.Group.list();
-      const g = group.find(x => x.id === n.related_group_id);
-      if (!g) {
-        toast.error("Group not found");
-        return;
-      }
-      await base44.entities.GroupInvite.update(inv[0].id, { status: "accepted" });
-      const updated = [...(g.member_emails || []), user.email];
-      await base44.entities.Group.update(g.id, { member_emails: updated });
-      await base44.entities.Notification.delete(n.id);
-      toast.success("Joined group!");
-      loadData();
-    } catch (err) {
-      toast.error("Failed to accept");
-    }
-  }
-
-  async function declineGroupInvite(n) {
-    try {
-      const inv = await base44.entities.GroupInvite.filter(
-        { group_id: n.related_group_id, invitee_email: user.email, status: "pending" },
-        "-created_date",
-        1
-      );
-      if (inv.length === 0) {
-        toast.error("Invite not found");
-        return;
-      }
-      await base44.entities.GroupInvite.update(inv[0].id, { status: "declined" });
-      await base44.entities.Notification.delete(n.id);
-      toast.success("Invite declined");
       loadData();
     } catch (err) {
       toast.error("Failed to decline");
@@ -194,13 +148,13 @@ export default function Notifications() {
                    <p className="text-sm leading-snug" style={{ color: "#2A2018", fontWeight: isUnread ? 500 : 400 }}>{n.message}</p>
                    {n.created_date && (
                      <p className="text-[11px] mt-1" style={{ color: "#B0A090" }}>
-                       {formatDistanceToNow(new Date(n.created_date), { addSuffix: true })}
+                       {format(new Date(n.created_date), "MMM d, h:mm a")}
                      </p>
                    )}
                 </div>
                 {cfg.actionable && (
                    <div className="flex gap-1.5 shrink-0">
-                     {n.type === "friend_request" ? (
+                     {n.type === "friend_request" && (
                        <>
                          <Button size="sm" className="h-7 px-2.5 text-xs rounded-full" onClick={() => acceptFriendRequest(n)}>
                            <Check className="h-3 w-3" />
@@ -209,7 +163,7 @@ export default function Notifications() {
                            <X className="h-3 w-3" />
                          </Button>
                        </>
-                     ) : null}
+                     )}
                    </div>
                  )}
                 {isUnread && !cfg.actionable && (
