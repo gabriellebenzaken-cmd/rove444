@@ -15,13 +15,28 @@ L.Icon.Default.mergeOptions({
 
 const DAY_COLORS = ["#C8A27C", "#7090B0", "#8BA86B", "#B07090", "#70A89E", "#A8946B"];
 
-function createColoredIcon(color) {
+function getItemEmoji(item) {
+  if (item.pin_icon) return item.pin_icon;
+  const t = (item.title || "").toLowerCase();
+  if (/museum|gallery|art/.test(t)) return "🏛️";
+  if (/beach|sea|ocean|surf/.test(t)) return "🏖️";
+  if (/hike|trail|mountain|park/.test(t)) return "🥾";
+  if (/food|eat|dinner|lunch|breakfast|restaurant|cafe|coffee/.test(t)) return "🍽️";
+  if (/bar|drink|cocktail|wine/.test(t)) return "🍹";
+  if (/hotel|hostel|airbnb|stay/.test(t)) return "🏨";
+  if (/shop|market|store/.test(t)) return "🛍️";
+  if (/flight|airport|plane/.test(t)) return "✈️";
+  if (/concert|show|theatre|movie/.test(t)) return "🎭";
+  return "📍";
+}
+
+function createEmojiIcon(emoji) {
   return L.divIcon({
     className: "",
-    html: `<div style="width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${color};border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 28],
-    popupAnchor: [0, -30],
+    html: `<div class="custom-pin"><span class="pin-emoji">${emoji}</span></div>`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -38],
   });
 }
 
@@ -92,7 +107,7 @@ export default function TripMap({ trip }) {
   }
 
   return (
-    <div style={{ paddingBottom: 100 }}>
+    <div className="map-section" style={{ paddingBottom: 120 }}>
       <div className="flex gap-1 mb-4 p-1 rounded-full" style={{ background: "rgba(200,162,124,0.1)" }}>
         {[{ key: "map", Icon: Map, label: "Map" }, { key: "list", Icon: List, label: "List" }].map(({ key, Icon, label }) => (
           <button
@@ -114,7 +129,7 @@ export default function TripMap({ trip }) {
         </div>
       ) : view === "map" ? (
         <>
-          <div className="rounded-2xl overflow-hidden" style={{ height: 300, border: "1px solid rgba(200,162,124,0.2)" }}>
+          <div className="map-card" style={{ border: "1px solid rgba(200,162,124,0.2)" }}>
             <MapContainer center={center} zoom={12} style={{ height: "100%", width: "100%" }} zoomControl={false}>
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -123,10 +138,9 @@ export default function TripMap({ trip }) {
               <MapInvalidator />
               {markers.length > 0 && <FitBounds markers={markers} />}
               {markers.map((m) => {
-                const dayIdx = uniqueDays.indexOf(m.date);
-                const color = DAY_COLORS[dayIdx % DAY_COLORS.length] || "#C8A27C";
+                const emoji = getItemEmoji(m);
                 return (
-                  <Marker key={m.id} position={[m.lat, m.lng]} icon={createColoredIcon(color)}>
+                  <Marker key={m.id} position={[m.lat, m.lng]} icon={createEmojiIcon(emoji)}>
                     <Popup>
                       <div style={{ fontFamily: "system-ui", minWidth: 120 }}>
                         <p style={{ fontWeight: 600, fontSize: 12, marginBottom: 2 }}>{m.title}</p>
@@ -140,7 +154,7 @@ export default function TripMap({ trip }) {
             </MapContainer>
           </div>
           {uniqueDays.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="map-legend mt-3">
               {uniqueDays.map((day, i) => (
                 <div key={day} className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.15)" }}>
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: DAY_COLORS[i % DAY_COLORS.length] }} />

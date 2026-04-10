@@ -259,11 +259,11 @@ export default function TripChat({ trip, user }) {
     await base44.entities.TripMessage.update(msg.id, { poll_votes: votes });
   }
 
-  // Group messages by date
+  // Group messages by date (local timezone)
   const grouped = [];
   let lastDate = null;
   messages.forEach(msg => {
-    const d = msg.created_date ? format(new Date(msg.created_date), "MMM d, yyyy") : null;
+    const d = msg.created_date ? new Date(msg.created_date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : null;
     if (d && d !== lastDate) { grouped.push({ type: "date", label: d }); lastDate = d; }
     grouped.push({ type: "msg", msg });
   });
@@ -351,7 +351,7 @@ export default function TripChat({ trip, user }) {
                     )}
                     {msg.created_date && (
                       <span style={{ fontSize: 9, color: "#C8B8A8", marginTop: 3, marginLeft: 2, marginRight: 2 }}>
-                        {format(new Date(msg.created_date), "h:mm a")}
+                        {new Date(msg.created_date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                       </span>
                     )}
                   </div>
