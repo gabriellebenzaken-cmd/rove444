@@ -21,10 +21,11 @@ export default function Friends() {
   }, []);
 
   async function loadData() {
-    const me = await base44.auth.me();
-    setUser(me);
-    const reqs = await base44.entities.FriendRequest.list("-created_date", 200);
-    setAllRequests(reqs);
+    try {
+      const me = await base44.auth.me();
+      setUser(me);
+      const reqs = await base44.entities.FriendRequest.list("-created_date", 200) || [];
+      setAllRequests(reqs);
 
     const accepted = reqs.filter((r) => r.status === "accepted");
     const friendEmails = new Set();
@@ -39,7 +40,12 @@ export default function Friends() {
 
     setPending(reqs.filter((r) => r.from_user === me.email && r.status === "pending"));
     setIncoming(reqs.filter((r) => r.to_user === me.email && r.status === "pending"));
-    setLoading(false);
+      setLoading(false);
+    } catch (err) {
+      console.error('Failed to load friends data:', err);
+      toast.error('Failed to load requests');
+      setLoading(false);
+    }
   }
 
   async function handleSearch() {
@@ -56,51 +62,69 @@ export default function Friends() {
   }
 
   async function sendRequest(toUser) {
-    // Prevent duplicate or self
-    const existing = allRequests.find(r =>
-      r.status !== "declined" &&
-      ((r.from_user === user.email && r.to_user === toUser.email) ||
-       (r.from_user === toUser.email && r.to_user === user.email))
-    );
-    if (existing) return;
-    await base44.entities.FriendRequest.create({
-      from_user: user.email,
-      from_name: user.full_name,
-      to_user: toUser.email,
-      to_name: toUser.full_name,
-      status: "pending",
-    });
-    // Notify recipient
-    await base44.entities.Notification.create({
-      user_email: toUser.email,
-      type: "friend_request",
-      message: `${user.full_name} sent you a friend request`,
-      related_user_email: user.email,
-      related_user_name: user.full_name,
-      is_read: false,
-    });
-    toast.success(`Request sent to ${toUser.full_name}`);
-    loadData();
+    try {
+      // Prevent duplicate or self
+      const existing = allRequests.find(r =>
+        r.status !== "declined" &&
+        ((r.from_user === user.email && r.to_user === toUser.email) ||
+         (r.from_user === toUser.email && r.to_user === user.email))
+      );
+      if (existing) {
+        toast.error('Request already exists');
+        return;
+      }
+      await base44.entities.FriendRequest.create({
+        from_user: user.email,
+        from_name: user.full_name,
+        to_user: toUser.email,
+        to_name: toUser.full_name,
+        status: "pending",
+      });
+      // Notify recipient
+      await base44.entities.Notification.create({
+        user_email: toUser.email,
+        type: "friend_request",
+        message: `${user.full_name} sent you a friend request`,
+        related_user_email: user.email,
+        related_user_name: user.full_name,
+        is_read: false,
+      });
+      toast.success(`Request sent to ${toUser.full_name}`);
+      loadData();
+    } catch (err) {
+      console.error('Failed to send request:', err);
+      toast.error('Failed to send request');
+    }
   }
 
   async function acceptRequest(req) {
-    await base44.entities.FriendRequest.update(req.id, { status: "accepted" });
-    // Notify sender
-    await base44.entities.Notification.create({
-      user_email: req.from_user,
-      type: "friend_accepted",
-      message: `${user.full_name} accepted your friend request`,
-      related_user_email: user.email,
-      related_user_name: user.full_name,
-      is_read: false,
-    });
-    toast.success("Friend added!");
-    loadData();
+    try {
+      await base44.entities.FriendRequest.update(req.id, { status: "accepted" });
+      // Notify sender
+      await base44.entities.Notification.create({
+        user_email: req.from_user,
+        type: "friend_accepted",
+        message: `${user.full_name} accepted your friend request`,
+        related_user_email: user.email,
+        related_user_name: user.full_name,
+        is_read: false,
+      });
+      toast.success("Friend added!");
+      loadData();
+    } catch (err) {
+      console.error('Failed to accept request:', err);
+      toast.error('Failed to accept request');
+    }
   }
 
   async function declineRequest(req) {
-    await base44.entities.FriendRequest.update(req.id, { status: "declined" });
-    loadData();
+    try {
+      await base44.entities.FriendRequest.update(req.id, { status: "declined" });
+      loadData();
+    } catch (err) {
+      console.error('Failed to decline request:', err);
+      toast.error('Failed to decline request');
+    }
   }
 
   async function removeFriend(friendUser) {
