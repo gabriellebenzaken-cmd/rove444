@@ -16,6 +16,8 @@ export default function Friends() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState("friends");
+  const [searchClicked, setSearchClicked] = useState(false);
+  const [searchClickCount, setSearchClickCount] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -107,6 +109,12 @@ export default function Friends() {
       setError(err.message || "Failed to load friends");
       setLoading(false);
     }
+  }
+
+  function handleSearchClick() {
+    setSearchClicked(true);
+    setSearchClickCount((prev) => prev + 1);
+    handleSearch();
   }
 
   async function handleSearch() {
@@ -264,19 +272,21 @@ export default function Friends() {
           placeholder="Search name or username..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          onKeyDown={(e) => e.key === "Enter" && handleSearchClick()}
           className="rounded-full bg-white border-border/60 shadow-sm"
         />
-        <Button size="icon" variant="outline" className="rounded-full shrink-0 shadow-sm" onClick={() => handleSearch()}>
+        <Button size="icon" variant="outline" className="rounded-full shrink-0 shadow-sm" onClick={handleSearchClick}>
           <Search className="h-4 w-4" />
         </Button>
       </div>
 
-      {searchResults.length > 0 && (
-        <div className="bg-blue-100 border border-blue-300 rounded-lg p-3 mb-4">
-          <p className="text-sm font-semibold text-blue-900">SEARCH TRIGGERED - Results: {searchResults.length}</p>
-        </div>
-      )}
+      <div style={{ background: "#ff6b6b", color: "white", padding: "12px", borderRadius: "8px", marginBottom: "16px", fontWeight: "bold", fontSize: "14px" }}>
+        <div>SEARCH BUTTON CLICKED: {searchClicked ? "YES" : "NO"}</div>
+        <div>CLICK COUNT: {searchClickCount}</div>
+        <div>QUERY: "{searchQuery}"</div>
+      </div>
+
+
 
       <div className="flex gap-1 mb-5 bg-muted/70 rounded-full p-1">
         {tabs.map((t) => (
