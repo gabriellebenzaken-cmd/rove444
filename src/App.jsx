@@ -1,8 +1,10 @@
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
@@ -23,13 +25,17 @@ const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
   const [currentUser, setCurrentUser] = useState(null);
   const [checkingOnboard, setCheckingOnboard] = useState(true);
+  const [onboardingError, setOnboardingError] = useState(false);
 
   useEffect(() => {
     if (!isLoadingAuth && !authError) {
       base44.auth.me().then((me) => {
         setCurrentUser(me);
         setCheckingOnboard(false);
-      }).catch(() => setCheckingOnboard(false));
+      }).catch(() => {
+        setCheckingOnboard(false);
+        toast.error("Failed to load profile");
+      });
     } else if (authError) {
       setCheckingOnboard(false);
     }
@@ -58,10 +64,21 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <>
-    {currentUser && !currentUser.onboarded && (
-      <OnboardingModal user={currentUser} onComplete={() => base44.auth.me().then(setCurrentUser)} />
+    {currentUser && !currentUser.onboarded && !onboardingError && (
+      <OnboardingModal user={currentUser} onComplete={() => base44.auth.me().then(setCurrentUser).catch(() => setOnboardingError(true))} />
     )}
-    <Routes>
+    {onboardingError && (
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="mb-4">Setup encountered an issue.</p>
+          <button onClick={() => { setOnboardingError(false); setCurrentUser(null); }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg">
+            Try Again
+          </button>
+        </div>
+      </div>
+    )}
+    {!onboardingError && (
+      <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Trips />} />
         <Route path="/groups" element={<Groups />} />
@@ -74,24 +91,59 @@ const AuthenticatedApp = () => {
       <Route path="/notifications" element={<Notifications />} />
       <Route path="/join/:type/:code" element={<JoinInvite />} />
       <Route path="*" element={<PageNotFound />} />
-    </Routes>
-    </>  
+      </Routes>
+      )}
+      </>
   );
 };
 
 
 function App() {
-
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <AuthenticatedApp />
-        </Router>
-        <Toaster />
-      </QueryClientProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <Router>
+            <AuthenticatedApp />
+          </Router>
+          <Toaster />
+        </QueryClientProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   )
+}
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("App error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="fixed inset-0 flex items-center justify-center bg-background">
+          <div className="text-center max-w-sm">
+            <h1 className="text-lg font-semibold mb-2">Something went wrong</h1>
+            <p className="text-sm text-muted-foreground mb-4">Please refresh the page to try again.</p>
+            <button onClick={() => window.location.reload()} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm">
+              Refresh
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
 }
 
 export default App
