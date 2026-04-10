@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Cloud, RefreshCw, Thermometer, Droplets, Wind, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
+
+function parseTemp(t) {
+  if (!t) return 0;
+  return parseInt(String(t).replace(/[^\d-]/g, "")) || 0;
+}
 
 export default function WeatherWidget({ trip }) {
   const [weather, setWeather] = useState(null);
@@ -18,13 +22,11 @@ export default function WeatherWidget({ trip }) {
       : "";
     const result = await base44.integrations.Core.InvokeLLM({
       prompt: `Get the current weather forecast for ${trip.destination}. ${dateContext}
-      Return a 5-day forecast with daily highs/lows, conditions, and a packing tip.`,
+      Return a 5-day forecast with daily highs/lows and conditions.`,
       add_context_from_internet: true,
       response_json_schema: {
         type: "object",
         properties: {
-          summary: { type: "string", description: "1-sentence overall weather summary" },
-          packing_tip: { type: "string", description: "What to pack based on weather" },
           days: {
             type: "array",
             items: {
@@ -47,61 +49,76 @@ export default function WeatherWidget({ trip }) {
 
   if (loading) {
     return (
-      <div className="bg-gradient-to-br from-blue-50 to-sky-50 border border-blue-100 rounded-2xl p-4 mb-5 flex items-center gap-3">
-        <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-blue-600">Fetching weather for {trip.destination}...</p>
+      <div className="flex items-center gap-2 py-4 px-1 mb-4">
+        <div className="w-4 h-4 border-[1.5px] border-t-transparent rounded-full animate-spin" style={{ borderColor: 'rgba(200,162,124,0.6)', borderTopColor: 'transparent' }} />
+        <p className="text-xs" style={{ color: 'rgba(154,138,122,0.8)' }}>Loading forecast…</p>
       </div>
     );
   }
 
-  if (!weather) return null;
+  if (!weather?.days?.length) return null;
+
+  const temps = weather.days.map(d => ({ hi: parseTemp(d.high), lo: parseTemp(d.low) }));
+  const globalMin = Math.min(...temps.map(t => t.lo));
+  const globalMax = Math.max(...temps.map(t => t.hi));
+  const range = globalMax - globalMin || 1;
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-sky-50 border border-blue-100 rounded-2xl p-4 mb-5">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
-            <Cloud className="h-4 w-4 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-blue-800">Weather Forecast</p>
-            <p className="text-[10px] text-blue-500">{trip.destination}</p>
-          </div>
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-blue-400 hover:text-blue-600"
-          onClick={fetchWeather}
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-        </Button>
+    <div className="mb-5 rounded-[18px] overflow-hidden" style={{ background: 'rgba(255,255,255,0.45)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid rgba(255,255,255,0.55)' }}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
+        <p className="text-[11px] font-semibold tracking-widest uppercase" style={{ color: 'rgba(154,138,122,0.85)', letterSpacing: '0.1em' }}>
+          {trip.destination} · Forecast
+        </p>
+        <button onClick={fetchWeather} className="opacity-50 hover:opacity-80 transition-opacity active:scale-90">
+          <RefreshCw className="h-3.5 w-3.5" style={{ color: '#9A8A7A' }} />
+        </button>
       </div>
 
-      {weather.summary && (
-        <p className="text-xs text-blue-700 mb-3 leading-relaxed">{weather.summary}</p>
-      )}
+      {/* Rows */}
+      <div className="px-4 pb-3">
+        {weather.days.map((d, i) => {
+          const hi = temps[i].hi;
+          const lo = temps[i].lo;
+          const barLeft = ((lo - globalMin) / range) * 100;
+          const barWidth = ((hi - lo) / range) * 100;
 
-      {weather.days?.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {weather.days.map((d, i) => (
-            <div key={i} className="shrink-0 bg-white/70 rounded-xl px-2.5 py-2 text-center min-w-[58px]">
-              <p className="text-[10px] font-medium text-blue-600 mb-1">{d.day}</p>
-              <p className="text-lg leading-none mb-1">{d.emoji || "🌤"}</p>
-              <p className="text-[10px] font-semibold text-slate-700">{d.high}</p>
-              <p className="text-[9px] text-slate-400">{d.low}</p>
-              <p className="text-[9px] text-slate-500 mt-0.5 truncate max-w-[52px]">{d.condition}</p>
+          return (
+            <div key={i}>
+              {i > 0 && (
+                <div style={{ height: 1, background: 'rgba(200,180,160,0.18)' }} />
+              )}
+              <div className="flex items-center gap-3 py-2.5">
+                {/* Day */}
+                <span className="text-[13px] font-medium w-14 shrink-0" style={{ color: i === 0 ? '#1A1A1A' : '#7A7060' }}>
+                  {i === 0 ? 'Today' : d.day}
+                </span>
+
+                {/* Emoji */}
+                <span className="text-base w-6 text-center shrink-0">{d.emoji || '🌤'}</span>
+
+                {/* Low */}
+                <span className="text-[12px] font-normal w-8 text-right shrink-0" style={{ color: '#B0A090' }}>{d.low}</span>
+
+                {/* Bar */}
+                <div className="flex-1 relative h-[4px] rounded-full" style={{ background: 'rgba(200,180,160,0.2)' }}>
+                  <div
+                    className="absolute top-0 h-full rounded-full"
+                    style={{
+                      left: `${barLeft}%`,
+                      width: `${Math.max(barWidth, 8)}%`,
+                      background: 'linear-gradient(90deg, rgba(200,162,124,0.5), rgba(200,162,124,0.85))',
+                    }}
+                  />
+                </div>
+
+                {/* High */}
+                <span className="text-[12px] font-medium w-8 shrink-0" style={{ color: '#3A3028' }}>{d.high}</span>
+              </div>
             </div>
-          ))}
-        </div>
-      )}
-
-      {weather.packing_tip && (
-        <div className="mt-3 flex items-start gap-2 bg-white/60 rounded-xl p-2">
-          <Sun className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-[11px] text-slate-600 leading-relaxed">{weather.packing_tip}</p>
-        </div>
-      )}
+          );
+        })}
+      </div>
     </div>
   );
 }
