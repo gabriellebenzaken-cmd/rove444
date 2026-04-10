@@ -23,25 +23,58 @@ function UserAvatar({ name }) {
 
 const CATEGORY_COLORS = { cafe: "#A07850", restaurant: "#C87050", hotel: "#7090B0", museum: "#8060A0", activity: "#508060", bar: "#906080", other: "#9A8A7A" };
 
+const PLATFORM_MAP = [
+  { match: /tiktok\.com/, name: "TikTok Video", icon: "🎵" },
+  { match: /instagram\.com/, name: "Instagram Post", icon: "📸" },
+  { match: /twitter\.com|x\.com/, name: "X Post", icon: "🐦" },
+  { match: /youtube\.com|youtu\.be/, name: "YouTube Video", icon: "▶️" },
+  { match: /maps\.google\.com|google\.com\/maps/, name: "Google Maps", icon: "📍" },
+  { match: /airbnb\.com/, name: "Airbnb Listing", icon: "🏠" },
+  { match: /booking\.com/, name: "Booking.com", icon: "🏨" },
+  { match: /tripadvisor\.com/, name: "TripAdvisor", icon: "⭐" },
+  { match: /yelp\.com/, name: "Yelp", icon: "🍽️" },
+  { match: /spotify\.com/, name: "Spotify", icon: "🎧" },
+];
+
+function detectPlatform(url) {
+  if (!url) return null;
+  return PLATFORM_MAP.find(p => p.match.test(url)) || null;
+}
+
+function cleanDomain(url) {
+  try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; }
+}
+
 function LinkCard({ msg }) {
+  const platform = detectPlatform(msg.link_url);
+  const hasMetadata = msg.link_title && !msg.link_title.toLowerCase().includes("unable") && !msg.link_title.toLowerCase().includes("error") && !msg.link_title.toLowerCase().includes("cannot");
+  const displayTitle = hasMetadata ? msg.link_title : (platform ? platform.name : "Shared Link");
+  const displaySummary = hasMetadata && msg.link_summary && !msg.link_summary.toLowerCase().includes("unable") && !msg.link_summary.toLowerCase().includes("error") ? msg.link_summary : null;
+  const domain = cleanDomain(msg.link_url);
+
   return (
     <a href={msg.link_url} target="_blank" rel="noopener noreferrer" style={{ display: "block", textDecoration: "none" }}>
-      <div style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(200,162,124,0.22)", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+      <div style={{ background: "rgba(255,255,255,0.92)", border: "1px solid rgba(200,162,124,0.2)", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 8px rgba(0,0,0,0.05)" }}>
         {msg.content && msg.content !== msg.link_url && (
-          <p style={{ margin: 0, padding: "10px 12px 4px", fontSize: 13, color: "#3A3028" }}>{msg.content}</p>
+          <p style={{ margin: 0, padding: "10px 12px 0", fontSize: 13, color: "#3A3028" }}>{msg.content}</p>
         )}
-        <div style={{ padding: "8px 12px 10px" }}>
-          {msg.link_title && <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "#2A2018", marginBottom: 2 }}>{msg.link_title}</p>}
-          {msg.link_summary && <p style={{ margin: 0, fontSize: 11, color: "#9A8A7A", lineHeight: 1.4 }}>{msg.link_summary}</p>}
-          <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4 }}>
-            <ExternalLink size={10} color="#C8A27C" />
-            <p style={{ margin: 0, fontSize: 10, color: "#C0B0A0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>{msg.link_url}</p>
+        <div style={{ padding: "10px 12px 11px", display: "flex", flexDirection: "column", gap: 3 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            {platform && !hasMetadata && <span style={{ fontSize: 13 }}>{platform.icon}</span>}
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "#2A2018", lineHeight: 1.35 }}>{displayTitle}</p>
           </div>
-          {msg.link_category && (
-            <span style={{ display: "inline-block", marginTop: 6, padding: "2px 8px", borderRadius: 20, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "white", background: CATEGORY_COLORS[msg.link_category] || CATEGORY_COLORS.other }}>
-              {msg.link_category}
-            </span>
+          {displaySummary && (
+            <p style={{ margin: 0, fontSize: 11, color: "#9A8A7A", lineHeight: 1.45 }}>{displaySummary}</p>
           )}
+          <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+            <ExternalLink size={9} color="#C8A27C" />
+            <span style={{ fontSize: 10, color: "#C0B0A0" }}>{domain}</span>
+            {msg.link_category && hasMetadata && (
+              <span style={{ marginLeft: 4, padding: "1px 7px", borderRadius: 20, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "white", background: CATEGORY_COLORS[msg.link_category] || CATEGORY_COLORS.other }}>
+                {msg.link_category}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </a>
@@ -194,12 +227,12 @@ export default function TripChat({ trip, user }) {
       let title = "", summary = "", category = "other";
       try {
         const res = await base44.integrations.Core.InvokeLLM({
-          prompt: `For this URL: ${detectedUrl}\nReturn JSON with: title (short place/page name, max 5 words), summary (one casual sentence max 12 words), category (one of: cafe, restaurant, hotel, museum, activity, bar, other)`,
+          prompt: `For this URL: ${detectedUrl}\nIf you can access the page, return JSON with: title (short place/page name, max 5 words, no error messages), summary (one casual sentence max 12 words describing the content, no error messages), category (one of: cafe, restaurant, hotel, museum, activity, bar, other). If you cannot access the page, return empty strings for title and summary.`,
           add_context_from_internet: true,
           response_json_schema: { type: "object", properties: { title: { type: "string" }, summary: { type: "string" }, category: { type: "string" } } }
         });
-        if (res?.title) title = res.title;
-        if (res?.summary) summary = res.summary;
+        if (res?.title && !res.title.toLowerCase().includes("unable") && !res.title.toLowerCase().includes("cannot")) title = res.title;
+        if (res?.summary && !res.summary.toLowerCase().includes("unable") && !res.summary.toLowerCase().includes("cannot")) summary = res.summary;
         if (res?.category) category = res.category;
       } catch {}
       await base44.entities.TripMessage.create({
