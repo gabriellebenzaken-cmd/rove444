@@ -1,10 +1,45 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Plus, MapPin, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Plus, MapPin, Users, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import CreateTripDialog from "../components/trips/CreateTripDialog";
+
+function TripCard({ trip, index, coverImages, past }) {
+  return (
+    <Link to={`/trip/${trip.id}`} className="block active:scale-[0.985] transition-transform duration-150">
+      <div className="rounded-[22px] overflow-hidden" style={{background:'rgba(255,255,255,0.75)', backdropFilter:'blur(16px)', WebkitBackdropFilter:'blur(16px)', border:'1px solid rgba(255,255,255,0.7)', boxShadow:'0 4px 24px rgba(0,0,0,0.07)', opacity: past ? 0.72 : 1}}>
+        <div
+          className="bg-cover bg-center relative"
+          style={{ backgroundImage: `url(${trip.cover_image || coverImages[index % coverImages.length]})`, height: past ? 100 : 180 }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+          {past && (
+            <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[9px] font-semibold" style={{background:'rgba(0,0,0,0.4)', color:'rgba(255,255,255,0.85)'}}>Completed</div>
+          )}
+          <div className="absolute bottom-0 left-0 right-0 p-3.5">
+            <h3 className="text-white font-semibold leading-tight" style={{fontSize: past ? 14 : 18, letterSpacing:'-0.015em'}}>{trip.name}</h3>
+            <div className="flex items-center gap-1 mt-0.5">
+              <MapPin className="h-3 w-3 text-white/70" />
+              <span className="text-white/75 text-xs font-medium">{trip.destination}</span>
+            </div>
+          </div>
+        </div>
+        <div className="px-4 py-2.5 flex items-center justify-between">
+          <p className="text-[11px] font-normal" style={{color:'#B0A090'}}>
+            {trip.start_date && trip.end_date
+              ? `${format(new Date(trip.start_date), "MMM d")} – ${format(new Date(trip.end_date), "MMM d, yyyy")}`
+              : 'Dates TBD'}
+          </p>
+          <div className="flex items-center gap-1">
+            <Users className="h-3 w-3" style={{color:'#C8A27C'}} />
+            <span className="text-[11px] font-medium" style={{color:'#9A8A7A'}}>{trip.member_emails?.length || 1}</span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 export default function Trips() {
   const [trips, setTrips] = useState([]);
@@ -19,13 +54,17 @@ export default function Trips() {
   async function loadData() {
     const me = await base44.auth.me();
     setUser(me);
-    const allTrips = await base44.entities.Trip.list("-created_date", 50);
+    const allTrips = await base44.entities.Trip.list("-created_date", 100);
     const myTrips = allTrips.filter(
       (t) => t.member_emails?.includes(me.email) || t.admin_email === me.email
     );
     setTrips(myTrips);
     setLoading(false);
   }
+
+  const today = new Date().toISOString().split("T")[0];
+  const activeTrips = trips.filter((t) => !t.end_date || t.end_date >= today);
+  const pastTrips = trips.filter((t) => t.end_date && t.end_date < today);
 
   const coverImages = [
     "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80",
@@ -54,7 +93,7 @@ export default function Trips() {
         <div className="flex justify-center py-24">
           <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{borderColor:'#C8A27C', borderTopColor:'transparent'}} />
         </div>
-      ) : trips.length === 0 ? (
+      ) : activeTrips.length === 0 && pastTrips.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-28 text-center">
           <div className="w-16 h-16 rounded-[22px] flex items-center justify-center mb-5" style={{background:'rgba(200,162,124,0.15)'}}>
             <MapPin className="h-7 w-7" style={{color:'#C8A27C'}} />
@@ -66,42 +105,24 @@ export default function Trips() {
           </button>
         </div>
       ) : (
-        <div className="space-y-4">
-          {trips.map((trip, i) => (
-            <Link key={trip.id} to={`/trip/${trip.id}`} className="block active:scale-[0.985] transition-transform duration-150">
-              <div className="rounded-[22px] overflow-hidden" style={{background:'rgba(255,255,255,0.75)', backdropFilter:'blur(16px)', WebkitBackdropFilter:'blur(16px)', border:'1px solid rgba(255,255,255,0.7)', boxShadow:'0 4px 24px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04)'}}>
-                <div
-                  className="h-48 bg-cover bg-center relative"
-                  style={{ backgroundImage: `url(${trip.cover_image || coverImages[i % coverImages.length]})` }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                  {trip.theme_color && (
-                    <div className="absolute top-3 right-3 w-5 h-5 rounded-full border-2 border-white/60" style={{background: trip.theme_color}} />
-                  )}
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 className="text-white font-semibold text-[18px] leading-tight" style={{letterSpacing:'-0.015em'}}>{trip.name}</h3>
-                    <div className="flex items-center gap-1 mt-1">
-                      <MapPin className="h-3 w-3 text-white/70" />
-                      <span className="text-white/75 text-xs font-medium">{trip.destination}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="px-4 py-3 flex items-center justify-between">
-                  <p className="text-[12px] font-normal" style={{color:'#B0A090'}}>
-                    {trip.start_date && trip.end_date
-                      ? `${format(new Date(trip.start_date), "MMM d")} – ${format(new Date(trip.end_date), "MMM d")}`
-                      : 'Dates TBD'}
-                  </p>
-                  <div className="flex items-center gap-1">
-                    <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{background:'rgba(200,162,124,0.15)'}}>
-                      <Users className="h-3 w-3" style={{color:'#C8A27C'}} />
-                    </div>
-                    <span className="text-[12px] font-medium" style={{color:'#9A8A7A'}}>{trip.member_emails?.length || 1}</span>
-                  </div>
-                </div>
+        <div className="space-y-6">
+          {activeTrips.length > 0 && (
+            <div className="space-y-4">
+              {activeTrips.map((trip, i) => (
+                <TripCard key={trip.id} trip={trip} index={i} coverImages={coverImages} />
+              ))}
+            </div>
+          )}
+          {pastTrips.length > 0 && (
+            <div>
+              <p className="text-[10px] font-semibold tracking-widest uppercase mb-3" style={{color:'#C8A27C', letterSpacing:'0.12em'}}>Past Trips</p>
+              <div className="space-y-3">
+                {pastTrips.map((trip, i) => (
+                  <TripCard key={trip.id} trip={trip} index={i + activeTrips.length} coverImages={coverImages} past />
+                ))}
               </div>
-            </Link>
-          ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -99,6 +99,15 @@
 }
 
 @layer utilities {
+  /* Hide scrollbars globally — preserve smooth scrolling */
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
+  }
+
   .glass {
     background: rgba(255, 255, 255, 0.72);
     backdrop-filter: blur(12px);

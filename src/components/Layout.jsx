@@ -1,22 +1,14 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Map, Users, UserPlus, DollarSign, User, Bell } from "lucide-react";
+import { Map, Users, UserPlus, Wallet, User, Bell } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const NAV_ITEMS = [
   { path: "/", icon: Map, label: "Trips" },
   { path: "/groups", icon: Users, label: "Groups" },
   { path: "/friends", icon: UserPlus, label: "Friends" },
-  { path: "/costs", icon: DollarSign, label: "Costs" },
+  { path: "/costs", icon: Wallet, label: "Costs" },
   { path: "/profile", icon: User, label: "Me" },
-];
-
-const navItems = [
-  { path: "/", icon: Map, label: "Trips" },
-  { path: "/groups", icon: Users, label: "Groups" },
-  { path: "/friends", icon: UserPlus, label: "Friends" },
-  { path: "/costs", icon: DollarSign, label: "Costs" },
-  { path: "/profile", icon: User, label: "Profile" },
 ];
 
 export default function Layout() {

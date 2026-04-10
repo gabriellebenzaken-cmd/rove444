@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
 import WeatherWidget from "./WeatherWidget";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CalendarDays, Plus, Trash2, Clock, MapPin, Star } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { format, eachDayOfInterval, parseISO } from "date-fns";
+import BottomSheet from "../BottomSheet";
 
 export default function TripItinerary({ trip, user }) {
   const [items, setItems] = useState([]);
@@ -127,42 +126,37 @@ export default function TripItinerary({ trip, user }) {
         </div>
       )}
 
-      <Dialog open={showAdd} onOpenChange={setShowAdd}>
-        <DialogContent className="mx-4 rounded-2xl max-w-md p-5">
-          <DialogHeader>
-            <DialogTitle className="text-base">Add Activity</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={addItem} className="space-y-3 mt-1">
+      <BottomSheet open={showAdd} onClose={() => setShowAdd(false)} title="Add Activity">
+        <form onSubmit={addItem} className="space-y-3">
+          <div>
+            <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Activity name</Label>
+            <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Activity name" className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
             <div>
-              <Label className="text-xs font-medium mb-1 block">Activity</Label>
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Visit the Colosseum" className="h-9 text-sm" />
-            </div>
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <Label className="text-xs font-medium mb-1 block">Date</Label>
-                <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="h-9 text-sm" />
-              </div>
-              <div>
-                <Label className="text-xs font-medium mb-1 block">Time</Label>
-                <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="h-9 text-sm" />
-              </div>
+              <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Date</Label>
+              <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
             </div>
             <div>
-              <Label className="text-xs font-medium mb-1 block">Location</Label>
-              <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Rome, Italy" className="h-9 text-sm" />
+              <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Time</Label>
+              <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
             </div>
-            <div>
-              <Label className="text-xs font-medium mb-1 block">Notes</Label>
-              <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Any details..." className="text-sm" rows={2} />
-            </div>
-            <div className="flex items-center gap-3">
-              <Switch checked={form.is_required} onCheckedChange={(v) => setForm({ ...form, is_required: v })} />
-              <Label className="text-xs">Required activity</Label>
-            </div>
-            <Button type="submit" className="w-full rounded-full h-9 text-sm" style={{ background: "#C8A27C", color: "white" }}>Add Activity</Button>
-          </form>
-        </DialogContent>
-      </Dialog>
+          </div>
+          <div>
+            <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Location <span style={{ color: "#C0B0A0", fontWeight: 400 }}>(optional)</span></Label>
+            <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Location" className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
+          </div>
+          <div>
+            <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Notes <span style={{ color: "#C0B0A0", fontWeight: 400 }}>(optional)</span></Label>
+            <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Any details" className="text-sm" rows={2} style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
+          </div>
+          <div className="flex items-center gap-3 py-1">
+            <Switch checked={form.is_required} onCheckedChange={(v) => setForm({ ...form, is_required: v })} />
+            <Label className="text-xs" style={{ color: "#9A8A7A" }}>Mark as required</Label>
+          </div>
+          <button type="submit" className="w-full h-10 rounded-full text-sm font-semibold" style={{ background: "#C8A27C", color: "white" }}>Add Activity</button>
+        </form>
+      </BottomSheet>
     </div>
   );
 }

@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  DollarSign, Plus, Trash2, ArrowRight, Clock, CheckCircle2,
-  XCircle, Send, ChevronDown, ChevronUp, Receipt, SplitSquareHorizontal
+  Plus, Trash2, ArrowRight, Clock, CheckCircle2,
+  XCircle, Send, ChevronDown, ChevronUp, Receipt
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import BottomSheet from "../BottomSheet";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
@@ -376,34 +376,28 @@ export default function TripCosts({ trip, user }) {
         </div>
       )}
 
-      {/* Add Expense Dialog */}
-      <Dialog open={showAdd} onOpenChange={setShowAdd}>
-        <DialogContent className="mx-4 rounded-2xl max-w-md p-5">
-          <DialogHeader>
-            <DialogTitle className="text-base">Add Expense</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={addExpense} className="space-y-3 mt-1">
+      <BottomSheet open={showAdd} onClose={() => setShowAdd(false)} title="Add Expense">
+        <form onSubmit={addExpense} className="space-y-3">
             <div>
-              <Label className="text-xs font-medium mb-1 block">Description</Label>
-              <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Dinner at La Piazza" className="h-9 text-sm" />
+              <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Description</Label>
+              <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What was it for?" className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
             </div>
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <Label className="text-xs font-medium mb-1 block">Amount ($)</Label>
-                <Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className="h-9 text-sm" />
+                <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Amount ($)</Label>
+                <Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0.00" className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
               </div>
               <div>
-                <Label className="text-xs font-medium mb-1 block">Category</Label>
+                <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Category</Label>
                 <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                  <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-9 text-xs" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}><SelectValue /></SelectTrigger>
                   <SelectContent>{categories.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
 
-            {/* Split among */}
             <div>
-              <Label className="text-xs font-medium mb-1.5 block">Split among</Label>
+              <Label className="text-xs font-medium mb-1.5 block" style={{ color: "#9A8A7A" }}>Split among</Label>
               <div className="space-y-1.5 mb-2">
                 {members.map((m) => (
                   <label key={m.email} className="flex items-center gap-2 text-xs cursor-pointer">
@@ -416,13 +410,12 @@ export default function TripCosts({ trip, user }) {
                         })
                       }
                     />
-                    <span>{m.full_name}{m.email === user.email ? " (You)" : ""}</span>
+                    <span style={{ color: "#3A3028" }}>{m.full_name}{m.email === user.email ? " (You)" : ""}</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* Split mode toggle */}
             <div className="flex gap-2 p-1 rounded-full" style={{ background: "rgba(200,162,124,0.08)" }}>
               {[{ key: "equal", label: "Equal split" }, { key: "custom", label: "Custom split" }].map(({ key, label }) => (
                 <button type="button" key={key} onClick={() => setSplitMode(key)} className="flex-1 py-1.5 text-xs font-medium rounded-full transition-all" style={splitMode === key ? { background: "white", color: "#C8A27C", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" } : { color: "#9A8A7A" }}>
@@ -459,10 +452,9 @@ export default function TripCosts({ trip, user }) {
               </div>
             )}
 
-            <Button type="submit" className="w-full rounded-full h-9 text-sm" style={{ background: "#C8A27C", color: "white" }}>Add Expense</Button>
+            <button type="submit" className="w-full h-10 rounded-full text-sm font-semibold mt-1" style={{ background: "#C8A27C", color: "white" }}>Add Expense</button>
           </form>
-        </DialogContent>
-      </Dialog>
+      </BottomSheet>
     </div>
   );
 }
