@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Home, Plus, Trash2, DollarSign, Calendar } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import BottomSheet from "../BottomSheet";
 import { format } from "date-fns";
 
 export default function TripStay({ trip, user }) {
@@ -93,42 +93,37 @@ export default function TripStay({ trip, user }) {
         </div>
       )}
 
-      <Dialog open={showAdd} onOpenChange={setShowAdd}>
-        <DialogContent className="mx-4 rounded-2xl max-w-md p-5">
-          <DialogHeader>
-            <DialogTitle className="text-base">Add Lodging</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={addLodging} className="space-y-3 mt-1">
+      <BottomSheet open={showAdd} onClose={() => setShowAdd(false)} title="Add Lodging">
+        <form onSubmit={addLodging} className="space-y-3">
             <div>
-              <Label className="text-xs font-medium mb-1 block">Name</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Hotel name or Airbnb" className="h-9 text-sm" />
+              <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Name</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Hotel name or Airbnb" className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
             </div>
             <div>
-              <Label className="text-xs font-medium mb-1 block">Address</Label>
-              <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Address" className="h-9 text-sm" />
+              <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Address <span style={{color:'#C0B0A0',fontWeight:400}}>(optional)</span></Label>
+              <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Address" className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
             </div>
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <Label className="text-xs font-medium mb-1 block">Check-in</Label>
-                <Input type="date" value={form.check_in} onChange={(e) => setForm({ ...form, check_in: e.target.value })} className="h-9 text-sm" />
+                <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Check-in</Label>
+                <Input type="date" value={form.check_in} onChange={(e) => setForm({ ...form, check_in: e.target.value })} className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
               </div>
               <div>
-                <Label className="text-xs font-medium mb-1 block">Check-out</Label>
-                <Input type="date" value={form.check_out} onChange={(e) => setForm({ ...form, check_out: e.target.value })} className="h-9 text-sm" />
+                <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Check-out</Label>
+                <Input type="date" value={form.check_out} onChange={(e) => setForm({ ...form, check_out: e.target.value })} className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
               </div>
             </div>
             <div>
-              <Label className="text-xs font-medium mb-1 block">$/Night <span style={{color:'#B0A090',fontWeight:400}}>(optional)</span></Label>
-              <Input type="number" value={form.price_per_night} onChange={(e) => setForm({ ...form, price_per_night: e.target.value })} placeholder="0" className="h-9 text-sm" />
+              <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>$/Night <span style={{color:'#C0B0A0',fontWeight:400}}>(optional)</span></Label>
+              <Input type="number" value={form.price_per_night} onChange={(e) => setForm({ ...form, price_per_night: e.target.value })} placeholder="0" className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
             </div>
             <div>
-              <Label className="text-xs font-medium mb-1 block">Notes <span style={{color:'#B0A090',fontWeight:400}}>(optional)</span></Label>
-              <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Check-in code, parking info..." className="text-sm" rows={2} />
+              <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Notes <span style={{color:'#C0B0A0',fontWeight:400}}>(optional)</span></Label>
+              <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Check-in code, parking info..." className="text-sm" rows={2} style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
             </div>
-            <Button type="submit" className="w-full rounded-full h-9 text-sm" style={{ background: "#C8A27C", color: "white" }}>Add Lodging</Button>
+            <button type="submit" className="w-full h-10 rounded-full text-sm font-semibold mt-1" style={{ background: "#C8A27C", color: "white" }}>Add Lodging</button>
           </form>
-        </DialogContent>
-      </Dialog>
+      </BottomSheet>
     </div>
   );
 }
