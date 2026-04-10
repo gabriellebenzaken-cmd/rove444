@@ -5,7 +5,15 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-// Add page imports here
+import Layout from './components/Layout';
+import Trips from './pages/Trips';
+import Groups from './pages/Groups';
+import Friends from './pages/Friends';
+import Costs from './pages/Costs';
+import Profile from './pages/Profile';
+import TripDetail from './pages/TripDetail';
+import GroupDetail from './pages/GroupDetail';
+import JoinInvite from './pages/JoinInvite';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -33,7 +41,16 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      {/* Add your page Route elements here */}
+      <Route element={<Layout />}>
+        <Route path="/" element={<Trips />} />
+        <Route path="/groups" element={<Groups />} />
+        <Route path="/friends" element={<Friends />} />
+        <Route path="/costs" element={<Costs />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/trip/:id" element={<TripDetail />} />
+        <Route path="/group/:id" element={<GroupDetail />} />
+      </Route>
+      <Route path="/join/:type/:code" element={<JoinInvite />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

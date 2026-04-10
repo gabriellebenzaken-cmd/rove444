@@ -1,0 +1,240 @@
+import { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import { Search, UserPlus, Check, X, UserMinus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+
+export default function Friends() {
+  const [user, setUser] = useState(null);
+  const [friends, setFriends] = useState([]);
+  const [pending, setPending] = useState([]);
+  const [incoming, setIncoming] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState("friends");
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  async function loadData() {
+    const me = await base44.auth.me();
+    setUser(me);
+    const allRequests = await base44.entities.FriendRequest.list("-created_date", 200);
+
+    const accepted = allRequests.filter((r) => r.status === "accepted");
+    const friendEmails = new Set();
+    accepted.forEach((r) => {
+      if (r.from_user === me.email) friendEmails.add(r.to_user);
+      if (r.to_user === me.email) friendEmails.add(r.from_user);
+    });
+
+    const allUsers = await base44.entities.User.list("-created_date", 200);
+    const friendList = allUsers.filter((u) => friendEmails.has(u.email));
+    setFriends(friendList);
+
+    setPending(allRequests.filter((r) => r.from_user === me.email && r.status === "pending"));
+    setIncoming(allRequests.filter((r) => r.to_user === me.email && r.status === "pending"));
+    setLoading(false);
+  }
+
+  async function handleSearch() {
+    if (!searchQuery.trim()) return;
+    const allUsers = await base44.entities.User.list("-created_date", 200);
+    const results = allUsers.filter(
+      (u) =>
+        u.email !== user.email &&
+        (u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          u.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          u.username?.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+    setSearchResults(results);
+    setTab("search");
+  }
+
+  async function sendRequest(toUser) {
+    await base44.entities.FriendRequest.create({
+      from_user: user.email,
+      from_name: user.full_name,
+      to_user: toUser.email,
+      to_name: toUser.full_name,
+      status: "pending",
+    });
+    toast.success(`Request sent to ${toUser.full_name}`);
+    loadData();
+  }
+
+  async function acceptRequest(req) {
+    await base44.entities.FriendRequest.update(req.id, { status: "accepted" });
+    toast.success("Friend added!");
+    loadData();
+  }
+
+  async function declineRequest(req) {
+    await base44.entities.FriendRequest.update(req.id, { status: "declined" });
+    loadData();
+  }
+
+  async function removeFriend(friendUser) {
+    const allRequests = await base44.entities.FriendRequest.list("-created_date", 200);
+    const friendship = allRequests.find(
+      (r) =>
+        r.status === "accepted" &&
+        ((r.from_user === user.email && r.to_user === friendUser.email) ||
+          (r.to_user === user.email && r.from_user === friendUser.email))
+    );
+    if (friendship) {
+      await base44.entities.FriendRequest.delete(friendship.id);
+      toast.success("Friend removed");
+      loadData();
+    }
+  }
+
+  const tabs = [
+    { key: "friends", label: `Friends (${friends.length})` },
+    { key: "requests", label: `Requests${incoming.length > 0 ? ` (${incoming.length})` : ""}` },
+  ];
+
+  return (
+    <div className="px-5 pt-14">
+      <h1 className="text-2xl font-bold tracking-tight mb-6">Friends</h1>
+
+      <div className="flex gap-2 mb-5">
+        <Input
+          placeholder="Search by name, email, or username..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          className="rounded-full"
+        />
+        <Button size="icon" variant="outline" className="rounded-full shrink-0" onClick={handleSearch}>
+          <Search className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <div className="flex gap-1 mb-5 bg-muted rounded-full p-1">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`flex-1 py-2 text-xs font-medium rounded-full transition-all ${
+              tab === t.key ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : tab === "search" ? (
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground mb-2">{searchResults.length} results</p>
+          {searchResults.map((u) => {
+            const isFriend = friends.some((f) => f.email === u.email);
+            const isPending = pending.some((p) => p.to_user === u.email);
+            return (
+              <div key={u.id} className="bg-card rounded-2xl border border-border p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary">
+                    {u.full_name?.[0] || "?"}
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">{u.full_name}</p>
+                    <p className="text-xs text-muted-foreground">{u.email}</p>
+                  </div>
+                </div>
+                {isFriend ? (
+                  <span className="text-xs text-primary font-medium">Friends</span>
+                ) : isPending ? (
+                  <span className="text-xs text-muted-foreground">Pending</span>
+                ) : (
+                  <Button size="sm" variant="outline" className="rounded-full" onClick={() => sendRequest(u)}>
+                    <UserPlus className="h-3.5 w-3.5 mr-1" /> Add
+                  </Button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : tab === "requests" ? (
+        <div className="space-y-3">
+          {incoming.length === 0 && pending.length === 0 ? (
+            <p className="text-center text-muted-foreground text-sm py-10">No pending requests</p>
+          ) : (
+            <>
+              {incoming.length > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium mb-2 uppercase tracking-wider">Incoming</p>
+                  {incoming.map((req) => (
+                    <div key={req.id} className="bg-card rounded-2xl border border-border p-4 flex items-center justify-between mb-2">
+                      <div>
+                        <p className="font-medium text-sm">{req.from_name || req.from_user}</p>
+                        <p className="text-xs text-muted-foreground">{req.from_user}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => acceptRequest(req)}>
+                          <Check className="h-4 w-4 text-primary" />
+                        </Button>
+                        <Button size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => declineRequest(req)}>
+                          <X className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {pending.length > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium mb-2 uppercase tracking-wider">Sent</p>
+                  {pending.map((req) => (
+                    <div key={req.id} className="bg-card rounded-2xl border border-border p-4 flex items-center justify-between mb-2">
+                      <div>
+                        <p className="font-medium text-sm">{req.to_name || req.to_user}</p>
+                        <p className="text-xs text-muted-foreground">Pending</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {friends.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <UserPlus className="h-7 w-7 text-primary" />
+              </div>
+              <h3 className="font-semibold text-lg mb-1">No friends yet</h3>
+              <p className="text-muted-foreground text-sm">Search for people to connect</p>
+            </div>
+          ) : (
+            friends.map((f) => (
+              <div key={f.id} className="bg-card rounded-2xl border border-border p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary">
+                    {f.full_name?.[0] || "?"}
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">{f.full_name}</p>
+                    <p className="text-xs text-muted-foreground">{f.username || f.email}</p>
+                  </div>
+                </div>
+                <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => removeFriend(f)}>
+                  <UserMinus className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

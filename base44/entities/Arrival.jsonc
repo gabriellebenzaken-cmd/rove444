@@ -1,0 +1,37 @@
+{
+  "name": "Arrival",
+  "type": "object",
+  "properties": {
+    "trip_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "arrival_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "arrival_time": {
+      "type": "string"
+    },
+    "arrival_location": {
+      "type": "string",
+      "description": "Airport or city"
+    },
+    "departure_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "departure_time": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "trip_id",
+    "user_email"
+  ]
+}

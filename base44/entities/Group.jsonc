@@ -1,0 +1,39 @@
+{
+  "name": "Group",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Group name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Group description"
+    },
+    "admin_email": {
+      "type": "string",
+      "description": "Email of the group admin"
+    },
+    "member_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of member emails"
+    },
+    "invite_code": {
+      "type": "string",
+      "description": "Unique invite code for the group"
+    },
+    "invite_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "admin_email",
+    "member_emails",
+    "invite_code"
+  ]
+}

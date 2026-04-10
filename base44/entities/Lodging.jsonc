@@ -1,0 +1,41 @@
+{
+  "name": "Lodging",
+  "type": "object",
+  "properties": {
+    "trip_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "description": "Hotel or Airbnb name"
+    },
+    "address": {
+      "type": "string"
+    },
+    "price_per_night": {
+      "type": "number"
+    },
+    "check_in": {
+      "type": "string",
+      "format": "date"
+    },
+    "check_out": {
+      "type": "string",
+      "format": "date"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "guest_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Who is staying there"
+    }
+  },
+  "required": [
+    "trip_id",
+    "name"
+  ]
+}
