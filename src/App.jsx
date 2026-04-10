@@ -26,24 +26,28 @@ const AuthenticatedApp = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [checkingOnboard, setCheckingOnboard] = useState(true);
   const [onboardingError, setOnboardingError] = useState(false);
+  const [isProfileReady, setIsProfileReady] = useState(false);
 
   useEffect(() => {
     if (!isLoadingAuth && !authError) {
-      base44.auth.me().then((me) => {
+      base44.auth.me().then(async (me) => {
         setCurrentUser(me);
-        // Backfill UserProfile for existing users
-        backfillUserProfile(me);
+        // Ensure UserProfile exists before rendering app
+        await ensureUserProfile(me);
+        setIsProfileReady(true);
         setCheckingOnboard(false);
       }).catch(() => {
         setCheckingOnboard(false);
+        setIsProfileReady(true);
         toast.error("Failed to load profile");
       });
     } else if (authError) {
       setCheckingOnboard(false);
+      setIsProfileReady(true);
     }
   }, [isLoadingAuth, authError]);
 
-  async function backfillUserProfile(me) {
+  async function ensureUserProfile(me) {
     try {
       const existing = await base44.entities.UserProfile.filter({ user_id: me.id }, "-created_date", 1);
       if (existing.length === 0) {
@@ -51,17 +55,19 @@ const AuthenticatedApp = () => {
           user_id: me.id,
           user_email: me.email,
           username: me.data?.username || me.email.split("@")[0],
-          full_name: me.full_name,
+          full_name: me.full_name || "",
         });
-        console.log("[App] UserProfile backfilled for:", me.email);
+        console.log("[App] UserProfile created for:", me.email);
+      } else {
+        console.log("[App] UserProfile already exists for:", me.email);
       }
     } catch (err) {
-      console.error("[App] UserProfile backfill failed:", err);
+      console.error("[App] UserProfile ensure failed:", err);
     }
   }
 
   // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth || checkingOnboard) {
+  if (isLoadingPublicSettings || isLoadingAuth || checkingOnboard || !isProfileReady) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
