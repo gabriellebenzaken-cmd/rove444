@@ -18,7 +18,7 @@ import TripMap from "../components/trip/TripMap";
 const tripTabs = [
   { key: "plan", label: "Plan" },
   { key: "stay", label: "Stay" },
-  { key: "itinerary", label: "Itinerary" },
+  { key: "itinerary", label: "Schedule" },
   { key: "map", label: "Map" },
   { key: "costs", label: "Costs" },
   { key: "chat", label: "Chat" },
@@ -137,21 +137,34 @@ export default function TripDetail() {
       </div>
 
       <div className="px-5">
-        <div className="flex gap-1 mt-4 mb-4 rounded-full p-1 overflow-x-auto" style={{background:'rgba(200,162,124,0.1)', scrollbarWidth:'none'}}>
+        <div
+          className="mt-4 mb-4 p-1 rounded-full"
+          style={{ background: 'rgba(200,162,124,0.1)', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+        >
           {tripTabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className="shrink-0 py-2 text-xs font-medium rounded-full transition-all whitespace-nowrap px-4"
-              style={tab === t.key
-                ? { background: themeColor || 'white', color: themeColor ? 'white' : '#3A3028', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }
-                : { color: '#9CA3AF' }
-              }
+              style={{
+                flexShrink: 0,
+                padding: '6px 14px',
+                fontSize: 12,
+                fontWeight: 500,
+                borderRadius: 999,
+                whiteSpace: 'nowrap',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                ...(tab === t.key
+                  ? { background: themeColor || 'white', color: themeColor ? 'white' : '#3A3028', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }
+                  : { background: 'transparent', color: '#9CA3AF' }
+                )
+              }}
             >
               {t.label}
             </button>
           ))}
-          <div className="shrink-0 w-2" />
+          <div style={{ flexShrink: 0, width: 8 }} />
         </div>
 
         {tab === "plan" && <TripPlan trip={trip} user={user} onUpdate={loadData} />}

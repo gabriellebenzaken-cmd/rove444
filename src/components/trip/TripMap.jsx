@@ -92,7 +92,7 @@ export default function TripMap({ trip }) {
   }
 
   return (
-    <div className="pb-24">
+    <div style={{ paddingBottom: 100 }}>
       <div className="flex gap-1 mb-4 p-1 rounded-full" style={{ background: "rgba(200,162,124,0.1)" }}>
         {[{ key: "map", Icon: Map, label: "Map" }, { key: "list", Icon: List, label: "List" }].map(({ key, Icon, label }) => (
           <button
@@ -114,7 +114,7 @@ export default function TripMap({ trip }) {
         </div>
       ) : view === "map" ? (
         <>
-          <div className="rounded-2xl overflow-hidden" style={{ height: 360, border: "1px solid rgba(200,162,124,0.2)" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ height: 300, border: "1px solid rgba(200,162,124,0.2)" }}>
             <MapContainer center={center} zoom={12} style={{ height: "100%", width: "100%" }} zoomControl={false}>
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
