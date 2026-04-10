@@ -99,6 +99,28 @@
 }
 
 @layer utilities {
+  .form-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .form-row > .form-field {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  @media (max-width: 480px) {
+    .form-row {
+      flex-direction: column;
+    }
+
+    .form-row > .form-field {
+      width: 100%;
+      flex: none;
+    }
+  }
+
   /* Hide scrollbars globally — preserve smooth scrolling */
   * {
     scrollbar-width: none;

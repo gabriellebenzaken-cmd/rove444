@@ -133,12 +133,12 @@ export default function TripItinerary({ trip, user }) {
             <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Activity name</Label>
             <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Activity name" className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
           </div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="form-row">
+            <div className="form-field">
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Date</Label>
               <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="h-9 text-sm w-full" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="form-field">
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Time</Label>
               <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="h-9 text-sm w-full" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
             </div>
