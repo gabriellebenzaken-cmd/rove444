@@ -37,13 +37,13 @@ export default function TripMembersManager({ trip, user, isAdmin, onMembersUpdat
       setLoading(true);
       const reqs = await base44.entities.FriendRequest.filter({}, "-created_date", 200) || [];
       const accepted = reqs.filter((r) => r.status === "accepted");
-      const friendEmails = new Set();
+      const friendIds = new Set();
       accepted.forEach((r) => {
-        if (r.from_user === user.email) friendEmails.add(r.to_user);
-        if (r.to_user === user.email) friendEmails.add(r.from_user);
+        if (r.sender_id === user.id) friendIds.add(r.receiver_id);
+        if (r.receiver_id === user.id) friendIds.add(r.sender_id);
       });
       const allUsers = await base44.entities.User.list("-created_date", 200) || [];
-      const friendList = allUsers.filter((u) => friendEmails.has(u.email) && !trip.member_emails?.includes(u.email));
+      const friendList = allUsers.filter((u) => friendIds.has(u.id) && !trip.member_emails?.includes(u.email));
       setFriends(friendList);
       console.log('[Trip] Loaded friends for invite:', friendList.length);
     } catch (err) {

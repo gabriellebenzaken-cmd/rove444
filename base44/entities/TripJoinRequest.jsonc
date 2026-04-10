@@ -5,6 +5,9 @@
     "trip_id": {
       "type": "string"
     },
+    "user_id": {
+      "type": "string"
+    },
     "user_email": {
       "type": "string"
     },
@@ -16,14 +19,17 @@
       "enum": [
         "pending",
         "approved",
-        "declined"
+        "denied"
       ],
       "default": "pending"
+    },
+    "user_profile_photo": {
+      "type": "string"
     }
   },
   "required": [
     "trip_id",
-    "user_email",
+    "user_id",
     "status"
   ]
 }

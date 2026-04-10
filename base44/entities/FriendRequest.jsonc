@@ -2,21 +2,25 @@
   "name": "FriendRequest",
   "type": "object",
   "properties": {
-    "from_user": {
+    "sender_id": {
       "type": "string",
-      "description": "Email of the user sending the request"
+      "description": "User ID of the person sending the request"
     },
-    "from_name": {
+    "receiver_id": {
       "type": "string",
-      "description": "Name of sender"
+      "description": "User ID of the person receiving the request"
     },
-    "to_user": {
-      "type": "string",
-      "description": "Email of the user receiving the request"
+    "sender_email": {
+      "type": "string"
     },
-    "to_name": {
-      "type": "string",
-      "description": "Name of recipient"
+    "receiver_email": {
+      "type": "string"
+    },
+    "sender_name": {
+      "type": "string"
+    },
+    "receiver_name": {
+      "type": "string"
     },
     "status": {
       "type": "string",
@@ -29,8 +33,8 @@
     }
   },
   "required": [
-    "from_user",
-    "to_user",
+    "sender_id",
+    "receiver_id",
     "status"
   ]
 }
