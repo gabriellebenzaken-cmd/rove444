@@ -61,6 +61,8 @@ export default function TripDetail() {
 
   const isAdmin = user && (trip?.admin_email === user.email);
   const isMember = user && (trip?.member_emails?.includes(user.email) || isAdmin);
+  const themeColor = trip?.theme_color || null;
+  const themeStyle = themeColor ? { '--trip-primary': themeColor } : {};
 
   async function copyInviteLink() {
     const link = `${window.location.origin}/join/trip/${trip.invite_code}`;
@@ -90,7 +92,7 @@ export default function TripDetail() {
   ];
 
   return (
-    <div>
+    <div style={themeStyle}>
       <div
         className="h-48 bg-cover bg-center relative"
         style={{ backgroundImage: `url(${trip.cover_image || coverImages[0]})` }}
@@ -145,9 +147,11 @@ export default function TripDetail() {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`flex-1 py-2 text-xs font-medium rounded-full transition-all whitespace-nowrap px-3 ${
-                tab === t.key ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
-              }`}
+              className="flex-1 py-2 text-xs font-medium rounded-full transition-all whitespace-nowrap px-3"
+              style={tab === t.key
+                ? { background: themeColor || 'white', color: themeColor ? 'white' : undefined, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }
+                : { color: '#9CA3AF' }
+              }
             >
               {t.label}
             </button>

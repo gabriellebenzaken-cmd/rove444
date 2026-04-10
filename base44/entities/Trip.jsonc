@@ -42,6 +42,10 @@
     "cover_image": {
       "type": "string",
       "description": "URL for trip cover image"
+    },
+    "theme_color": {
+      "type": "string",
+      "description": "Hex color for trip theme, e.g. #4A90E2"
     }
   },
   "required": [
