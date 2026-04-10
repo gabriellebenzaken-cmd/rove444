@@ -28,11 +28,22 @@ function createColoredIcon(color) {
 function FitBounds({ markers }) {
   const map = useMap();
   useEffect(() => {
-    if (markers.length > 0) {
-      const bounds = L.latLngBounds(markers.map(m => [m.lat, m.lng]));
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
-    }
+    setTimeout(() => {
+      map.invalidateSize();
+      if (markers.length > 0) {
+        const bounds = L.latLngBounds(markers.map(m => [m.lat, m.lng]));
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+      }
+    }, 100);
   }, [markers]);
+  return null;
+}
+
+function MapInvalidator() {
+  const map = useMap();
+  useEffect(() => {
+    setTimeout(() => map.invalidateSize(), 150);
+  }, []);
   return null;
 }
 
@@ -109,6 +120,7 @@ export default function TripMap({ trip }) {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
+              <MapInvalidator />
               {markers.length > 0 && <FitBounds markers={markers} />}
               {markers.map((m) => {
                 const dayIdx = uniqueDays.indexOf(m.date);
