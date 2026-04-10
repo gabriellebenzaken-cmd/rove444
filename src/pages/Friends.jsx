@@ -311,7 +311,7 @@ export default function Friends() {
             const isFriend = friends.some((f) => f.id === u.user_id);
             const isOutgoing = sentRequests.some((p) => p.receiver_id === u.user_id);
             const isIncoming = receivedRequests.some((p) => p.sender_id === u.user_id);
-            const incomingReq = receivedRequests.find((p) => p.sender_id === u.id);
+            const incomingReq = receivedRequests.find((p) => p.sender_id === u.user_id);
 
             return (
               <div
