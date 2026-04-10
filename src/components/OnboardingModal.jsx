@@ -31,14 +31,7 @@ export default function OnboardingModal({ user, onComplete }) {
       }
 
       try {
-        const allUsers = await base44.entities.User.list("-created_date", 500);
-        const existing = allUsers.find(u => u.username?.toLowerCase() === normalizedUsername && u.email !== user.email);
-
-        if (existing) {
-          throw new Error("Username already taken");
-        }
-
-        await base44.auth.updateMe({ username: normalizedUsername, bio: bio.trim(), onboarded: true });
+        await base44.auth.updateMe({ username: normalizedUsername, bio: bio.trim() || "", onboarded: true });
       } catch (profileErr) {
         console.error("Profile save failed, allowing user through anyway:", profileErr);
       }
