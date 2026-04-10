@@ -189,7 +189,12 @@
     gap: 12px;
   }
 
-  /* Fix map z-index so modals/menus appear above the map */
+  /* Fix map z-index so modals/menus and bottom nav appear above the map */
+  .leaflet-container {
+    position: relative;
+    z-index: 1;
+  }
+
   .leaflet-pane,
   .leaflet-tile,
   .leaflet-marker-icon,
@@ -205,6 +210,12 @@
 
   .leaflet-control-container {
     z-index: 2 !important;
+  }
+
+  /* Ensure bottom nav stays above map */
+  nav[role="navigation"],
+  nav.fixed {
+    z-index: 1000 !important;
   }
 
   .custom-pin {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,9 +8,11 @@ import { Plane, Clock, MapPin, Plus, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import TripMembersManager from "./TripMembersManager";
+import TripPendingRequests from "./TripPendingRequests";
 
 export default function TripPlan({ trip, user, onUpdate }) {
   const isAdmin = trip?.admin_email === user?.email;
+  const isMember = user && (trip?.member_emails?.includes(user.email) || isAdmin);
   const [arrivals, setArrivals] = useState([]);
   const [members, setMembers] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
@@ -52,6 +55,7 @@ export default function TripPlan({ trip, user, onUpdate }) {
 
   return (
     <div className="pb-24">
+      {isAdmin && <TripPendingRequests trip={trip} isAdmin={isAdmin} onUpdate={onUpdate} />}
       <div className="mb-6">
         <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
           <Plane className="h-4 w-4" /> Arrivals & Departures

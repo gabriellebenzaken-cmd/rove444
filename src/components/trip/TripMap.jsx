@@ -116,131 +116,177 @@ export default function TripMap({ trip }) {
   }
 
   return (
-    <div className="map-section" style={{ paddingBottom: 120 }}>
-      <div className="flex gap-1 mb-4 p-1 rounded-full" style={{ background: "rgba(200,162,124,0.1)" }}>
-        {[{ key: "map", Icon: Map, label: "Map" }, { key: "list", Icon: List, label: "List" }].map(({ key, Icon, label }) => (
-          <button
-            key={key}
-            onClick={() => setView(key)}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium rounded-full transition-all"
-            style={view === key
-              ? { background: "white", color: "#C8A27C", boxShadow: "0 1px 4px rgba(0,0,0,0.1)" }
-              : { color: "#9CA3AF" }}
-          >
-            <Icon className="h-3.5 w-3.5" /> {label}
-          </button>
-        ))}
-      </div>
+    <div className="pb-32">
+      <div className="px-5 space-y-4">
+        {/* View toggle */}
+        <div className="flex gap-1 p-1 rounded-full bg-muted/70">
+          {[
+            { key: "map", Icon: Map, label: "Map" },
+            { key: "list", Icon: List, label: "List" }
+          ].map(({ key, Icon, label }) => (
+            <button
+              key={key}
+              onClick={() => setView(key)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-medium rounded-full transition-all ${
+                view === key ? "bg-card shadow-sm text-primary" : "text-muted-foreground"
+              }`}
+            >
+              <Icon className="h-4 w-4" /> {label}
+            </button>
+          ))}
+        </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#C8A27C", borderTopColor: "transparent" }} />
-        </div>
-      ) : view === "map" ? (
-        <>
-          {/* Day filter */}
-          {uniqueDays.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-1 mb-3" style={{ scrollbarWidth: 'none' }}>
-              <button
-                onClick={() => setSelectedDay(null)}
-                className="shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all"
-                style={!selectedDay ? { background: "#C8A27C", color: "white" } : { background: "rgba(200,162,124,0.1)", color: "#9A8A7A" }}
-              >
-                All
-              </button>
-              {uniqueDays.map((day, i) => (
-                <button
-                  key={day}
-                  onClick={() => setSelectedDay(day === selectedDay ? null : day)}
-                  className="shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all"
-                  style={selectedDay === day ? { background: DAY_COLORS[i % DAY_COLORS.length], color: "white" } : { background: "rgba(200,162,124,0.1)", color: "#9A8A7A" }}
-                >
-                  Day {i + 1}
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="map-card" style={{ border: "1px solid rgba(200,162,124,0.2)" }}>
-            <MapContainer center={center} zoom={12} style={{ height: "100%", width: "100%" }} zoomControl={false}>
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <MapInvalidator />
-              {markers.length > 0 && <FitBounds markers={markers} />}
-              {markers.filter(m => !selectedDay || m.date === selectedDay).map((m) => {
-                const emoji = getItemEmoji(m);
-                return (
-                  <Marker key={m.id} position={[m.lat, m.lng]} icon={createEmojiIcon(emoji)}>
-                    <Popup>
-                      <div style={{ fontFamily: "system-ui", minWidth: 120 }}>
-                        <p style={{ fontWeight: 600, fontSize: 12, marginBottom: 2 }}>{m.title}</p>
-                        {m.location && <p style={{ fontSize: 11, color: "#9A8A7A", margin: 0 }}>{m.location}</p>}
-                        {m.time && <p style={{ fontSize: 11, color: "#C8A27C", margin: "2px 0 0" }}>{m.time}</p>}
-                      </div>
-                    </Popup>
-                  </Marker>
-                );
-              })}
-            </MapContainer>
+        {/* Loading state */}
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
-          {uniqueDays.length > 0 && (
-            <div className="map-legend mt-3">
-              {uniqueDays.map((day, i) => (
-                <div key={day} className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.15)" }}>
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: DAY_COLORS[i % DAY_COLORS.length] }} />
-                  <span className="text-[10px] font-medium" style={{ color: "#3A3028" }}>Day {i + 1} · {format(parseISO(day), "MMM d")}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="space-y-4">
-          {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-14 h-14 rounded-[18px] flex items-center justify-center mb-4" style={{ background: "rgba(200,162,124,0.1)" }}>
-                <MapPin className="h-6 w-6" style={{ color: "#C8A27C" }} />
+        ) : view === "map" ? (
+          <>
+            {/* Day filter */}
+            {uniqueDays.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+                <button
+                  onClick={() => setSelectedDay(null)}
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    !selectedDay ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  All
+                </button>
+                {uniqueDays.map((day, i) => (
+                  <button
+                    key={day}
+                    onClick={() => setSelectedDay(day === selectedDay ? null : day)}
+                    className="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                    style={{
+                      background: selectedDay === day ? DAY_COLORS[i % DAY_COLORS.length] : "rgba(200,162,124,0.1)",
+                      color: selectedDay === day ? "white" : "#9A8A7A"
+                    }}
+                  >
+                    Day {i + 1}
+                  </button>
+                ))}
               </div>
-              <p className="text-sm font-medium" style={{ color: "#3A3028" }}>No itinerary items yet</p>
-              <p className="text-xs mt-1" style={{ color: "#B0A090" }}>Add activities in the Itinerary tab</p>
+            )}
+
+            {/* Map container */}
+            <div className="map-card rounded-2xl overflow-hidden border border-border shadow-sm" style={{ height: "400px" }}>
+              <MapContainer
+                center={center}
+                zoom={12}
+                style={{ height: "100%", width: "100%" }}
+                zoomControl={false}
+              >
+                {/* Light, minimal map tiles */}
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                  maxZoom={19}
+                />
+                <MapInvalidator />
+                {markers.length > 0 && <FitBounds markers={markers} />}
+                {markers
+                  .filter(m => !selectedDay || m.date === selectedDay)
+                  .map((m) => {
+                    const emoji = getItemEmoji(m);
+                    return (
+                      <Marker key={m.id} position={[m.lat, m.lng]} icon={createEmojiIcon(emoji)}>
+                        <Popup>
+                          <div style={{ fontFamily: "system-ui", minWidth: 120, fontSize: "14px" }}>
+                            <p style={{ fontWeight: 600, marginBottom: 4 }}>{m.title}</p>
+                            {m.location && (
+                              <p style={{ fontSize: 12, color: "#9A8A7A", margin: 0 }}>{m.location}</p>
+                            )}
+                            {m.time && (
+                              <p style={{ fontSize: 12, color: "#C8A27C", margin: "4px 0 0" }}>{m.time}</p>
+                            )}
+                          </div>
+                        </Popup>
+                      </Marker>
+                    );
+                  })}
+              </MapContainer>
             </div>
-          ) : (
-            uniqueDays.map((day, dayIdx) => {
-              const dayItems = items.filter(i => i.date === day);
-              const color = DAY_COLORS[dayIdx % DAY_COLORS.length];
-              return (
-                <div key={day}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-6 h-6 rounded-lg flex items-center justify-center text-white text-[10px] font-bold" style={{ background: color }}>
-                      {dayIdx + 1}
-                    </div>
-                    <p className="text-xs font-semibold" style={{ color: "#3A3028" }}>
-                      {format(parseISO(day), "EEE, MMM d")}
-                    </p>
+
+            {/* Legend */}
+            {uniqueDays.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {uniqueDays.map((day, i) => (
+                  <div
+                    key={day}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border border-border bg-card"
+                  >
+                    <div
+                      className="w-2 h-2 rounded-full"
+                      style={{ background: DAY_COLORS[i % DAY_COLORS.length] }}
+                    />
+                    <span>Day {i + 1} • {format(parseISO(day), "MMM d")}</span>
                   </div>
-                  <div className="space-y-2 pl-8">
-                    {dayItems.map(item => (
-                      <div key={item.id} className="p-3 rounded-xl flex items-start gap-3" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.12)" }}>
-                        <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: color }} />
-                        <div>
-                          <p className="text-sm font-medium" style={{ color: "#2A2018" }}>{item.title}</p>
-                          {item.location && (
-                            <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: "#9A8A7A" }}>
-                              <MapPin className="h-3 w-3" />{item.location}
-                            </p>
-                          )}
-                          {item.time && <p className="text-xs mt-0.5" style={{ color: "#C8A27C" }}>{item.time}</p>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          /* List view */
+          <div className="space-y-4">
+            {items.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 bg-muted">
+                  <MapPin className="h-6 w-6 text-primary" />
                 </div>
-              );
-            })
-          )}
-        </div>
-      )}
+                <p className="font-medium text-sm">No itinerary items yet</p>
+                <p className="text-xs text-muted-foreground mt-1">Add activities in the Plan tab</p>
+              </div>
+            ) : (
+              uniqueDays.map((day, dayIdx) => {
+                const dayItems = items.filter(i => i.date === day);
+                const color = DAY_COLORS[dayIdx % DAY_COLORS.length];
+                return (
+                  <div key={day}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div
+                        className="w-6 h-6 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                        style={{ background: color }}
+                      >
+                        {dayIdx + 1}
+                      </div>
+                      <p className="text-sm font-semibold">{format(parseISO(day), "EEE, MMM d")}</p>
+                    </div>
+                    <div className="space-y-2 pl-8">
+                      {dayItems.map(item => (
+                        <div
+                          key={item.id}
+                          className="p-3 rounded-xl border border-border bg-card"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className="w-2 h-2 rounded-full mt-1.5 shrink-0"
+                              style={{ background: color }}
+                            />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">{item.title}</p>
+                              {item.location && (
+                                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" />
+                                  {item.location}
+                                </p>
+                              )}
+                              {item.time && (
+                                <p className="text-xs text-primary mt-1">{item.time}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

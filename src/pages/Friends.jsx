@@ -65,10 +65,15 @@ export default function Friends() {
       const results = allUsers.filter(
         (u) =>
           u.id !== user.id &&
-          (u.full_name?.toLowerCase().includes(q) || u.username?.toLowerCase().includes(q))
+          (u.full_name?.toLowerCase().includes(q) || 
+           u.username?.toLowerCase().includes(q) ||
+           u.email?.toLowerCase().includes(q))
       );
       setSearchResults(results);
       setTab("search");
+      if (results.length === 0) {
+        toast.info("No users found");
+      }
     } catch (err) {
       console.error("Search failed:", err);
       toast.error("Search failed");
