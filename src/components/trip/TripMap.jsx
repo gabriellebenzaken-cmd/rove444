@@ -43,13 +43,17 @@ function createEmojiIcon(emoji) {
 function FitBounds({ markers }) {
   const map = useMap();
   useEffect(() => {
-    setTimeout(() => {
-      map.invalidateSize();
-      if (markers.length > 0) {
-        const bounds = L.latLngBounds(markers.map(m => [m.lat, m.lng]));
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
-      }
-    }, 100);
+    if (!map) return;
+    const timer = setTimeout(() => {
+      try {
+        map.invalidateSize();
+        if (markers.length > 0) {
+          const bounds = L.latLngBounds(markers.map(m => [m.lat, m.lng]));
+          map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+        }
+      } catch (e) {}
+    }, 300);
+    return () => clearTimeout(timer);
   }, [markers]);
   return null;
 }
@@ -57,7 +61,11 @@ function FitBounds({ markers }) {
 function MapInvalidator() {
   const map = useMap();
   useEffect(() => {
-    setTimeout(() => map.invalidateSize(), 150);
+    if (!map) return;
+    const timer = setTimeout(() => {
+      try { map.invalidateSize(); } catch (e) {}
+    }, 300);
+    return () => clearTimeout(timer);
   }, []);
   return null;
 }
