@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Link2, MapPin, Calendar, Users } from "lucide-react";
+import { ArrowLeft, Link2, MapPin, Calendar, Users, ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import TripPlan from "../components/trip/TripPlan";
@@ -11,6 +11,8 @@ import TripItinerary from "../components/trip/TripItinerary";
 import TripCosts from "../components/trip/TripCosts";
 import TripAira from "../components/trip/TripAira";
 import TripLinks from "../components/trip/TripLinks";
+import TripChat from "../components/trip/TripChat";
+import TripCoverEditor from "../components/trip/TripCoverEditor";
 
 const tripTabs = [
   { key: "plan", label: "Plan" },
@@ -18,6 +20,7 @@ const tripTabs = [
   { key: "itinerary", label: "Itinerary" },
   { key: "costs", label: "Costs" },
   { key: "links", label: "Links" },
+  { key: "chat", label: "Chat" },
   { key: "aira", label: "Aira" },
 ];
 
@@ -27,6 +30,7 @@ export default function TripDetail() {
   const [trip, setTrip] = useState(null);
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState("plan");
+  const [showCoverEditor, setShowCoverEditor] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -86,7 +90,15 @@ export default function TripDetail() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </div>
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-4 right-4 flex gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full bg-black/30 text-white hover:bg-black/50 h-9 w-9"
+            onClick={() => setShowCoverEditor(true)}
+          >
+            <ImageIcon className="h-5 w-5" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -136,7 +148,15 @@ export default function TripDetail() {
         {tab === "itinerary" && <TripItinerary trip={trip} user={user} />}
         {tab === "costs" && <TripCosts trip={trip} user={user} />}
         {tab === "links" && <TripLinks trip={trip} user={user} />}
+        {tab === "chat" && <TripChat trip={trip} user={user} />}
         {tab === "aira" && <TripAira trip={trip} />}
+
+        <TripCoverEditor
+          open={showCoverEditor}
+          onOpenChange={setShowCoverEditor}
+          trip={trip}
+          onUpdated={loadData}
+        />
       </div>
     </div>
   );
