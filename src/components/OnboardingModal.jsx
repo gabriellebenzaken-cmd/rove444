@@ -1,0 +1,68 @@
+import { useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Sparkles } from "lucide-react";
+
+export default function OnboardingModal({ user, onComplete }) {
+  const [username, setUsername] = useState(user?.full_name?.toLowerCase().replace(/\s+/g, "_") || "");
+  const [bio, setBio] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!username.trim()) return;
+    setSaving(true);
+    await base44.auth.updateMe({ username: username.trim(), bio: bio.trim(), onboarded: true });
+    onComplete();
+  }
+
+  return (
+    <Dialog open>
+      <DialogContent className="mx-4 rounded-2xl max-w-sm" hideCloseButton>
+        <DialogHeader>
+          <div className="flex flex-col items-center mb-2">
+            <div className="w-14 h-14 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl flex items-center justify-center mb-3">
+              <Sparkles className="h-7 w-7 text-primary" />
+            </div>
+            <DialogTitle className="text-xl">Welcome to Rove!</DialogTitle>
+            <p className="text-sm text-muted-foreground text-center mt-1">
+              Hey {user?.full_name?.split(" ")[0]} 👋 Set up your profile to get started.
+            </p>
+          </div>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label>Username <span className="text-destructive">*</span></Label>
+            <div className="flex items-center mt-1">
+              <span className="px-3 py-2 bg-muted text-muted-foreground text-sm rounded-l-md border border-r-0 border-input">@</span>
+              <Input
+                value={username}
+                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                placeholder="your_username"
+                className="rounded-l-none"
+                required
+              />
+            </div>
+          </div>
+          <div>
+            <Label>Bio <span className="text-muted-foreground text-xs">(optional)</span></Label>
+            <Textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Avid traveler, coffee enthusiast ✈️"
+              className="mt-1"
+              rows={2}
+            />
+          </div>
+          <Button type="submit" className="w-full rounded-full" disabled={saving || !username.trim()}>
+            {saving ? "Setting up..." : "Let's go 🚀"}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

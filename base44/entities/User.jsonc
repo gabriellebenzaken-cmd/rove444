@@ -11,13 +11,21 @@
       "default": "user"
     },
     "username": {
-      "type": "string"
+      "type": "string",
+      "description": "Unique display handle"
     },
     "bio": {
-      "type": "string"
+      "type": "string",
+      "description": "Short bio"
     },
     "profile_photo": {
-      "type": "string"
+      "type": "string",
+      "description": "URL to profile photo (Google or uploaded)"
+    },
+    "onboarded": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether user has completed initial profile setup"
     }
   }
 }
