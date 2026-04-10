@@ -101,10 +101,9 @@ export default function Notifications() {
                   <p className="text-sm leading-snug" style={{ color: "#2A2018", fontWeight: isUnread ? 500 : 400 }}>{n.message}</p>
                   {n.created_date && (
                     <p className="text-[11px] mt-1" style={{ color: "#B0A090" }}>
-                      {formatDistanceToNow(new Date(n.created_date), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(n.created_date), { addSuffix: true, includeSeconds: false })}
                     </p>
                   )}
-                </div>
                 {isUnread && (
                   <div className="w-2 h-2 rounded-full mt-2 shrink-0" style={{ background: "#C8A27C" }} />
                 )}
