@@ -17,11 +17,17 @@
     "category": {
       "type": "string",
       "enum": [
-        "lodging",
+        "general",
+        "hotel",
+        "food",
         "restaurant",
+        "cafe",
+        "beach",
+        "museum",
         "activity",
-        "transport",
-        "general"
+        "nightlife",
+        "shopping",
+        "other"
       ],
       "default": "general"
     }
