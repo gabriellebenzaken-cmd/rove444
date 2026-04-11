@@ -132,7 +132,7 @@ export default function InviteMembersModal({ group, user, isOpen, onClose, onSuc
           status: "pending",
         });
 
-        // Send notification
+        // Send notification — this is an admin-sent invite (user can Accept/Decline)
         await base44.entities.Notification.create({
           user_email: friend.email,
           type: "group_invite",

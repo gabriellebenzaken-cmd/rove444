@@ -20,8 +20,10 @@ const TYPE_CONFIG = {
   friend_request: { icon: UserPlus, color: "#C8A27C", bg: "rgba(200,162,124,0.12)", actionable: true },
   friend_accepted: { icon: Check, color: "#6BAE8A", bg: "rgba(107,174,138,0.12)" },
   trip_added: { icon: MapPin, color: "#7090B0", bg: "rgba(112,144,176,0.12)" },
+  trip_request: { icon: MapPin, color: "#7090B0", bg: "rgba(112,144,176,0.12)" },
   group_added: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)" },
   group_invite: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)", actionable: true },
+  group_join_request: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)" },
   group_accepted: { icon: Check, color: "#6BAE8A", bg: "rgba(107,174,138,0.12)" },
   group_declined: { icon: X, color: "#EF4444", bg: "rgba(239,68,68,0.12)" },
   trip_approved: { icon: Check, color: "#6BAE8A", bg: "rgba(107,174,138,0.12)" },
@@ -54,9 +56,12 @@ export default function Notifications() {
     setNotifications([]);
   }
 
+  function removeNotif(id) {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }
+
   async function acceptFriendRequest(n) {
     try {
-      // Fetch all pending requests and find the one from sender to me
       const allReqs = await base44.entities.FriendRequest.list("-created_date", 200);
       const req = allReqs.find(
         (r) => r.sender_email === n.related_user_email && r.receiver_email === user.email && r.status === "pending"
@@ -64,8 +69,8 @@ export default function Notifications() {
       if (!req) { toast.error("Request not found"); return; }
       await base44.entities.FriendRequest.update(req.id, { status: "accepted" });
       await base44.entities.Notification.delete(n.id);
+      removeNotif(n.id);
       toast.success("Friend added!");
-      loadData();
     } catch (err) {
       toast.error("Failed to accept");
     }
@@ -80,8 +85,8 @@ export default function Notifications() {
       if (!req) { toast.error("Request not found"); return; }
       await base44.entities.FriendRequest.update(req.id, { status: "declined" });
       await base44.entities.Notification.delete(n.id);
+      removeNotif(n.id);
       toast.success("Request declined");
-      loadData();
     } catch (err) {
       toast.error("Failed to decline");
     }
@@ -95,14 +100,17 @@ export default function Notifications() {
       );
       if (!inv) { toast.error("Invite not found"); return; }
       await base44.entities.GroupInvite.update(inv.id, { status: "accepted" });
-      const group = await base44.entities.Group.list("-created_date", 200).then(gs => gs.find(g => g.id === n.related_group_id));
+      const groups = await base44.entities.Group.list("-created_date", 200);
+      const group = groups.find(g => g.id === n.related_group_id);
       if (group) {
         const updated = [...new Set([...(group.member_emails || []), user.email])];
         await base44.entities.Group.update(group.id, { member_emails: updated });
       }
-      await base44.entities.Notification.delete(n.id);
+      // Clean up all pending invites for this group+user
+      const staleNotifs = notifications.filter(x => x.type === "group_invite" && x.related_group_id === n.related_group_id);
+      await Promise.all(staleNotifs.map(x => base44.entities.Notification.delete(x.id)));
+      setNotifications(prev => prev.filter(x => !(x.type === "group_invite" && x.related_group_id === n.related_group_id)));
       toast.success("Joined group!");
-      loadData();
     } catch (err) {
       toast.error("Failed to accept invite");
     }
@@ -116,8 +124,8 @@ export default function Notifications() {
       );
       if (inv) await base44.entities.GroupInvite.update(inv.id, { status: "declined" });
       await base44.entities.Notification.delete(n.id);
+      removeNotif(n.id);
       toast.success("Invite declined");
-      loadData();
     } catch (err) {
       toast.error("Failed to decline invite");
     }

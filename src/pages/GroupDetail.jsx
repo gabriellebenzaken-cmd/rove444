@@ -38,10 +38,18 @@ export default function GroupDetail() {
     setGroup(g);
 
     if (g) {
-      const allUsers = await base44.entities.User.list("-created_date", 200);
-      setMembers(allUsers.filter((u) => g.member_emails?.includes(u.email)));
-
-      const allTrips = await base44.entities.Trip.list("-created_date", 50);
+      const [allUsers, profiles, allTrips] = await Promise.all([
+        base44.entities.User.list("-created_date", 200),
+        base44.entities.UserProfile.list("-created_date", 200),
+        base44.entities.Trip.list("-created_date", 50),
+      ]);
+      const memberUsers = allUsers.filter((u) => g.member_emails?.includes(u.email));
+      // Enrich with UserProfile data for profile_photo and username
+      const enriched = memberUsers.map((u) => {
+        const profile = profiles.find((p) => p.user_email === u.email);
+        return { ...u, profile_photo: profile?.profile_photo || null, username: profile?.username || null };
+      });
+      setMembers(enriched);
       setTrips(allTrips.filter((t) => t.group_id === id));
     }
     setLoading(false);

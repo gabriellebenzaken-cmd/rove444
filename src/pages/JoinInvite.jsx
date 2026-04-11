@@ -110,7 +110,7 @@ export default function JoinInvite() {
 
         await base44.entities.Notification.create({
           user_email: entity.admin_email,
-          type: "group_invite",
+          type: "group_join_request",
           message: `${user.full_name} requested to join ${entity.name}`,
           related_user_email: user.email,
           related_user_name: user.full_name,
