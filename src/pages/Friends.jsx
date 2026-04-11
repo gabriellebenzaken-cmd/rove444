@@ -149,23 +149,38 @@ export default function Friends() {
 
   async function sendRequest(toUser) {
     try {
-      // Check if already friends
-      const isFriend = friends.some((f) => f.id === toUser.id);
-      if (isFriend) {
+      // Only block if currently an active friend (record exists + accepted)
+      const activeFriendRecord = allRequests.find(
+        (r) =>
+          r.status === "accepted" &&
+          ((r.sender_id === user.id && r.receiver_id === toUser.id) ||
+            (r.sender_id === toUser.id && r.receiver_id === user.id))
+      );
+      if (activeFriendRecord) {
         toast.error("Already friends");
         return;
       }
 
       // Only block if there is currently a PENDING request between them
-      const existing = allRequests.find(
+      const pendingRecord = allRequests.find(
         (r) =>
           r.status === "pending" &&
           ((r.sender_id === user.id && r.receiver_id === toUser.id) ||
             (r.sender_id === toUser.id && r.receiver_id === user.id))
       );
-      if (existing) {
+      if (pendingRecord) {
         toast.error("Friend request already pending");
         return;
+      }
+
+      // Delete any stale old records (declined, old accepted-then-removed, etc.) before creating fresh request
+      const staleRecords = allRequests.filter(
+        (r) =>
+          (r.sender_id === user.id && r.receiver_id === toUser.id) ||
+          (r.sender_id === toUser.id && r.receiver_id === user.id)
+      );
+      for (const stale of staleRecords) {
+        try { await base44.entities.FriendRequest.delete(stale.id); } catch {}
       }
 
       const req = await base44.entities.FriendRequest.create({
