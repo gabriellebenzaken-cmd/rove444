@@ -5,9 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Plus, Trash2, ArrowRight, Clock, CheckCircle2,
-  XCircle, Send, ChevronDown, ChevronUp, Receipt
+  XCircle, Send, ChevronDown, ChevronUp, Receipt, X
 } from "lucide-react";
-import BottomSheet from "../BottomSheet";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
@@ -606,8 +605,28 @@ export default function TripCosts({ trip, user }) {
         </div>
       )}
 
-      <BottomSheet open={showAdd} onClose={() => setShowAdd(false)} title="Add Expense">
-        <form onSubmit={addExpense} className="space-y-3">
+      {showAdd && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setShowAdd(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl max-h-[90vh] overflow-y-auto relative"
+            style={{ background: "#FAF7F4" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowAdd(false)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full z-10"
+              style={{ background: "rgba(200,162,124,0.15)" }}
+            >
+              <X className="h-4 w-4" style={{ color: "#9A8A7A" }} />
+            </button>
+
+            <div className="px-6 py-6">
+              <h3 className="text-lg font-semibold mb-4" style={{ color: "#2A2018" }}>Add Expense</h3>
+              <form onSubmit={addExpense} className="space-y-3">
             <div>
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Description</Label>
               <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What was it for?" className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
@@ -707,9 +726,12 @@ export default function TripCosts({ trip, user }) {
               </Select>
             </div>
 
-            <button type="submit" className="w-full h-10 rounded-full text-sm font-semibold mt-1" style={{ background: "#C8A27C", color: "white" }}>Add Expense</button>
-          </form>
-      </BottomSheet>
+                <button type="submit" className="w-full h-10 rounded-full text-sm font-semibold mt-4" style={{ background: "#C8A27C", color: "white" }}>Add Expense</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
