@@ -69,31 +69,33 @@ export default function InviteMembersModal({ group, user, isOpen, onClose, onSuc
 
       console.log("[InviteModal] Friends before filtering:", friendList);
 
-      // Filter out already invited or members
-      const existingInvites = await base44.entities.GroupInvite.filter(
-        { group_id: group.id },
-        "-created_date",
-        200
-      );
-      const existingEmails = new Set(existingInvites.map((inv) => inv.invitee_email));
-      const memberEmails = new Set(group.member_emails || []);
+      // Fetch pending invites separately — non-fatal if it fails
+      let existingEmails = new Set();
+      try {
+        const existingInvites = await base44.entities.GroupInvite.filter(
+          { group_id: group.id, status: "pending" },
+          "-created_date",
+          200
+        );
+        existingEmails = new Set(existingInvites.map((inv) => inv.invitee_email));
+        console.log("[InviteModal] Pending invite emails:", Array.from(existingEmails));
+      } catch (err) {
+        console.warn("[InviteModal] Could not load existing invites, skipping filter:", err);
+      }
 
+      const memberEmails = new Set(group.member_emails || []);
       console.log("[InviteModal] Member emails:", Array.from(memberEmails));
-      console.log("[InviteModal] Existing invite emails:", Array.from(existingEmails));
 
       const filtered = friendList.filter((f) => {
         const isAlreadyMember = memberEmails.has(f.email);
         const isAlreadyInvited = existingEmails.has(f.email);
-        const shouldInclude = !isAlreadyMember && !isAlreadyInvited;
-        
-        if (!shouldInclude) {
-          console.log(`[InviteModal] Filtering out ${f.email}: member=${isAlreadyMember}, invited=${isAlreadyInvited}`);
+        if (isAlreadyMember || isAlreadyInvited) {
+          console.log(`[InviteModal] Excluding ${f.email}: member=${isAlreadyMember}, invited=${isAlreadyInvited}`);
         }
-        
-        return shouldInclude;
+        return !isAlreadyMember && !isAlreadyInvited;
       });
 
-      console.log("[InviteModal] Filtered friends ready to invite:", filtered);
+      console.log("[InviteModal] Final invite-eligible friends:", filtered);
 
       setFriends(filtered);
       setSelectedFriends([]);
