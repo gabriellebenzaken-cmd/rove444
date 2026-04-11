@@ -16,6 +16,7 @@ export default function JoinInvite() {
   const [isAuthed, setIsAuthed] = useState(false);
   const [isMember, setIsMember] = useState(false);
   const [requesting, setRequesting] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [showRequests, setShowRequests] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -81,16 +82,31 @@ export default function JoinInvite() {
       setRequesting(true);
 
       if (type === "group") {
+        // Check for existing pending request first
+        let existing = [];
+        try {
+          existing = await base44.entities.GroupInvite.filter(
+            { group_id: entity.id, invitee_email: user.email, status: "pending" },
+            "-created_date", 1
+          );
+        } catch {}
+        if (existing.length > 0) {
+          toast.error("Request already sent");
+          setRequesting(false);
+          setShowConfirm(false);
+          setRequestSent(true);
+          return;
+        }
+
         // Create pending invite request (user sends request to admin)
-        const groupInv = await base44.entities.GroupInvite.create({
+        await base44.entities.GroupInvite.create({
           group_id: entity.id,
           invitee_email: user.email,
+          invitee_name: user.full_name,
           inviter_email: entity.admin_email,
           inviter_name: entity.admin_name || entity.admin_email.split("@")[0],
           status: "pending",
         });
-
-        console.log("[Group] Invite created:", groupInv.id, "invitee:", user.email);
 
         await base44.entities.Notification.create({
           user_email: entity.admin_email,
@@ -103,6 +119,7 @@ export default function JoinInvite() {
         });
 
         toast.success("Join request sent!");
+        setRequestSent(true);
         setShowConfirm(false);
       } else {
         // Trip join request (unchanged)
@@ -291,10 +308,12 @@ export default function JoinInvite() {
 
           {isMember ? (
             <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 text-center">
-              <p className="text-sm font-medium text-primary mb-3">You're a member of this trip</p>
-              <Button className="w-full rounded-full" onClick={() => navigate(`/trip/${entity.id}`)}>
-                View Trip
-              </Button>
+              <p className="text-sm font-medium text-primary mb-3">You're already a member</p>
+              <Button className="w-full rounded-full" onClick={() => navigate(type === "group" ? `/group/${entity.id}` : `/trip/${entity.id}`)}>View {type === "group" ? "Group" : "Trip"}</Button>
+            </div>
+          ) : requestSent ? (
+            <div className="bg-muted/60 border border-border rounded-xl p-4 text-center">
+              <p className="text-sm font-medium text-muted-foreground">✓ Request sent — waiting for admin approval</p>
             </div>
           ) : (
             <Button

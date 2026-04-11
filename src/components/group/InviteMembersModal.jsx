@@ -123,6 +123,7 @@ export default function InviteMembersModal({ group, user, isOpen, onClose, onSuc
         await base44.entities.GroupInvite.create({
           group_id: group.id,
           invitee_email: friend.email,
+          invitee_name: friend.full_name || friend.name || friend.email,
           inviter_email: user.email,
           inviter_name: user.full_name,
           status: "pending",
@@ -181,7 +182,7 @@ export default function InviteMembersModal({ group, user, isOpen, onClose, onSuc
             <div className="flex-1 overflow-y-auto space-y-2 mb-4 -mx-2 px-2">
               {filteredFriends.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-6">
-                  {friends.length === 0 ? "No friends to invite" : "No results"}
+                  {friends.length === 0 ? "No friends available to invite" : "No matching friends found"}
                 </p>
               ) : (
                 filteredFriends.map((friend) => (

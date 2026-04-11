@@ -90,10 +90,10 @@ export default function GroupPendingInvites({ group, isAdmin, onUpdate }) {
           <div key={inv.id} className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
             <div className="flex items-center gap-3 flex-1">
               <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary shrink-0">
-                {inv.inviter_name?.[0] || "?"}
+                {(inv.invitee_name || inv.invitee_email)?.[0]?.toUpperCase() || "?"}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium truncate">{inv.inviter_name}</p>
+                <p className="text-sm font-medium truncate">{inv.invitee_name || inv.invitee_email}</p>
                 <p className="text-xs text-muted-foreground truncate">{inv.invitee_email}</p>
               </div>
             </div>

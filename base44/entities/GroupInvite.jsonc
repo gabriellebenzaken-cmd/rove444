@@ -8,6 +8,10 @@
     "invitee_email": {
       "type": "string"
     },
+    "invitee_name": {
+      "type": "string",
+      "description": "Name of the person being invited or requesting to join"
+    },
     "inviter_email": {
       "type": "string"
     },

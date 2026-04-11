@@ -166,6 +166,17 @@ export default function TripPlan({ trip, user, onUpdate }) {
     return to ? `${from} → ${to}` : from;
   }
 
+  function formatTime(timeStr) {
+    if (!timeStr) return null;
+    // timeStr is "HH:MM" (24h) from time input — convert to 12h display
+    const [hStr, mStr] = timeStr.split(":");
+    const h = parseInt(hStr, 10);
+    const m = mStr || "00";
+    const ampm = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 || 12;
+    return `${h12}:${m} ${ampm}`;
+  }
+
   function closeDialog() {
     setEditingId(null);
     setForm({ ...EMPTY_FORM });
@@ -244,13 +255,13 @@ export default function TripPlan({ trip, user, onUpdate }) {
                     {a.arrival_date && (
                       <div className="flex items-center gap-2">
                         <Clock className="h-3 w-3 shrink-0" />
-                        <span>Arrives {format(new Date(a.arrival_date + "T00:00:00"), "MMM d")}{a.arrival_time ? ` at ${a.arrival_time}` : ""}</span>
+                        <span>Arrives {format(new Date(a.arrival_date + "T00:00:00"), "MMM d")}{a.arrival_time ? ` at ${formatTime(a.arrival_time)}` : ""}</span>
                       </div>
                     )}
                     {a.is_round_trip && a.departure_date && (
                       <div className="flex items-center gap-2">
                         <Clock className="h-3 w-3 shrink-0" />
-                        <span>Returns {format(new Date(a.departure_date + "T00:00:00"), "MMM d")}{a.departure_time ? ` at ${a.departure_time}` : ""}</span>
+                        <span>Returns {format(new Date(a.departure_date + "T00:00:00"), "MMM d")}{a.departure_time ? ` at ${formatTime(a.departure_time)}` : ""}</span>
                       </div>
                     )}
                   </div>
