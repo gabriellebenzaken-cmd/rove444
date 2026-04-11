@@ -24,6 +24,12 @@ export default function Friends() {
 
   useEffect(() => {
     loadData();
+
+    // Subscribe to UserProfile changes to refresh friend list
+    const unsubscribe = base44.entities.UserProfile.subscribe(() => {
+      loadData();
+    });
+    return () => unsubscribe?.();
   }, []);
 
   async function loadData() {
@@ -75,27 +81,28 @@ export default function Friends() {
       console.log("[Friends] Normalized friends from FriendRequest:", friendsMap.size);
       let friendList = Array.from(friendsMap.values());
 
-      // Optional: Enrich friends with User data (username, profile_photo)
-      // If this fails, still show the friends list
+      // Enrich friends with UserProfile data (username, bio, profile_photo)
+      // This ensures we always have the latest profile info
       try {
-        const allUsers = await base44.entities.User.list("-created_date", 200) || [];
-        console.log("[Friends] User.list() loaded:", allUsers.length, "records");
-        
+        const profiles = await base44.entities.UserProfile.list("-created_date", 200) || [];
+        console.log("[Friends] UserProfile.list() loaded:", profiles.length, "records");
+
         friendList = friendList.map((friend) => {
-          const userData = allUsers.find((u) => u.id === friend.id);
-          if (userData) {
+          const profileData = profiles.find((p) => p.user_email === friend.email);
+          if (profileData) {
             return {
               ...friend,
-              username: userData.data?.username,
-              profile_photo: userData.data?.profile_photo,
-              full_name: userData.full_name, // add full_name from User
+              username: profileData.username,
+              profile_photo: profileData.profile_photo,
+              bio: profileData.bio,
+              full_name: profileData.full_name || friend.display_name,
             };
           }
           return friend;
         });
-        console.log("[Friends] Enriched friend data from User records");
+        console.log("[Friends] Enriched friend data from UserProfile records");
       } catch (err) {
-        console.warn("[Friends] User.list() failed; using FriendRequest data only:", err);
+        console.warn("[Friends] UserProfile.list() failed; using FriendRequest data only:", err);
         // Continue with friends list built from FriendRequest
       }
       setFriends(friendList);

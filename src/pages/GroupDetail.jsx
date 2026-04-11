@@ -28,6 +28,12 @@ export default function GroupDetail() {
 
   useEffect(() => {
     loadData();
+
+    // Subscribe to UserProfile changes to refresh member list
+    const unsubscribe = base44.entities.UserProfile.subscribe(() => {
+      loadData();
+    });
+    return () => unsubscribe?.();
   }, [id]);
 
   async function loadData() {
@@ -39,12 +45,12 @@ export default function GroupDetail() {
       setGroup(g || null);
 
       if (g) {
-        // Use UserProfile (readable by all users) instead of User.list() which has admin-only RLS
+        // Use fresh UserProfile data to ensure no stale member info
         const [profiles, allTrips] = await Promise.all([
           base44.entities.UserProfile.list("-created_date", 500),
           base44.entities.Trip.list("-created_date", 50),
         ]);
-        // Build member list from group.member_emails + UserProfile data
+        // Build member list from group.member_emails + fresh UserProfile data
         const enriched = (g.member_emails || []).map((email) => {
           const profile = profiles.find((p) => p.user_email === email);
           return {

@@ -31,7 +31,9 @@ export default function FriendProfileModal({ friend, onClose, currentUserEmail }
       base44.entities.UserProfile.filter({ user_email: friend.email }, "-created_date", 1),
       base44.auth.me(),
     ]).then(async ([results, me]) => {
-      setProfile(results[0] || null);
+      // Always use fresh UserProfile record
+      const freshProfile = results[0] || null;
+      setProfile(freshProfile);
       setCurrentUser(me);
       if (me && friend.email && me.email !== friend.email) {
         const reqs = await base44.entities.FriendRequest.list("-created_date", 200).catch(() => []);
