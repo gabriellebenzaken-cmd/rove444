@@ -46,6 +46,7 @@ export default function Friends() {
       setAllRequests(reqs);
 
       // Build friends list from accepted FriendRequest rows (no User.list() dependency)
+      // Only treat truly accepted records as active friends (not removed/stale)
       const accepted = reqs.filter((r) => r.status === "accepted");
       console.log("[Friends] Accepted requests:", accepted.length);
       
@@ -331,10 +332,12 @@ export default function Friends() {
             <>
               <p className="text-xs text-muted-foreground mb-2">{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</p>
               {searchResults.map((u) => {
+                // Only treat as friend if there's a current accepted record in the friends list
                 const isFriend = friends.some((f) => f.id === u.user_id);
-                const isOutgoing = sentRequests.some((p) => p.receiver_id === u.user_id && p.status === "pending");
-                const isIncoming = receivedRequests.some((p) => p.sender_id === u.user_id && p.status === "pending");
-                const incomingReq = receivedRequests.find((p) => p.sender_id === u.user_id && p.status === "pending");
+                // Only treat as pending if there's a truly pending request right now
+                const isOutgoing = allRequests.some((p) => p.status === "pending" && p.sender_id === user.id && p.receiver_id === u.user_id);
+                const isIncoming = allRequests.some((p) => p.status === "pending" && p.sender_id === u.user_id && p.receiver_id === user.id);
+                const incomingReq = allRequests.find((p) => p.status === "pending" && p.sender_id === u.user_id && p.receiver_id === user.id);
                 return (
                   <div key={u.user_id} className="bg-white rounded-[18px] p-4 shadow-[0_1px_8px_rgba(0,0,0,0.06)] flex items-center justify-between">
                     <div className="flex items-center gap-3">

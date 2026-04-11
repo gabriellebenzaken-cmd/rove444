@@ -53,12 +53,12 @@ export default function GroupChat({ group, user }) {
       if (!pollQuestion.trim() || opts.length < 2) return;
       setSending(true);
       try {
-        const created = await base44.entities.TripMessage.create({
+        // Do NOT append here — the subscription handler adds the message to avoid duplicates
+        await base44.entities.TripMessage.create({
           trip_id: group.id, sender_email: user.email, sender_name: user.full_name,
           content: pollQuestion.trim(), message_type: "poll",
           poll_question: pollQuestion.trim(), poll_options: opts, poll_votes: {},
         });
-        if (created) setMessages(prev => [...prev, created]);
         setPollQuestion(""); setPollOptions(["", ""]); setMode("text");
       } catch (err) {
         console.error("[GroupChat] Failed to send poll:", err);
@@ -73,11 +73,11 @@ export default function GroupChat({ group, user }) {
     setText("");
     setSending(true);
     try {
-      const created = await base44.entities.TripMessage.create({
+      // Do NOT append here — the subscription handler adds the message to avoid duplicates
+      await base44.entities.TripMessage.create({
         trip_id: group.id, sender_email: user.email, sender_name: user.full_name,
         content, message_type: "text",
       });
-      if (created) setMessages(prev => [...prev, created]);
     } catch (err) {
       console.error("[GroupChat] Failed to send message:", err);
       setText(content); // restore text on failure
