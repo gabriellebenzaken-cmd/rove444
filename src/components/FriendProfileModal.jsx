@@ -50,8 +50,8 @@ export default function FriendProfileModal({ friend, onClose, currentUserEmail }
   if (!friend) return null;
 
   const displayName = profile?.full_name || friend.full_name || friend.display_name || "Unknown";
-  const username = profile?.username || friend.username;
-  const photo = profile?.profile_photo || friend.profile_photo;
+  const username = profile?.username;
+  const photo = profile?.profile_photo;
   const bio = profile?.bio;
 
   async function sendFriendRequest() {
@@ -105,7 +105,7 @@ export default function FriendProfileModal({ friend, onClose, currentUserEmail }
             </div>
             <h2 className="text-xl font-semibold" style={{ color: "#1A1A1A" }}>{displayName}</h2>
             {username && (
-              <p className="text-sm mt-0.5" style={{ color: "#B0A090" }}>@{username.replace(/^@/, "")}</p>
+              <p className="text-sm mt-0.5" style={{ color: "#B0A090" }}>@{username}</p>
             )}
             {friendStatus === "none" && (
               <button onClick={sendFriendRequest} className="mt-3 px-5 py-1.5 rounded-full text-sm font-semibold" style={{ background: "#C8A27C", color: "white" }}>Add Friend</button>
