@@ -170,10 +170,10 @@ export default function InviteMembersModal({ group, user, isOpen, onClose, onSuc
         </DialogHeader>
 
         <Input
-          placeholder="Search friends..."
+          placeholder="Search friends"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="rounded-lg mb-3"
+          className="w-full rounded-lg mb-3 mt-2"
         />
 
         {loading ? (
