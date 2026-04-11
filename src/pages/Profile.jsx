@@ -38,7 +38,8 @@ export default function Profile() {
 
   async function handleSave() {
     setUsernameError("");
-    if (form.username) {
+    const usernameChanged = form.username.toLowerCase() !== (user.username || "").toLowerCase();
+    if (form.username && usernameChanged) {
       const allUsers = await base44.entities.User.list("-created_date", 500);
       const taken = allUsers.find(u => u.username?.toLowerCase() === form.username.toLowerCase() && u.email !== user.email);
       if (taken) { setUsernameError("Username already taken"); return; }
