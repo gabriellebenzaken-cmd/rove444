@@ -10,8 +10,10 @@ import { toast } from "sonner";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ username: "", bio: "", profile_photo: "" });
+  const [payForm, setPayForm] = useState({ venmo: "", cashapp: "", paypal: "", zelle: "", instagram: "", twitter: "", tiktok: "", snapchat: "" });
   const [loading, setLoading] = useState(true);
   const [usernameError, setUsernameError] = useState("");
   const [trips, setTrips] = useState([]);
@@ -27,6 +29,11 @@ export default function Profile() {
     setUser(me);
     setForm({ username: me.username || "", bio: me.bio || "", profile_photo: me.profile_photo || "" });
 
+    const profiles = await base44.entities.UserProfile.filter({ user_id: me.id }, "-created_date", 1);
+    const p = profiles[0] || null;
+    setProfile(p);
+    if (p) setPayForm({ venmo: p.venmo || "", cashapp: p.cashapp || "", paypal: p.paypal || "", zelle: p.zelle || "", instagram: p.instagram || "", twitter: p.twitter || "", tiktok: p.tiktok || "", snapchat: p.snapchat || "" });
+
     const allTrips = await base44.entities.Trip.list("-created_date", 50);
     setTrips(allTrips.filter((t) => t.member_emails?.includes(me.email) || t.admin_email === me.email));
 
@@ -34,6 +41,13 @@ export default function Profile() {
     setGroups(allGroups.filter((g) => g.member_emails?.includes(me.email) || g.admin_email === me.email));
 
     setLoading(false);
+  }
+
+  async function savePaymentProfile() {
+    if (!profile) return;
+    await base44.entities.UserProfile.update(profile.id, payForm);
+    setProfile({ ...profile, ...payForm });
+    toast.success("Links saved!");
   }
 
   async function handleSave() {
@@ -117,6 +131,43 @@ export default function Profile() {
         </div>
       </div>
 
+      {/* Payment & Social Links (display when not editing) */}
+      {!editing && profile && (() => {
+        const payLinks = [
+          { key: "venmo", label: "Venmo", prefix: "https://venmo.com/" },
+          { key: "cashapp", label: "Cash App", prefix: "https://cash.app/" },
+          { key: "paypal", label: "PayPal", prefix: "https://paypal.me/" },
+          { key: "zelle", label: "Zelle", prefix: null },
+          { key: "instagram", label: "Instagram", prefix: "https://instagram.com/" },
+          { key: "twitter", label: "X", prefix: "https://x.com/" },
+          { key: "tiktok", label: "TikTok", prefix: "https://tiktok.com/@" },
+          { key: "snapchat", label: "Snap", prefix: "https://snapchat.com/add/" },
+        ].filter(l => profile[l.key]);
+        if (payLinks.length === 0) return null;
+        return (
+          <div className="bg-white rounded-[18px] shadow-[0_2px_10px_rgba(0,0,0,0.06)] p-4 mb-4">
+            <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: "#C8A27C" }}>Links</p>
+            <div className="flex flex-wrap gap-2">
+              {payLinks.map(l => {
+                const handle = profile[l.key];
+                const href = l.prefix ? `${l.prefix}${handle.replace(/^[@$\/]/, "")}` : null;
+                return href ? (
+                  <a key={l.key} href={href} target="_blank" rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-full text-xs font-medium"
+                    style={{ background: "rgba(200,162,124,0.1)", color: "#7A6A5A" }}>
+                    {l.label}
+                  </a>
+                ) : (
+                  <span key={l.key} className="px-3 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(200,162,124,0.1)", color: "#7A6A5A" }}>
+                    {l.label}: {handle}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Edit Form */}
       {editing ? (
         <div className="bg-white rounded-[18px] shadow-[0_2px_10px_rgba(0,0,0,0.06)] p-5 mb-4 space-y-4">
@@ -153,9 +204,46 @@ export default function Profile() {
           </div>
         </div>
       ) : (
-        <Button variant="outline" className="w-full rounded-full" onClick={() => setEditing(true)}>
+        <Button variant="outline" className="w-full rounded-full mb-4" onClick={() => setEditing(true)}>
           <Edit3 className="h-4 w-4 mr-1.5" /> Edit Profile
         </Button>
+      )}
+
+      {/* Payment & Social Edit */}
+      {profile && (
+        <div className="bg-white rounded-[18px] shadow-[0_2px_10px_rgba(0,0,0,0.06)] p-5 mb-4">
+          <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: "#C8A27C" }}>Payment & Social</p>
+          <div className="space-y-2.5">
+            {[
+              { key: "venmo", label: "Venmo", placeholder: "@username" },
+              { key: "cashapp", label: "Cash App", placeholder: "$cashtag" },
+              { key: "paypal", label: "PayPal", placeholder: "username or me/link" },
+              { key: "zelle", label: "Zelle", placeholder: "phone or email" },
+              { key: "instagram", label: "Instagram", placeholder: "@handle" },
+              { key: "twitter", label: "X / Twitter", placeholder: "@handle" },
+              { key: "tiktok", label: "TikTok", placeholder: "@handle" },
+              { key: "snapchat", label: "Snapchat", placeholder: "username" },
+            ].map(f => (
+              <div key={f.key} className="flex items-center gap-2">
+                <span className="text-xs w-20 shrink-0" style={{ color: "#9A8A7A" }}>{f.label}</span>
+                <Input
+                  value={payForm[f.key]}
+                  onChange={(e) => setPayForm({ ...payForm, [f.key]: e.target.value })}
+                  placeholder={f.placeholder}
+                  className="h-8 text-xs"
+                  style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}
+                />
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={savePaymentProfile}
+            className="mt-3 w-full h-8 rounded-full text-xs font-semibold"
+            style={{ background: "#C8A27C", color: "white" }}
+          >
+            Save Links
+          </button>
+        </div>
       )}
 
       {/* Settings Sheet */}

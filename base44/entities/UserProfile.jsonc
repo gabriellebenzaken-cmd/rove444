@@ -21,6 +21,38 @@
     "profile_photo": {
       "type": "string",
       "description": "URL to profile photo"
+    },
+    "venmo": {
+      "type": "string",
+      "description": "Venmo username e.g. @username"
+    },
+    "cashapp": {
+      "type": "string",
+      "description": "Cash App handle e.g. $cashtag"
+    },
+    "paypal": {
+      "type": "string",
+      "description": "PayPal.me link or username"
+    },
+    "zelle": {
+      "type": "string",
+      "description": "Zelle phone or email"
+    },
+    "instagram": {
+      "type": "string",
+      "description": "Instagram handle"
+    },
+    "twitter": {
+      "type": "string",
+      "description": "X / Twitter handle"
+    },
+    "tiktok": {
+      "type": "string",
+      "description": "TikTok handle"
+    },
+    "snapchat": {
+      "type": "string",
+      "description": "Snapchat username"
     }
   },
   "required": [

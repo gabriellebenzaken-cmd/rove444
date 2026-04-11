@@ -38,27 +38,27 @@ export default function TripCosts({ trip, user }) {
   const [expenses, setExpenses] = useState([]);
   const [payments, setPayments] = useState([]);
   const [members, setMembers] = useState([]);
+  const [payerProfiles, setPayerProfiles] = useState({}); // email -> UserProfile
   const [showAdd, setShowAdd] = useState(false);
   const [expandedExpense, setExpandedExpense] = useState(null);
   const [selectedMethod, setSelectedMethod] = useState({});
   const [detailModal, setDetailModal] = useState(null); // 'owe' | 'received' | null
-  const [splitMode, setSplitMode] = useState("equal"); // "equal" | "custom"
-  const [form, setForm] = useState({
-    description: "", amount: "", category: "other", split_among: [],
-  });
-  const [customAmounts, setCustomAmounts] = useState({});
 
   useEffect(() => { loadData(); }, [trip.id]);
 
   async function loadData() {
-    const [allExpenses, allPayments, allUsers] = await Promise.all([
+    const [allExpenses, allPayments, allUsers, allProfiles] = await Promise.all([
       base44.entities.Expense.filter({ trip_id: trip.id }, "-created_date", 200),
       base44.entities.Payment.filter({ trip_id: trip.id }, "-created_date", 200),
       base44.entities.User.list("-created_date", 200),
+      base44.entities.UserProfile.list("-created_date", 200),
     ]);
     setExpenses(allExpenses);
     setPayments(allPayments);
     setMembers(allUsers.filter((u) => trip.member_emails?.includes(u.email)));
+    const profileMap = {};
+    allProfiles.forEach((p) => { profileMap[p.user_email] = p; });
+    setPayerProfiles(profileMap);
   }
 
   function getPayment(expenseId, senderEmail) {
@@ -353,6 +353,37 @@ export default function TripCosts({ trip, user }) {
                             <p className="text-xs font-medium mb-2" style={{ color: "#3A3028" }}>
                               You owe ${myShare.toFixed(2)} to {exp.paid_by_name || exp.paid_by?.split("@")[0]}
                             </p>
+                            {/* External settle buttons */}
+                            {(() => {
+                              const pp = payerProfiles[exp.paid_by];
+                              if (!pp) return null;
+                              const payLinks = [
+                                pp.venmo && { label: "Venmo", href: `https://venmo.com/${pp.venmo.replace(/^@/, "")}` },
+                                pp.cashapp && { label: "Cash App", href: `https://cash.app/${pp.cashapp.replace(/^\$/, "$")}` },
+                                pp.paypal && { label: "PayPal", href: `https://paypal.me/${pp.paypal.replace(/^[@\/]/, "")}` },
+                                pp.zelle && { label: "Zelle", href: null, info: pp.zelle },
+                              ].filter(Boolean);
+                              if (payLinks.length === 0) return null;
+                              return (
+                                <div className="flex flex-wrap gap-1.5 mb-2">
+                                  {payLinks.map((pl) =>
+                                    pl.href ? (
+                                      <a key={pl.label} href={pl.href} target="_blank" rel="noopener noreferrer"
+                                        className="px-2.5 py-1 rounded-full text-[10px] font-semibold"
+                                        style={{ background: "rgba(200,162,124,0.15)", color: "#7A6A5A" }}>
+                                        Settle via {pl.label} ↗
+                                      </a>
+                                    ) : (
+                                      <span key={pl.label}
+                                        className="px-2.5 py-1 rounded-full text-[10px] font-medium"
+                                        style={{ background: "rgba(200,162,124,0.1)", color: "#9A8A7A" }}>
+                                        Zelle: {pl.info}
+                                      </span>
+                                    )
+                                  )}
+                                </div>
+                              );
+                            })()}
                             <div className="flex gap-2">
                               <Select value={selectedMethod[exp.id] || "other"} onValueChange={(v) => setSelectedMethod({ ...selectedMethod, [exp.id]: v })}>
                                 <SelectTrigger className="h-8 text-xs rounded-full flex-1 border-0" style={{ background: "rgba(200,162,124,0.12)" }}>
