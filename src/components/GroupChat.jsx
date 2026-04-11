@@ -52,24 +52,38 @@ export default function GroupChat({ group, user }) {
       const opts = pollOptions.filter(o => o.trim());
       if (!pollQuestion.trim() || opts.length < 2) return;
       setSending(true);
-      await base44.entities.TripMessage.create({
-        trip_id: group.id, sender_email: user.email, sender_name: user.full_name,
-        content: pollQuestion.trim(), message_type: "poll",
-        poll_question: pollQuestion.trim(), poll_options: opts, poll_votes: {},
-      });
-      setPollQuestion(""); setPollOptions(["", ""]); setMode("text");
-      setSending(false);
+      try {
+        const created = await base44.entities.TripMessage.create({
+          trip_id: group.id, sender_email: user.email, sender_name: user.full_name,
+          content: pollQuestion.trim(), message_type: "poll",
+          poll_question: pollQuestion.trim(), poll_options: opts, poll_votes: {},
+        });
+        if (created) setMessages(prev => [...prev, created]);
+        setPollQuestion(""); setPollOptions(["", ""]); setMode("text");
+      } catch (err) {
+        console.error("[GroupChat] Failed to send poll:", err);
+      } finally {
+        setSending(false);
+      }
       return;
     }
 
     if (!text.trim()) return;
-    setSending(true);
-    await base44.entities.TripMessage.create({
-      trip_id: group.id, sender_email: user.email, sender_name: user.full_name,
-      content: text.trim(), message_type: "text",
-    });
+    const content = text.trim();
     setText("");
-    setSending(false);
+    setSending(true);
+    try {
+      const created = await base44.entities.TripMessage.create({
+        trip_id: group.id, sender_email: user.email, sender_name: user.full_name,
+        content, message_type: "text",
+      });
+      if (created) setMessages(prev => [...prev, created]);
+    } catch (err) {
+      console.error("[GroupChat] Failed to send message:", err);
+      setText(content); // restore text on failure
+    } finally {
+      setSending(false);
+    }
   }
 
   async function handleVote(msg, optionIndex) {
