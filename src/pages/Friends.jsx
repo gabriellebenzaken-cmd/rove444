@@ -156,15 +156,15 @@ export default function Friends() {
         return;
       }
 
-      // Check for existing request (either direction, not declined)
+      // Only block if there is currently a PENDING request between them
       const existing = allRequests.find(
         (r) =>
-          r.status !== "declined" &&
+          r.status === "pending" &&
           ((r.sender_id === user.id && r.receiver_id === toUser.id) ||
             (r.sender_id === toUser.id && r.receiver_id === user.id))
       );
       if (existing) {
-        toast.error("Request already exists");
+        toast.error("Friend request already pending");
         return;
       }
 
@@ -317,9 +317,9 @@ export default function Friends() {
               <p className="text-xs text-muted-foreground mb-2">{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</p>
               {searchResults.map((u) => {
                 const isFriend = friends.some((f) => f.id === u.user_id);
-                const isOutgoing = sentRequests.some((p) => p.receiver_id === u.user_id);
-                const isIncoming = receivedRequests.some((p) => p.sender_id === u.user_id);
-                const incomingReq = receivedRequests.find((p) => p.sender_id === u.user_id);
+                const isOutgoing = sentRequests.some((p) => p.receiver_id === u.user_id && p.status === "pending");
+                const isIncoming = receivedRequests.some((p) => p.sender_id === u.user_id && p.status === "pending");
+                const incomingReq = receivedRequests.find((p) => p.sender_id === u.user_id && p.status === "pending");
                 return (
                   <div key={u.user_id} className="bg-white rounded-[18px] p-4 shadow-[0_1px_8px_rgba(0,0,0,0.06)] flex items-center justify-between">
                     <div className="flex items-center gap-3">
