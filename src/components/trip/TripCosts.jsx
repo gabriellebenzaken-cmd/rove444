@@ -506,13 +506,6 @@ export default function TripCosts({ trip, user }) {
                             })()}
                             <div className="flex gap-2">
                                <MobileSelect value={selectedMethod[exp.id] || "other"} onChange={(v) => setSelectedMethod({ ...selectedMethod, [exp.id]: v })} options={paymentMethods} placeholder="Method" />
-                                <SelectTrigger className="h-8 text-xs rounded-full flex-1 border-0" style={{ background: "rgba(200,162,124,0.12)" }}>
-                                  <SelectValue placeholder="Method" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {paymentMethods.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-                                </SelectContent>
-                              </Select>
                               <Button size="sm" className="rounded-full shrink-0 h-8 text-xs px-3" style={{ background: "#C8A27C", color: "white" }} onClick={() => markPaymentSent(exp, selectedMethod[exp.id])}>
                                 <Send className="h-3 w-3 mr-1" /> Sent
                               </Button>
@@ -638,11 +631,8 @@ export default function TripCosts({ trip, user }) {
                 <Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0.00" className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
               </div>
               <div>
-                <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Category</Label>
-                <MobileSelect value={form.category} onChange={(v) => setForm({ ...form, category: v })} options={categories} />
-                  <SelectTrigger className="h-9 text-xs" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}><SelectValue /></SelectTrigger>
-                  <SelectContent>{categories.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
-                </Select>
+                 <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Category</Label>
+                 <MobileSelect value={form.category} onChange={(v) => setForm({ ...form, category: v })} options={categories} />
               </div>
             </div>
 
