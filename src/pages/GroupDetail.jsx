@@ -3,9 +3,10 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Link2, Users, UserMinus, LogOut, MapPin, Crown, UserPlus } from "lucide-react";
+import { ArrowLeft, Link2, Users, UserMinus, LogOut, MapPin, Crown, UserPlus, Plus, MessageSquare } from "lucide-react";
 import GroupPendingInvites from "@/components/group/GroupPendingInvites";
 import InviteMembersModal from "@/components/group/InviteMembersModal";
+import CreateTripDialog from "../components/trips/CreateTripDialog";
 import { toast } from "sonner";
 
 export default function GroupDetail() {
@@ -17,6 +18,7 @@ export default function GroupDetail() {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showCreateTrip, setShowCreateTrip] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState(null);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
@@ -80,11 +82,14 @@ export default function GroupDetail() {
   }
 
   const isAdmin = group.admin_email === user?.email;
+  const hasActivity = trips.length > 0 || members.length > 1;
 
   return (
     <div className="px-5 pt-10">
       {isAdmin && <GroupPendingInvites group={group} isAdmin={isAdmin} onUpdate={loadData} />}
-      <div className="flex items-center gap-3 mb-6">
+
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-5">
         <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate("/groups")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -92,23 +97,52 @@ export default function GroupDetail() {
           <h1 className="text-xl font-bold">{group.name}</h1>
           {group.description && <p className="text-xs text-muted-foreground">{group.description}</p>}
         </div>
+        {!isAdmin && (
+          <Button variant="ghost" size="sm" className="rounded-full text-muted-foreground text-xs" onClick={() => setShowLeaveConfirm(true)}>
+            <LogOut className="h-3.5 w-3.5 mr-1" /> Leave
+          </Button>
+        )}
       </div>
 
-      <div className="flex gap-2 mb-6">
-        <Button variant="outline" className="flex-1 rounded-full" onClick={copyInviteLink}>
-          <Link2 className="h-4 w-4 mr-1.5" /> Copy Invite
-        </Button>
-        {isAdmin && (
-          <Button className="flex-1 rounded-full" onClick={() => setShowInviteModal(true)}>
-            <UserPlus className="h-4 w-4 mr-1.5" /> Add Members
-          </Button>
-        )}
-        {!isAdmin && (
-          <Button variant="outline" className="rounded-full text-destructive" onClick={() => setShowLeaveConfirm(true)}>
-            <LogOut className="h-4 w-4 mr-1.5" /> Leave
-          </Button>
-        )}
+      {/* Action buttons */}
+      <div className="grid grid-cols-3 gap-2 mb-6">
+        <button
+          onClick={() => setShowInviteModal(true)}
+          className="flex flex-col items-center gap-1.5 p-3 rounded-2xl text-center transition-all active:scale-95"
+          style={{ background: "rgba(200,162,124,0.1)", border: "1px solid rgba(200,162,124,0.15)" }}
+        >
+          <UserPlus className="h-5 w-5" style={{ color: "#C8A27C" }} />
+          <span className="text-[10px] font-medium" style={{ color: "#9A8A7A" }}>Invite Members</span>
+        </button>
+        <button
+          onClick={() => setShowCreateTrip(true)}
+          className="flex flex-col items-center gap-1.5 p-3 rounded-2xl text-center transition-all active:scale-95"
+          style={{ background: "rgba(200,162,124,0.1)", border: "1px solid rgba(200,162,124,0.15)" }}
+        >
+          <Plus className="h-5 w-5" style={{ color: "#C8A27C" }} />
+          <span className="text-[10px] font-medium" style={{ color: "#9A8A7A" }}>Create Trip</span>
+        </button>
+        <button
+          onClick={copyInviteLink}
+          className="flex flex-col items-center gap-1.5 p-3 rounded-2xl text-center transition-all active:scale-95"
+          style={{ background: "rgba(200,162,124,0.1)", border: "1px solid rgba(200,162,124,0.15)" }}
+        >
+          <Link2 className="h-5 w-5" style={{ color: "#C8A27C" }} />
+          <span className="text-[10px] font-medium" style={{ color: "#9A8A7A" }}>Copy Invite</span>
+        </button>
       </div>
+
+      {/* Empty state */}
+      {!hasActivity && (
+        <div className="rounded-2xl p-5 mb-6 text-center" style={{ background: "rgba(200,162,124,0.06)", border: "1px dashed rgba(200,162,124,0.3)" }}>
+          <p className="text-sm font-semibold mb-1" style={{ color: "#3A3028" }}>start planning with this group</p>
+          <p className="text-xs mb-4" style={{ color: "#B0A090" }}>invite your crew and kick off a trip together</p>
+          <div className="flex gap-2 justify-center">
+            <button onClick={() => setShowCreateTrip(true)} className="px-4 py-1.5 rounded-full text-xs font-semibold" style={{ background: "#C8A27C", color: "white" }}>Create a trip</button>
+            <button onClick={() => setShowInviteModal(true)} className="px-4 py-1.5 rounded-full text-xs font-medium border" style={{ borderColor: "rgba(200,162,124,0.3)", color: "#9A8A7A" }}>Invite members</button>
+          </div>
+        </div>
+      )}
 
       <div className="mb-6">
         <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
@@ -179,6 +213,14 @@ export default function GroupDetail() {
         isOpen={showInviteModal}
         onClose={() => setShowInviteModal(false)}
         onSuccess={loadData}
+      />
+
+      <CreateTripDialog
+        open={showCreateTrip}
+        onOpenChange={setShowCreateTrip}
+        user={user}
+        onCreated={loadData}
+        defaultGroupId={group.id}
       />
 
       {/* Remove member confirmation */}
