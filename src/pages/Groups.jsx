@@ -16,14 +16,19 @@ export default function Groups() {
   }, []);
 
   async function loadData() {
-    const me = await base44.auth.me();
-    setUser(me);
-    const allGroups = await base44.entities.Group.list("-created_date", 50);
-    const myGroups = allGroups.filter(
-      (g) => g.member_emails?.includes(me.email) || g.admin_email === me.email
-    );
-    setGroups(myGroups);
-    setLoading(false);
+    try {
+      const me = await base44.auth.me();
+      setUser(me);
+      const allGroups = await base44.entities.Group.list("-created_date", 50);
+      const myGroups = allGroups.filter(
+        (g) => g.member_emails?.includes(me.email) || g.admin_email === me.email
+      );
+      setGroups(myGroups);
+    } catch (err) {
+      console.error("[Groups] loadData failed:", err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

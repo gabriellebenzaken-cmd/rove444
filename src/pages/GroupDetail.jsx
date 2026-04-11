@@ -31,28 +31,38 @@ export default function GroupDetail() {
   }, [id]);
 
   async function loadData() {
-    const me = await base44.auth.me();
-    setUser(me);
-    const allGroups = await base44.entities.Group.list("-created_date", 200);
-    const g = allGroups.find((gr) => gr.id === id);
-    setGroup(g);
+    try {
+      const me = await base44.auth.me();
+      setUser(me);
+      const allGroups = await base44.entities.Group.list("-created_date", 200);
+      const g = allGroups.find((gr) => gr.id === id);
+      setGroup(g || null);
 
-    if (g) {
-      const [allUsers, profiles, allTrips] = await Promise.all([
-        base44.entities.User.list("-created_date", 200),
-        base44.entities.UserProfile.list("-created_date", 200),
-        base44.entities.Trip.list("-created_date", 50),
-      ]);
-      const memberUsers = allUsers.filter((u) => g.member_emails?.includes(u.email));
-      // Enrich with UserProfile data for profile_photo and username
-      const enriched = memberUsers.map((u) => {
-        const profile = profiles.find((p) => p.user_email === u.email);
-        return { ...u, profile_photo: profile?.profile_photo || null, username: profile?.username || null };
-      });
-      setMembers(enriched);
-      setTrips(allTrips.filter((t) => t.group_id === id));
+      if (g) {
+        // Use UserProfile (readable by all users) instead of User.list() which has admin-only RLS
+        const [profiles, allTrips] = await Promise.all([
+          base44.entities.UserProfile.list("-created_date", 500),
+          base44.entities.Trip.list("-created_date", 50),
+        ]);
+        // Build member list from group.member_emails + UserProfile data
+        const enriched = (g.member_emails || []).map((email) => {
+          const profile = profiles.find((p) => p.user_email === email);
+          return {
+            id: profile?.user_id || email,
+            email,
+            full_name: profile?.full_name || profile?.username || email.split("@")[0],
+            username: profile?.username || null,
+            profile_photo: profile?.profile_photo || null,
+          };
+        });
+        setMembers(enriched);
+        setTrips(allTrips.filter((t) => t.group_id === id));
+      }
+    } catch (err) {
+      console.error("[GroupDetail] loadData failed:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   async function copyInviteLink() {
