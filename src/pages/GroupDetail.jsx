@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, Link2, Users, UserMinus, LogOut, MapPin, Crown, UserPlus } from "lucide-react";
 import GroupPendingInvites from "@/components/group/GroupPendingInvites";
 import InviteMembersModal from "@/components/group/InviteMembersModal";
@@ -16,6 +17,8 @@ export default function GroupDetail() {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState(null);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -48,6 +51,7 @@ export default function GroupDetail() {
     const updated = group.member_emails.filter((e) => e !== email);
     await base44.entities.Group.update(id, { member_emails: updated });
     toast.success("Member removed");
+    setMemberToRemove(null);
     loadData();
   }
 
@@ -100,7 +104,7 @@ export default function GroupDetail() {
           </Button>
         )}
         {!isAdmin && (
-          <Button variant="outline" className="rounded-full text-destructive" onClick={leaveGroup}>
+          <Button variant="outline" className="rounded-full text-destructive" onClick={() => setShowLeaveConfirm(true)}>
             <LogOut className="h-4 w-4 mr-1.5" /> Leave
           </Button>
         )}
@@ -136,7 +140,7 @@ export default function GroupDetail() {
                   </div>
                 </div>
                 {isAdmin && m.email !== user.email && (
-                  <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={() => removeMember(m.email)}>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={() => setMemberToRemove(m)}>
                     <UserMinus className="h-3.5 w-3.5 text-muted-foreground" />
                   </Button>
                 )}
@@ -176,6 +180,34 @@ export default function GroupDetail() {
         onClose={() => setShowInviteModal(false)}
         onSuccess={loadData}
       />
+
+      {/* Remove member confirmation */}
+      <Dialog open={!!memberToRemove} onOpenChange={(v) => !v && setMemberToRemove(null)}>
+        <DialogContent className="mx-4 rounded-2xl max-w-sm p-6">
+          <DialogHeader>
+            <DialogTitle>Remove {memberToRemove?.full_name}?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-6">They will be removed from the group and will need to be re-invited to rejoin.</p>
+          <div className="flex gap-3">
+            <Button variant="outline" className="flex-1 rounded-full" onClick={() => setMemberToRemove(null)}>Cancel</Button>
+            <Button variant="destructive" className="flex-1 rounded-full" onClick={() => removeMember(memberToRemove.email)}>Remove</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Leave group confirmation */}
+      <Dialog open={showLeaveConfirm} onOpenChange={setShowLeaveConfirm}>
+        <DialogContent className="mx-4 rounded-2xl max-w-sm p-6">
+          <DialogHeader>
+            <DialogTitle>Leave {group?.name}?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-6">You will need to be re-invited to rejoin this group.</p>
+          <div className="flex gap-3">
+            <Button variant="outline" className="flex-1 rounded-full" onClick={() => setShowLeaveConfirm(false)}>Cancel</Button>
+            <Button variant="destructive" className="flex-1 rounded-full" onClick={leaveGroup}>Leave Group</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

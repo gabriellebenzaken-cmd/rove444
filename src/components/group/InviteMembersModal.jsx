@@ -27,17 +27,19 @@ export default function InviteMembersModal({ group, user, isOpen, onClose, onSuc
       const accepted = allRequests.filter((r) => r.status === "accepted");
       console.log("[InviteModal] Loaded accepted friend requests:", accepted.length);
 
-      // Build friends map using same logic as Friends.jsx
+      // Build friends map — match by user.id OR by email (fallback for data inconsistencies)
       const friendsMap = new Map();
       accepted.forEach((r) => {
-        if (r.sender_id === user.id) {
+        const isSender = r.sender_id === user.id || r.sender_email === user.email;
+        const isReceiver = r.receiver_id === user.id || r.receiver_email === user.email;
+        if (isSender) {
           friendsMap.set(r.receiver_email, {
             id: r.receiver_id,
             email: r.receiver_email,
             name: r.receiver_name,
             user_id: r.receiver_id,
           });
-        } else if (r.receiver_id === user.id) {
+        } else if (isReceiver) {
           friendsMap.set(r.sender_email, {
             id: r.sender_id,
             email: r.sender_email,
