@@ -34,10 +34,10 @@ export default function Layout() {
     <div className="min-h-screen bg-background font-sans flex flex-col">
       {/* Top-right bell — only on main pages */}
       {!hideTopBell && (
-        <Link
-          to="/notifications"
-          className="fixed top-4 right-4 z-50 w-9 h-9 rounded-full flex items-center justify-center"
-          style={{ background: "rgba(250,246,241,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(200,162,124,0.2)", boxShadow: "0 2px 10px rgba(0,0,0,0.08)" }}
+       <Link
+         to="/notifications"
+         className="fixed top-4 right-4 z-50 w-9 h-9 rounded-full flex items-center justify-center"
+         style={{ top: "calc(1rem + env(safe-area-inset-top))", background: "rgba(250,246,241,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(200,162,124,0.2)", boxShadow: "0 2px 10px rgba(0,0,0,0.08)", WebkitTapHighlightColor: "transparent" }}
         >
           <Bell className="h-4 w-4" style={{ color: "#C8A27C" }} />
           {unreadCount > 0 && (
@@ -52,7 +52,7 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50" style={{ background: "rgba(250,246,241,0.92)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderTop: "1px solid rgba(200,162,124,0.12)", boxShadow: "0 -1px 24px rgba(0,0,0,0.05)" }}>
+      <nav className="fixed bottom-0 left-0 right-0 z-50" style={{ background: "rgba(250,246,241,0.92)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderTop: "1px solid rgba(200,162,124,0.12)", boxShadow: "0 -1px 24px rgba(0,0,0,0.05)", paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="max-w-lg mx-auto flex items-center justify-around h-[62px] px-2">
           {NAV_ITEMS.map((item) => {
             const isActive = item.path === "/"
@@ -60,10 +60,10 @@ export default function Layout() {
               : location.pathname.startsWith(item.path);
             return (
               <Link
-                key={item.path}
-                to={item.path}
-                className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-2xl transition-all duration-200"
-                style={{ color: isActive ? "#C8A27C" : "#B5A898" }}
+                       key={item.path}
+                       to={item.path}
+                       className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-2xl transition-all duration-200"
+                       style={{ color: isActive ? "#C8A27C" : "#B5A898", WebkitTapHighlightColor: "transparent" }}
               >
                 <item.icon className={`h-[19px] w-[19px] ${isActive ? "stroke-[2.2px]" : "stroke-[1.6px]"}`} />
                 <span className={`text-[9px] tracking-wide ${isActive ? "font-semibold" : "font-medium"}`}>{item.label}</span>

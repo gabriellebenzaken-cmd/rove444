@@ -20,6 +20,18 @@ import GroupDetail from './pages/GroupDetail';
 import JoinInvite from './pages/JoinInvite';
 import Notifications from './pages/Notifications';
 import OnboardingModal from './components/OnboardingModal';
+import { motion } from 'framer-motion';
+
+const MotionPage = ({ children }) => (
+  <motion.div
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: -20 }}
+    transition={{ duration: 0.3 }}
+  >
+    {children}
+  </motion.div>
+);
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -27,6 +39,13 @@ const AuthenticatedApp = () => {
   const [checkingOnboard, setCheckingOnboard] = useState(true);
   const [onboardingError, setOnboardingError] = useState(false);
   const [isProfileReady, setIsProfileReady] = useState(false);
+
+  // Apply dark mode if system preference is dark
+  useEffect(() => {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
 
   useEffect(() => {
     if (!isLoadingAuth && !authError) {
@@ -105,16 +124,16 @@ const AuthenticatedApp = () => {
     {!onboardingError && (
       <Routes>
       <Route element={<Layout />}>
-        <Route path="/" element={<Trips />} />
-        <Route path="/groups" element={<Groups />} />
-        <Route path="/friends" element={<Friends />} />
-        <Route path="/costs" element={<Costs />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/trip/:id" element={<TripDetail />} />
-        <Route path="/group/:id" element={<GroupDetail />} />
+        <Route path="/" element={<MotionPage><Trips /></MotionPage>} />
+        <Route path="/groups" element={<MotionPage><Groups /></MotionPage>} />
+        <Route path="/friends" element={<MotionPage><Friends /></MotionPage>} />
+        <Route path="/costs" element={<MotionPage><Costs /></MotionPage>} />
+        <Route path="/profile" element={<MotionPage><Profile /></MotionPage>} />
+        <Route path="/trip/:id" element={<MotionPage><TripDetail /></MotionPage>} />
+        <Route path="/group/:id" element={<MotionPage><GroupDetail /></MotionPage>} />
       </Route>
-      <Route path="/notifications" element={<Notifications />} />
-      <Route path="/join/:type/:code" element={<JoinInvite />} />
+      <Route path="/notifications" element={<MotionPage><Notifications /></MotionPage>} />
+      <Route path="/join/:type/:code" element={<MotionPage><JoinInvite /></MotionPage>} />
       <Route path="*" element={<PageNotFound />} />
       </Routes>
       )}
