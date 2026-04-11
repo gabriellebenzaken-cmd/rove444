@@ -42,7 +42,7 @@ export default function TripCosts({ trip, user }) {
   const [expandedExpense, setExpandedExpense] = useState(null);
   const [selectedMethod, setSelectedMethod] = useState({});
   const [detailModal, setDetailModal] = useState(null); // 'owe' | 'received' | null
-  const [form, setForm] = useState({ description: "", amount: "", category: "other", split_among: [] });
+  const [form, setForm] = useState({ description: "", amount: "", category: "other", split_among: [], day_number: null, trip_wide: true });
   const [splitMode, setSplitMode] = useState("equal");
   const [customAmounts, setCustomAmounts] = useState({});
 
@@ -105,8 +105,10 @@ export default function TripCosts({ trip, user }) {
       custom_split_amounts,
       trip_id: trip.id,
       is_settled: false,
+      trip_wide: form.trip_wide,
+      day_number: form.trip_wide ? null : form.day_number,
     });
-    setForm({ description: "", amount: "", category: "other", split_among: [] });
+    setForm({ description: "", amount: "", category: "other", split_among: [], day_number: null, trip_wide: true });
     setCustomAmounts({});
     setSplitMode("equal");
     setShowAdd(false);
@@ -358,8 +360,39 @@ export default function TripCosts({ trip, user }) {
           <p className="text-xs mt-1" style={{ color: "#B0A090" }}>Tap Add to log a shared cost</p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {expenses.map((exp) => {
+        <div className="space-y-4">
+          {(() => {
+            // Build trip days
+            const tripDays = [];
+            if (trip.start_date && trip.end_date) {
+              const start = new Date(trip.start_date);
+              const end = new Date(trip.end_date);
+              const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+              for (let i = 1; i <= days; i++) tripDays.push(i);
+            }
+
+            // Group expenses
+            const groups = [];
+            const wideExpenses = expenses.filter(e => e.trip_wide !== false || !e.day_number);
+            const dayExpenses = expenses.filter(e => e.trip_wide === false && e.day_number);
+
+            if (wideExpenses.length > 0) groups.push({ label: "Trip-wide", exps: wideExpenses });
+            tripDays.forEach(d => {
+              const de = dayExpenses.filter(e => e.day_number === d);
+              if (de.length > 0) groups.push({ label: `Day ${d}`, exps: de });
+            });
+            // Any day expenses for days outside trip range
+            const extraDays = [...new Set(dayExpenses.filter(e => !tripDays.includes(e.day_number)).map(e => e.day_number))];
+            extraDays.sort((a,b) => a-b).forEach(d => {
+              const de = dayExpenses.filter(e => e.day_number === d);
+              groups.push({ label: `Day ${d}`, exps: de });
+            });
+
+            return groups.map(({ label, exps }) => (
+              <div key={label}>
+                <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "#C8A27C" }}>{label}</p>
+                <div className="space-y-2">
+          {exps.map((exp) => {
             const status = getExpenseStatus(exp);
             const settled = status === "settled" || exp.is_settled;
             const isExpanded = expandedExpense === exp.id;
@@ -512,6 +545,10 @@ export default function TripCosts({ trip, user }) {
               </div>
             );
           })}
+                </div>
+              </div>
+            ));
+          })()}
         </div>
       )}
 
@@ -644,6 +681,31 @@ export default function TripCosts({ trip, user }) {
                 })}
               </div>
             )}
+
+            <div>
+              <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Applies to</Label>
+              <Select
+                value={form.trip_wide ? "trip_wide" : String(form.day_number)}
+                onValueChange={(v) => {
+                  if (v === "trip_wide") setForm({ ...form, trip_wide: true, day_number: null });
+                  else setForm({ ...form, trip_wide: false, day_number: parseInt(v) });
+                }}
+              >
+                <SelectTrigger className="h-9 text-xs" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="trip_wide">Trip-wide</SelectItem>
+                  {(() => {
+                    if (!trip.start_date || !trip.end_date) return null;
+                    const start = new Date(trip.start_date);
+                    const end = new Date(trip.end_date);
+                    const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                    return Array.from({ length: days }, (_, i) => (
+                      <SelectItem key={i + 1} value={String(i + 1)}>Day {i + 1}</SelectItem>
+                    ));
+                  })()}
+                </SelectContent>
+              </Select>
+            </div>
 
             <button type="submit" className="w-full h-10 rounded-full text-sm font-semibold mt-1" style={{ background: "#C8A27C", color: "white" }}>Add Expense</button>
           </form>

@@ -25,6 +25,10 @@
       },
       "description": "Emails of who shares the cost"
     },
+    "custom_split_amounts": {
+      "type": "object",
+      "description": "Map of email -> custom amount for unequal splits"
+    },
     "is_settled": {
       "type": "boolean",
       "default": false
@@ -43,6 +47,15 @@
         "other"
       ],
       "default": "other"
+    },
+    "trip_wide": {
+      "type": "boolean",
+      "default": true,
+      "description": "If true, expense applies to the whole trip"
+    },
+    "day_number": {
+      "type": "number",
+      "description": "Trip day number (1-based) if not trip-wide"
     }
   },
   "required": [
