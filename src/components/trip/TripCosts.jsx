@@ -255,15 +255,15 @@ export default function TripCosts({ trip, user }) {
       {/* Summary boxes */}
       <div className="grid grid-cols-3 gap-2 mb-4">
         {[
-          { key: null, label: "total spent", value: `$${total.toFixed(2)}`, color: "#2A2018" },
-          { key: "owe", label: "you owe", value: `$${iOwe.toFixed(2)}`, color: iOwe > 0 ? "#B04040" : "#2A2018" },
-          { key: "received", label: "you're owed", value: `$${iAmOwed.toFixed(2)}`, color: iAmOwed > 0 ? "#3A7A5A" : "#2A2018" },
+          { key: "all",      label: "total spent",  value: `$${total.toFixed(2)}`,    color: "#2A2018" },
+          { key: "owe",      label: "you owe",      value: `$${iOwe.toFixed(2)}`,     color: iOwe > 0 ? "#B04040" : "#2A2018" },
+          { key: "received", label: "you're owed",  value: `$${iAmOwed.toFixed(2)}`,  color: iAmOwed > 0 ? "#3A7A5A" : "#2A2018" },
         ].map(({ key, label, value, color }) => (
           <div
             key={label}
-            className={`rounded-2xl p-3 text-center ${key ? "cursor-pointer active:scale-95 transition-transform" : ""}`}
+            className="rounded-2xl p-3 text-center cursor-pointer active:scale-95 transition-transform"
             style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.15)" }}
-            onClick={() => key && setDetailModal(key)}
+            onClick={() => setDetailModal(key)}
           >
             <p className="text-[10px] mb-1" style={{ color: "#B0A090" }}>{label}</p>
             <p className="text-sm font-semibold" style={{ color }}>{value}</p>
@@ -377,7 +377,7 @@ export default function TripCosts({ trip, user }) {
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-medium truncate ${settled ? "line-through" : ""}`} style={{ color: settled ? "#B0A090" : "#2A2018" }}>{exp.description}</p>
                         <p className="text-[10px] mt-0.5" style={{ color: "#B0A090" }}>
-                          {exp.paid_by_name || exp.paid_by?.split("@")[0]} paid · {exp.split_among?.length || 0} people
+                          {resolveName(exp.paid_by)} paid · {exp.split_among?.length || 0} people
                         </p>
                       </div>
                     </div>
@@ -412,7 +412,7 @@ export default function TripCosts({ trip, user }) {
                               </div>
                               <span className="text-xs" style={{ color: "#3A3028" }}>{memberName}</span>
                               <ArrowRight className="h-2.5 w-2.5" style={{ color: "#C0B0A0" }} />
-                              <span className="text-xs" style={{ color: "#B0A090" }}>{exp.paid_by_name || exp.paid_by?.split("@")[0]}</span>
+                              <span className="text-xs" style={{ color: "#B0A090" }}>{resolveName(exp.paid_by)}</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs font-medium" style={{ color: "#2A2018" }}>${share.toFixed(2)}</span>
@@ -519,35 +519,52 @@ export default function TripCosts({ trip, user }) {
       {/* Detail modal */}
       {detailModal && (
         <div className="fixed inset-0 z-50 flex items-end" onClick={() => setDetailModal(null)}>
-          <div className="w-full rounded-t-3xl p-5 pb-10 max-h-[75vh] overflow-y-auto" style={{ background: "#FAF7F4" }} onClick={e => e.stopPropagation()}>
+          <div className="w-full rounded-t-3xl p-5 pb-10 max-h-[80vh] overflow-y-auto" style={{ background: "#FAF7F4" }} onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: "rgba(200,162,124,0.3)" }} />
             <h3 className="text-base font-semibold mb-4" style={{ color: "#2A2018" }}>
-              {detailModal === "owe" ? "what you owe" : "owed to you"}
+              {detailModal === "all" ? "All Expenses" : detailModal === "owe" ? "What You Owe" : "Owed to You"}
             </h3>
             <div className="space-y-2">
-              {(detailModal === "owe" ? oweExpenses : receivedExpenses).map(exp => {
-                const share = detailModal === "owe"
-                  ? getShareAmount(exp, user.email)
-                  : (exp.split_among || []).filter(em => em !== user.email).reduce((s, em) => s + getShareAmount(exp, em), 0);
-                const pay = detailModal === "owe" ? getPayment(exp.id, user.email) : null;
-                return (
-                  <div key={exp.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(200,162,124,0.12)" }}>
-                    <div>
-                      <p className="text-sm font-medium" style={{ color: "#2A2018" }}>{exp.description}</p>
-                      <p className="text-[11px] mt-0.5" style={{ color: "#B0A090" }}>
-                        {detailModal === "owe" ? `to ${exp.paid_by_name || exp.paid_by?.split("@")[0]}` : `${(exp.split_among || []).filter(em => em !== user.email).length} people owe you`}
-                      </p>
+              {(() => {
+                const list = detailModal === "all" ? expenses
+                  : detailModal === "owe" ? oweExpenses
+                  : receivedExpenses;
+                if (list.length === 0) return <p className="text-sm text-center py-6" style={{ color: "#B0A090" }}>nothing here</p>;
+                return list.map(exp => {
+                  const status = getExpenseStatus(exp);
+                  const settled = status === "settled" || exp.is_settled;
+                  const myShare = detailModal === "owe" ? getShareAmount(exp, user.email)
+                    : detailModal === "received" ? (exp.split_among || []).filter(em => em !== user.email).reduce((s, em) => s + getShareAmount(exp, em), 0)
+                    : exp.amount;
+                  const myPay = getPayment(exp.id, user.email);
+                  return (
+                    <div key={exp.id} className="p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(200,162,124,0.12)" }}>
+                      <div className="flex items-start justify-between mb-1">
+                        <div className="flex-1 min-w-0 pr-2">
+                          <p className="text-sm font-medium" style={{ color: "#2A2018" }}>{exp.description}</p>
+                          <p className="text-[11px] mt-0.5" style={{ color: "#B0A090" }}>
+                            Paid by {resolveName(exp.paid_by)}
+                            {exp.created_date ? ` · ${format(new Date(exp.created_date), "MMM d")}` : ""}
+                          </p>
+                          <p className="text-[11px] mt-0.5" style={{ color: "#B0A090" }}>
+                            Split {exp.split_among?.length || 0} ways
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-semibold" style={{ color: detailModal === "owe" ? "#B04040" : detailModal === "received" ? "#3A7A5A" : "#2A2018" }}>${myShare.toFixed(2)}</p>
+                          {settled ? (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(107,174,138,0.15)", color: "#5A9E7A" }}>Settled</span>
+                          ) : myPay?.status === "pending" ? (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(255,193,50,0.15)", color: "#9A7840" }}>Pending</span>
+                          ) : (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(220,80,80,0.08)", color: "#B04040" }}>Unpaid</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold" style={{ color: detailModal === "owe" ? "#B04040" : "#3A7A5A" }}>${share.toFixed(2)}</p>
-                      {pay && <p className="text-[10px]" style={{ color: "#B0A090" }}>{pay.status}</p>}
-                    </div>
-                  </div>
-                );
-              })}
-              {(detailModal === "owe" ? oweExpenses : receivedExpenses).length === 0 && (
-                <p className="text-sm text-center py-6" style={{ color: "#B0A090" }}>nothing here</p>
-              )}
+                  );
+                });
+              })()}
             </div>
           </div>
         </div>
