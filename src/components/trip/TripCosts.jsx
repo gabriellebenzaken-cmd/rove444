@@ -211,12 +211,10 @@ export default function TripCosts({ trip, user }) {
         </div>
       )}
       {iAmOwed > 0 && (
-        <div className="rounded-2xl p-3 mb-3 flex items-center gap-3" style={{ background: "rgba(107,174,138,0.07)", border: "1px solid rgba(107,174,138,0.2)" }}>
-          <span className="text-xl">🤝</span>
-          <div>
-            <p className="text-xs font-semibold" style={{ color: "#4A8E6A" }}>You are owed ${iAmOwed.toFixed(2)}</p>
-            <p className="text-[10px]" style={{ color: "#70A080" }}>awaiting settlement</p>
-          </div>
+        <div className="rounded-2xl px-4 py-3.5 mb-3" style={{ background: "rgba(107,174,138,0.07)", border: "1px solid rgba(107,174,138,0.18)" }}>
+          <p className="text-2xl font-semibold tracking-tight" style={{ color: "#3A7A5A" }}>${iAmOwed.toFixed(2)}</p>
+          <p className="text-xs mt-0.5" style={{ color: "#6BAE8A" }}>owed to you</p>
+          <p className="text-[10px] mt-1" style={{ color: "#90BEA0" }}>settlement pending</p>
         </div>
       )}
       <div className="grid grid-cols-3 gap-2 mb-5">
