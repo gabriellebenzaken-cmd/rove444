@@ -23,7 +23,7 @@ const TYPE_CONFIG = {
   trip_request: { icon: MapPin, color: "#7090B0", bg: "rgba(112,144,176,0.12)", actionable: true },
   group_added: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)" },
   group_invite: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)", actionable: true },
-  group_join_request: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)" },
+  group_join_request: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)", actionable: true },
   group_accepted: { icon: Check, color: "#6BAE8A", bg: "rgba(107,174,138,0.12)" },
   group_declined: { icon: X, color: "#EF4444", bg: "rgba(239,68,68,0.12)" },
   trip_approved: { icon: Check, color: "#6BAE8A", bg: "rgba(107,174,138,0.12)" },
@@ -201,6 +201,62 @@ export default function Notifications() {
     }
   }
 
+  async function approveGroupJoinRequest(n) {
+    try {
+      const allInvites = await base44.entities.GroupInvite.list("-created_date", 200);
+      const inv = allInvites.find(
+        (i) => i.group_id === n.related_group_id && i.invitee_email === n.related_user_email && i.status === "pending"
+      );
+      if (!inv) { toast.error("Request not found"); return; }
+      
+      // Update invite status
+      await base44.entities.GroupInvite.update(inv.id, { status: "accepted" });
+      
+      // Add user to group
+      const groups = await base44.entities.Group.list("-created_date", 200);
+      const group = groups.find(g => g.id === n.related_group_id);
+      if (group) {
+        const updated = [...new Set([...(group.member_emails || []), n.related_user_email])];
+        await base44.entities.Group.update(group.id, { member_emails: updated });
+      }
+      
+      // Notify user
+      await base44.entities.Notification.create({
+        user_email: n.related_user_email,
+        type: "group_accepted",
+        message: `You were added to ${group?.name || "the group"}`,
+        related_group_id: n.related_group_id,
+        is_read: false,
+      });
+      
+      // Remove the request notification
+      await base44.entities.Notification.delete(n.id);
+      removeNotif(n.id);
+      toast.success("Request approved!");
+    } catch (err) {
+      console.error("Failed to approve group join request:", err);
+      toast.error("Failed to approve request");
+    }
+  }
+
+  async function declineGroupJoinRequest(n) {
+    try {
+      const allInvites = await base44.entities.GroupInvite.list("-created_date", 200);
+      const inv = allInvites.find(
+        (i) => i.group_id === n.related_group_id && i.invitee_email === n.related_user_email && i.status === "pending"
+      );
+      if (inv) await base44.entities.GroupInvite.update(inv.id, { status: "declined" });
+      
+      // Remove the request notification
+      await base44.entities.Notification.delete(n.id);
+      removeNotif(n.id);
+      toast.success("Request declined");
+    } catch (err) {
+      console.error("Failed to decline group join request:", err);
+      toast.error("Failed to decline request");
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center py-32">
@@ -297,6 +353,16 @@ export default function Notifications() {
                            <Check className="h-3 w-3" />
                          </Button>
                          <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs rounded-full" onClick={() => declineTripRequest(n)}>
+                           <X className="h-3 w-3" />
+                         </Button>
+                       </>
+                     )}
+                     {n.type === "group_join_request" && n.related_group_id && (
+                       <>
+                         <Button size="sm" className="h-7 px-2.5 text-xs rounded-full" onClick={() => approveGroupJoinRequest(n)}>
+                           <Check className="h-3 w-3" />
+                         </Button>
+                         <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs rounded-full" onClick={() => declineGroupJoinRequest(n)}>
                            <X className="h-3 w-3" />
                          </Button>
                        </>

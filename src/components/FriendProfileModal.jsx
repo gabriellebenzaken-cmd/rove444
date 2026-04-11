@@ -52,6 +52,7 @@ export default function FriendProfileModal({ friend, onClose, currentUserEmail }
   const displayName = profile?.full_name || friend.full_name || friend.display_name || "Unknown";
   const username = profile?.username || friend.username;
   const photo = profile?.profile_photo || friend.profile_photo;
+  const bio = profile?.bio;
 
   async function sendFriendRequest() {
     if (!currentUser || !friend.email) return;
@@ -115,7 +116,10 @@ export default function FriendProfileModal({ friend, onClose, currentUserEmail }
             {friendStatus === "friends" && (
               <span className="mt-3 px-5 py-1.5 rounded-full text-sm" style={{ background: "rgba(107,174,138,0.15)", color: "#5A9E7A" }}>Friends ✓</span>
             )}
-          </div>
+            </div>
+            {bio && (
+            <p className="text-sm text-center mt-3" style={{ color: "#5A4A3A" }}>{bio}</p>
+            )}
 
           {loading ? (
             <div className="flex justify-center py-6">

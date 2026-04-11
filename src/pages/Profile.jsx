@@ -25,14 +25,15 @@ export default function Profile() {
   useEffect(() => { loadData(); }, []);
 
   async function loadData() {
-    const me = await base44.auth.me();
-    setUser(me);
-    setForm({ username: me.username || "", bio: me.bio || "", profile_photo: me.profile_photo || "" });
+   const me = await base44.auth.me();
+   setUser(me);
 
-    const profiles = await base44.entities.UserProfile.filter({ user_id: me.id }, "-created_date", 1);
-    const p = profiles[0] || null;
-    setProfile(p);
-    if (p) setPayForm({ venmo: p.venmo || "", cashapp: p.cashapp || "", paypal: p.paypal || "", zelle: p.zelle || "", instagram: p.instagram || "", twitter: p.twitter || "", tiktok: p.tiktok || "", snapchat: p.snapchat || "" });
+   const profiles = await base44.entities.UserProfile.filter({ user_id: me.id }, "-created_date", 1);
+   const p = profiles[0] || null;
+   setProfile(p);
+
+   setForm({ username: p?.username || me.username || "", bio: p?.bio || me.bio || "", profile_photo: p?.profile_photo || me.profile_photo || "" });
+   if (p) setPayForm({ venmo: p.venmo || "", cashapp: p.cashapp || "", paypal: p.paypal || "", zelle: p.zelle || "", instagram: p.instagram || "", twitter: p.twitter || "", tiktok: p.tiktok || "", snapchat: p.snapchat || "" });
 
     const allTrips = await base44.entities.Trip.list("-created_date", 50);
     setTrips(allTrips.filter((t) => t.member_emails?.includes(me.email) || t.admin_email === me.email));
@@ -51,17 +52,21 @@ export default function Profile() {
   }
 
   async function handleSave() {
-    setUsernameError("");
-    const usernameChanged = form.username.toLowerCase() !== (user.username || "").toLowerCase();
-    if (form.username && usernameChanged) {
-      const allUsers = await base44.entities.User.list("-created_date", 500);
-      const taken = allUsers.find(u => u.username?.toLowerCase() === form.username.toLowerCase() && u.email !== user.email);
-      if (taken) { setUsernameError("Username already taken"); return; }
-    }
-    await base44.auth.updateMe({ username: form.username, bio: form.bio, profile_photo: form.profile_photo });
-    setUser({ ...user, ...form });
-    setEditing(false);
-    toast.success("Profile updated!");
+   setUsernameError("");
+   const usernameChanged = form.username.toLowerCase() !== (user.username || "").toLowerCase();
+   if (form.username && usernameChanged) {
+     const allUsers = await base44.entities.User.list("-created_date", 500);
+     const taken = allUsers.find(u => u.username?.toLowerCase() === form.username.toLowerCase() && u.email !== user.email);
+     if (taken) { setUsernameError("Username already taken"); return; }
+   }
+   await base44.auth.updateMe({ username: form.username, profile_photo: form.profile_photo });
+   if (profile) {
+     await base44.entities.UserProfile.update(profile.id, { username: form.username, bio: form.bio, profile_photo: form.profile_photo });
+   }
+   setUser({ ...user, username: form.username, profile_photo: form.profile_photo });
+   setProfile(prev => prev ? { ...prev, username: form.username, bio: form.bio, profile_photo: form.profile_photo } : null);
+   setEditing(false);
+   toast.success("Profile updated!");
   }
 
   async function handlePhotoUpload(e) {
@@ -116,7 +121,7 @@ export default function Profile() {
         <h2 className="text-xl font-semibold">{user?.full_name}</h2>
         {user?.username && <p className="text-sm text-muted-foreground">@{user.username}</p>}
         <p className="text-xs text-muted-foreground mt-0.5">{user?.email}</p>
-        {!editing && user?.bio && <p className="text-sm text-center mt-2 max-w-[260px] text-muted-foreground">{user.bio}</p>}
+        {!editing && (profile?.bio || user?.bio) && <p className="text-sm text-center mt-2 max-w-[260px] text-muted-foreground">{profile?.bio || user?.bio}</p>}
       </div>
 
       {/* Stats */}

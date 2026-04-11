@@ -18,6 +18,10 @@
       "type": "string",
       "description": "Full name of the user"
     },
+    "bio": {
+      "type": "string",
+      "description": "User bio"
+    },
     "profile_photo": {
       "type": "string",
       "description": "URL to profile photo"
