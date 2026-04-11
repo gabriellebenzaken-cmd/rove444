@@ -82,18 +82,18 @@ export default function Costs() {
         <>
           <div className="grid grid-cols-2 gap-3 mb-5">
             <div className="bg-white rounded-[18px] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
-              <p className="text-[11px] text-slate-400 font-medium mb-1">Total Spent</p>
+              <p className="text-[11px] text-slate-400 font-medium mb-1">total spent</p>
               <p className="text-2xl font-bold tracking-tight">${totalSpent.toFixed(2)}</p>
             </div>
             <div className="bg-white rounded-[18px] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
-              <p className="text-[11px] text-slate-400 font-medium mb-1">You Paid</p>
+              <p className="text-[11px] text-slate-400 font-medium mb-1">you paid</p>
               <p className="text-2xl font-bold tracking-tight">${myTotal.toFixed(2)}</p>
             </div>
           </div>
 
           {Object.keys(balances).length > 0 && (
             <div className="mb-5">
-              <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest mb-3">Balances</p>
+              <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest mb-3">who owes who</p>
               <div className="space-y-2">
                 {Object.entries(balances).map(([key, amount]) => {
                   const [from, to] = key.split("->");
@@ -112,7 +112,7 @@ export default function Costs() {
             </div>
           )}
 
-          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest mb-3">Recent Expenses</p>
+          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest mb-3">recent expenses</p>
           <div className="space-y-2">
             {expenses.slice(0, 20).map((exp) => {
               const trip = trips.find((t) => t.id === exp.trip_id);
@@ -122,8 +122,8 @@ export default function Costs() {
                     <div>
                       <p className="text-sm font-medium">{exp.description}</p>
                       <p className="text-xs text-muted-foreground">
-                        {trip?.name} · Paid by {exp.paid_by_name || exp.paid_by?.split("@")[0]}
-                      </p>
+                                     {trip?.name} · paid by {exp.paid_by_name || exp.paid_by?.split("@")[0]}
+                                   </p>
                     </div>
                     <span className={`text-sm font-semibold ${exp.is_settled ? "text-muted-foreground line-through" : ""}`}>
                       ${exp.amount?.toFixed(2)}

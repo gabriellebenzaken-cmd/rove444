@@ -306,65 +306,55 @@ export default function Friends() {
         <div className="flex justify-center py-20">
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : tab === "search" && searchResults.length > 0 ? (
+      ) : tab === "search" ? (
         <div className="space-y-3">
-          <p className="text-xs text-muted-foreground mb-2">{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</p>
           {searchResults.length === 0 ? (
-            <p className="text-center text-muted-foreground text-sm py-10">No users found</p>
+            <p className="text-center text-muted-foreground text-sm py-10">no one found</p>
           ) : (
-            searchResults.map((u) => {
-            const isFriend = friends.some((f) => f.id === u.user_id);
-            const isOutgoing = sentRequests.some((p) => p.receiver_id === u.user_id);
-            const isIncoming = receivedRequests.some((p) => p.sender_id === u.user_id);
-            const incomingReq = receivedRequests.find((p) => p.sender_id === u.user_id);
-
-            return (
-              <div
-                key={u.user_id}
-                className="bg-white rounded-[18px] p-4 shadow-[0_1px_8px_rgba(0,0,0,0.06)] flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary shrink-0">
-                   {u.profile_photo ? (
-                     <img src={u.profile_photo} className="w-10 h-10 rounded-full object-cover" alt="" />
-                   ) : (
-                     u.full_name?.[0] || "?"
-                   )}
-                 </div>
-                 <div>
-                   <p className="font-medium text-sm">{u.full_name || "Unknown"}</p>
-                   <p className="text-xs text-muted-foreground">{u.username ? `@${u.username}` : u.user_email || "No email"}</p>
-                 </div>
-                </div>
-                {isFriend ? (
-                   <span className="text-xs text-primary font-medium px-3 py-1 rounded-full" style={{ background: "rgba(200,162,124,0.1)" }}>
-                     Friends
-                   </span>
-                 ) : isIncoming ? (
-                   <div className="flex gap-1.5">
-                     <Button size="sm" className="rounded-full h-8 px-3 text-xs" onClick={() => acceptRequest(incomingReq)}>
-                       Accept
-                     </Button>
-                     <Button size="sm" variant="outline" className="rounded-full h-8 px-3 text-xs" onClick={() => declineRequest(incomingReq)}>
-                       Decline
-                     </Button>
-                   </div>
-                 ) : isOutgoing ? (
-                   <span className="text-xs text-muted-foreground">Sent</span>
-                 ) : (
-                   <Button size="sm" variant="outline" className="rounded-full" onClick={() => sendRequest({ id: u.user_id, email: u.user_email, full_name: u.full_name })}>
-                     <UserPlus className="h-3.5 w-3.5 mr-1" /> Add
-                   </Button>
-                 )}
-              </div>
-            );
-            })
+            <>
+              <p className="text-xs text-muted-foreground mb-2">{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</p>
+              {searchResults.map((u) => {
+                const isFriend = friends.some((f) => f.id === u.user_id);
+                const isOutgoing = sentRequests.some((p) => p.receiver_id === u.user_id);
+                const isIncoming = receivedRequests.some((p) => p.sender_id === u.user_id);
+                const incomingReq = receivedRequests.find((p) => p.sender_id === u.user_id);
+                return (
+                  <div key={u.user_id} className="bg-white rounded-[18px] p-4 shadow-[0_1px_8px_rgba(0,0,0,0.06)] flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary shrink-0">
+                        {u.profile_photo ? (
+                          <img src={u.profile_photo} className="w-10 h-10 rounded-full object-cover" alt="" />
+                        ) : (u.full_name?.[0] || "?")}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{u.full_name || "Unknown"}</p>
+                        <p className="text-xs text-muted-foreground">{u.username ? `@${u.username}` : u.user_email || ""}</p>
+                      </div>
+                    </div>
+                    {isFriend ? (
+                      <span className="text-xs text-primary font-medium px-3 py-1 rounded-full" style={{ background: "rgba(200,162,124,0.1)" }}>Friends</span>
+                    ) : isIncoming ? (
+                      <div className="flex gap-1.5">
+                        <Button size="sm" className="rounded-full h-8 px-3 text-xs" onClick={() => acceptRequest(incomingReq)}>Accept</Button>
+                        <Button size="sm" variant="outline" className="rounded-full h-8 px-3 text-xs" onClick={() => declineRequest(incomingReq)}>Decline</Button>
+                      </div>
+                    ) : isOutgoing ? (
+                      <span className="text-xs text-muted-foreground">Sent</span>
+                    ) : (
+                      <Button size="sm" variant="outline" className="rounded-full" onClick={() => sendRequest({ id: u.user_id, email: u.user_email, full_name: u.full_name })}>
+                        <UserPlus className="h-3.5 w-3.5 mr-1" /> Add
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+            </>
           )}
         </div>
       ) : tab === "requests" ? (
         <div className="space-y-3">
           {receivedRequests.length === 0 && sentRequests.length === 0 ? (
-            <p className="text-center text-muted-foreground text-sm py-10">No pending requests</p>
+            <p className="text-center text-muted-foreground text-sm py-10">no pending requests</p>
           ) : (
             <>
               {receivedRequests.length > 0 && (
@@ -373,21 +363,15 @@ export default function Friends() {
                   {receivedRequests.map((req) => (
                     <div key={req.id} className="bg-white rounded-[18px] shadow-[0_1px_8px_rgba(0,0,0,0.06)] p-4 flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary">
-                          {req.sender_name?.[0] || "?"}
-                        </div>
+                        <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary">{req.sender_name?.[0] || "?"}</div>
                         <div>
                           <p className="font-medium text-sm">{req.sender_name || req.sender_email}</p>
                           <p className="text-xs text-muted-foreground">{req.sender_email}</p>
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => acceptRequest(req)}>
-                          <Check className="h-4 w-4 text-primary" />
-                        </Button>
-                        <Button size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => declineRequest(req)}>
-                          <X className="h-4 w-4 text-destructive" />
-                        </Button>
+                        <Button size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => acceptRequest(req)}><Check className="h-4 w-4 text-primary" /></Button>
+                        <Button size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => declineRequest(req)}><X className="h-4 w-4 text-destructive" /></Button>
                       </div>
                     </div>
                   ))}
@@ -399,12 +383,10 @@ export default function Friends() {
                   {sentRequests.map((req) => (
                     <div key={req.id} className="bg-white rounded-[18px] shadow-[0_1px_8px_rgba(0,0,0,0.06)] p-4 flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary">
-                          {req.receiver_name?.[0] || "?"}
-                        </div>
+                        <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary">{req.receiver_name?.[0] || "?"}</div>
                         <div>
                           <p className="font-medium text-sm">{req.receiver_name || req.receiver_email}</p>
-                          <p className="text-xs text-muted-foreground">Pending</p>
+                          <p className="text-xs text-muted-foreground">request sent</p>
                         </div>
                       </div>
                     </div>
@@ -421,8 +403,8 @@ export default function Friends() {
               <div className="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <UserPlus className="h-7 w-7 text-primary" />
               </div>
-              <h3 className="font-semibold text-lg mb-1">No friends yet</h3>
-              <p className="text-muted-foreground text-sm">Search for people to connect</p>
+              <h3 className="font-semibold text-lg mb-1">no friends yet</h3>
+              <p className="text-muted-foreground text-sm">search by name or username to connect</p>
             </div>
           ) : (
             friends.map((f) => (

@@ -98,8 +98,8 @@ export default function Trips() {
           <div className="w-16 h-16 rounded-[22px] flex items-center justify-center mb-5" style={{background:'rgba(200,162,124,0.15)'}}>
             <MapPin className="h-7 w-7" style={{color:'#C8A27C'}} />
           </div>
-          <h3 className="font-semibold text-lg mb-1.5" style={{color:'#1A1A1A'}}>No trips yet</h3>
-          <p className="text-sm mb-7" style={{color:'#9A8A7A'}}>Tap "New Trip" to start planning your next adventure</p>
+          <h3 className="font-semibold text-lg mb-1.5" style={{color:'#1A1A1A'}}>no trips yet</h3>
+          <p className="text-sm mb-7" style={{color:'#9A8A7A'}}>tap "new trip" to start planning</p>
           <button onClick={() => setShowCreate(true)} className="px-7 py-2.5 rounded-full text-sm font-semibold" style={{background:'#C8A27C', color:'white', boxShadow:'0 2px 14px rgba(200,162,124,0.35)'}}>
             Create Trip
           </button>
