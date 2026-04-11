@@ -34,6 +34,7 @@ export default function TripDetail() {
   const [showEdit, setShowEdit] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -107,7 +108,7 @@ export default function TripDetail() {
           <button className="rounded-full h-9 w-9 flex items-center justify-center" style={{background:'rgba(0,0,0,0.28)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)'}} onClick={() => setShowCoverEditor(true)}>
             <ImageIcon className="h-4.5 w-4.5 text-white" />
           </button>
-          <button className="rounded-full h-9 w-9 flex items-center justify-center" style={{background:'rgba(0,0,0,0.28)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)'}} onClick={copyInviteLink}>
+          <button className="rounded-full h-9 w-9 flex items-center justify-center" style={{background:'rgba(0,0,0,0.28)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)'}} onClick={() => setShowInviteModal(true)}>
             <Link2 className="h-4.5 w-4.5 text-white" />
           </button>
           {isMember && (
@@ -191,6 +192,27 @@ export default function TripDetail() {
                 <span className="text-sm font-medium text-destructive">Delete Trip</span>
               </button>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Invite link modal */}
+        <Dialog open={showInviteModal} onOpenChange={setShowInviteModal}>
+          <DialogContent className="mx-4 rounded-2xl max-w-sm p-6">
+            <DialogHeader><DialogTitle>Invite to {trip.name}</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground mb-3">Share this link. Anyone who opens it can request to join — admin approval required.</p>
+            <div className="bg-muted/60 rounded-xl px-3 py-2.5 text-xs font-mono break-all text-foreground mb-4 select-all">
+              {`${window.location.origin}/join/trip/${trip.invite_code}`}
+            </div>
+            <div className="flex gap-2">
+              <Button className="flex-1 rounded-full" onClick={async () => { await navigator.clipboard.writeText(`${window.location.origin}/join/trip/${trip.invite_code}`); toast.success('Link copied!'); }}>
+                Copy Link
+              </Button>
+              {navigator.share && (
+                <Button variant="outline" className="flex-1 rounded-full" onClick={() => navigator.share({ title: trip.name, url: `${window.location.origin}/join/trip/${trip.invite_code}` })}>
+                  Share
+                </Button>
+              )}
+            </div>
           </DialogContent>
         </Dialog>
 
