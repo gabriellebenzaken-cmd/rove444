@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +55,9 @@ export default function TripPlan({ trip, user, onUpdate }) {
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [detailArrival, setDetailArrival] = useState(null);
+  const [lookingUp, setLookingUp] = useState(false);
+  const [lookupStatus, setLookupStatus] = useState(null); // 'found' | 'not_found' | null
+  const lookupTimer = useRef(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
   useEffect(() => { loadData(); }, [trip.id]);
@@ -67,13 +70,42 @@ export default function TripPlan({ trip, user, onUpdate }) {
   }
 
   function handleFlightNumberChange(field, value) {
-    const updates = { [field]: value };
-    // Auto-fill airline if blank and we can guess from the flight number
-    if (!form.airline && value) {
-      const guessed = guessAirline(value);
-      if (guessed) updates.airline = guessed;
+    const upper = value.toUpperCase();
+    setForm((prev) => ({ ...prev, [field]: upper }));
+    setLookupStatus(null);
+
+    // Debounce live lookup
+    if (lookupTimer.current) clearTimeout(lookupTimer.current);
+    if (upper.length >= 4) {
+      lookupTimer.current = setTimeout(() => doFlightLookup(upper), 800);
+    } else if (upper.length > 0) {
+      // Instant airline guess from IATA prefix
+      const guessed = guessAirline(upper);
+      if (guessed) setForm((prev) => ({ ...prev, [field]: upper, airline: prev.airline || guessed }));
     }
-    setForm((prev) => ({ ...prev, ...updates }));
+  }
+
+  async function doFlightLookup(flightNum) {
+    setLookingUp(true);
+    try {
+      const res = await base44.functions.invoke('lookupFlight', { flight_number: flightNum });
+      const data = res.data;
+      if (data?.found) {
+        setForm((prev) => ({
+          ...prev,
+          airline: data.airline || prev.airline,
+          arrival_location: data.departure_airport || prev.arrival_location,
+          destination: data.arrival_airport || prev.destination,
+          arrival_time: data.scheduled_arrival_time || prev.arrival_time,
+        }));
+        setLookupStatus('found');
+      } else {
+        setLookupStatus('not_found');
+      }
+    } catch {
+      setLookupStatus('not_found');
+    }
+    setLookingUp(false);
   }
 
   async function addArrival(e) {
@@ -138,6 +170,9 @@ export default function TripPlan({ trip, user, onUpdate }) {
     setEditingId(null);
     setForm({ ...EMPTY_FORM });
     setShowAdd(false);
+    setLookupStatus(null);
+    setLookingUp(false);
+    if (lookupTimer.current) clearTimeout(lookupTimer.current);
   }
 
   return (
@@ -290,12 +325,23 @@ export default function TripPlan({ trip, user, onUpdate }) {
                   <Label className="text-xs font-medium mb-1 block">
                     Outbound Flight # <span className="text-muted-foreground font-normal">(e.g. UA123)</span>
                   </Label>
-                  <Input
-                    value={form.outbound_flight_number}
-                    onChange={(e) => handleFlightNumberChange("outbound_flight_number", e.target.value.toUpperCase())}
-                    placeholder="e.g. UA123"
-                    className="h-9 text-sm font-mono"
-                  />
+                  <div className="relative">
+                    <Input
+                      value={form.outbound_flight_number}
+                      onChange={(e) => handleFlightNumberChange("outbound_flight_number", e.target.value)}
+                      placeholder="e.g. UA123"
+                      className="h-9 text-sm font-mono pr-8"
+                    />
+                    {lookingUp && (
+                      <Loader2 className="absolute right-2 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
+                  </div>
+                  {lookupStatus === 'found' && (
+                    <p className="text-[11px] text-green-600 mt-1">✓ Flight details auto-filled</p>
+                  )}
+                  {lookupStatus === 'not_found' && (
+                    <p className="text-[11px] text-muted-foreground mt-1">Flight not found — enter details manually</p>
+                  )}
                 </div>
 
                 {form.is_round_trip && (

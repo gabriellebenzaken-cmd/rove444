@@ -127,8 +127,10 @@ export default function FlightDetailModal({ arrival, open, onClose }) {
             {/* Airline + status */}
             <div className="flex items-center justify-between">
               <div>
-                {arrival.airline && <p className="font-semibold text-sm">{arrival.airline}</p>}
-                {!arrival.airline && <p className="text-sm text-muted-foreground">Airline not specified</p>}
+                {arrival.airline
+                  ? <p className="font-semibold text-sm">{arrival.airline}</p>
+                  : <p className="text-sm text-muted-foreground">Airline not specified</p>
+                }
               </div>
               <FlightStatusBadge status="unknown" />
             </div>
@@ -149,7 +151,7 @@ export default function FlightDetailModal({ arrival, open, onClose }) {
             {arrival.is_round_trip && (
               <LegBlock
                 label="Return"
-                flightNum={returnFlight}
+                flightNum={returnFlight || null}
                 from={arrival.destination}
                 to={arrival.arrival_location}
                 depDate={arrival.departure_date ? format(new Date(arrival.departure_date + "T00:00:00"), "EEE, MMM d") : null}
@@ -159,9 +161,12 @@ export default function FlightDetailModal({ arrival, open, onClose }) {
               />
             )}
 
-            <p className="text-[11px] text-muted-foreground text-center pt-1">
-              Live flight status not available
-            </p>
+            {!outboundFlight && !arrival.airline && (
+              <p className="text-[11px] text-muted-foreground text-center pt-1">No flight details recorded</p>
+            )}
+            {(outboundFlight || arrival.airline) && (
+              <p className="text-[11px] text-muted-foreground text-center pt-1">Live status not available</p>
+            )}
           </div>
         ) : (
           <NonFlightDetail arrival={arrival} />
