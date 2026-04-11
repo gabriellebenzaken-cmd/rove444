@@ -53,5 +53,19 @@
     "trip_id",
     "sender_email",
     "content"
-  ]
+  ],
+  "permissions": {
+    "create": {
+      "if": "user.is_authenticated"
+    },
+    "read": {
+      "if": "user.is_authenticated"
+    },
+    "update": {
+      "if": "user.is_authenticated"
+    },
+    "delete": {
+      "if": "record.sender_email == user.email"
+    }
+  }
 }
