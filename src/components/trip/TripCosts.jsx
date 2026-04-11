@@ -206,6 +206,41 @@ export default function TripCosts({ trip, user }) {
   const oweExpenses = expenses.filter(e => e.split_among?.includes(user.email) && e.paid_by !== user.email);
   const receivedExpenses = expenses.filter(e => e.paid_by === user.email && (e.split_among || []).some(em => em !== user.email));
 
+  // Net balances: who owes who
+  const netBalances = {}; // key: `${fromEmail}|${toEmail}` -> { from, fromName, to, toName, amount }
+  expenses.forEach((exp) => {
+    const owersExPayer = (exp.split_among || []).filter(e => e !== exp.paid_by);
+    owersExPayer.forEach((owerEmail) => {
+      const pay = getPayment(exp.id, owerEmail);
+      if (pay?.status === "confirmed") return;
+      const share = getShareAmount(exp, owerEmail);
+      const key = `${owerEmail}|${exp.paid_by}`;
+      const reverseKey = `${exp.paid_by}|${owerEmail}`;
+      if (netBalances[reverseKey]) {
+        netBalances[reverseKey].amount -= share;
+        if (netBalances[reverseKey].amount <= 0) {
+          netBalances[key] = { from: owerEmail, fromName: members.find(m=>m.email===owerEmail)?.full_name || owerEmail.split("@")[0], to: exp.paid_by, toName: exp.paid_by_name || exp.paid_by.split("@")[0], amount: Math.abs(netBalances[reverseKey].amount) };
+          delete netBalances[reverseKey];
+        }
+      } else {
+        if (!netBalances[key]) netBalances[key] = { from: owerEmail, fromName: members.find(m=>m.email===owerEmail)?.full_name || owerEmail.split("@")[0], to: exp.paid_by, toName: exp.paid_by_name || exp.paid_by.split("@")[0], amount: 0 };
+        netBalances[key].amount += share;
+      }
+    });
+  });
+  const balanceRows = Object.values(netBalances).filter(b => b.amount > 0.01);
+
+  function getSettleLinks(email) {
+    const pp = payerProfiles[email];
+    if (!pp) return [];
+    return [
+      pp.venmo    && { label: "Venmo",    href: `https://venmo.com/${pp.venmo.replace(/^@/, "")}` },
+      pp.cashapp  && { label: "Cash App", href: `https://cash.app/$${pp.cashapp.replace(/^\$/, "")}` },
+      pp.paypal   && { label: "PayPal",   href: `https://paypal.me/${pp.paypal.replace(/^[@\/]/, "")}` },
+      pp.zelle    && { label: "Zelle",    href: null, info: pp.zelle },
+    ].filter(Boolean);
+  }
+
   return (
     <div className="pb-24">
       {/* Summary boxes */}
@@ -226,6 +261,47 @@ export default function TripCosts({ trip, user }) {
           </div>
         ))}
       </div>
+
+      {/* Who Owes Who */}
+      {balanceRows.length > 0 && (
+        <div className="mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#C8A27C" }}>Who Owes Who</p>
+          <div className="space-y-2">
+            {balanceRows.map((b, i) => {
+              const settleLinks = getSettleLinks(b.to);
+              const isMe = b.from === user.email;
+              return (
+                <div key={i} className="rounded-2xl p-3" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.15)" }}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-xs" style={{ color: "#3A3028" }}>
+                      <span className="font-semibold">{isMe ? "You" : b.fromName}</span>
+                      <span style={{ color: "#B0A090" }}> → </span>
+                      <span className="font-semibold">{b.toName}</span>
+                    </p>
+                    <span className="text-sm font-semibold" style={{ color: isMe ? "#B04040" : "#3A7A5A" }}>${b.amount.toFixed(2)}</span>
+                  </div>
+                  {settleLinks.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px]" style={{ color: "#B0A090" }}>settle via</span>
+                      {settleLinks.map(l => l.href ? (
+                        <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer"
+                          className="px-2 py-0.5 rounded-full text-[10px] font-semibold active:opacity-70"
+                          style={{ background: "rgba(200,162,124,0.15)", color: "#7A5A3A" }}>
+                          {l.label} ↗
+                        </a>
+                      ) : (
+                        <span key={l.label} className="px-2 py-0.5 rounded-full text-[10px]" style={{ background: "rgba(200,162,124,0.08)", color: "#9A8A7A" }}>
+                          Zelle: {l.info}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Payments awaiting confirmation */}
       {payments.filter((p) => p.receiver_email === user.email && p.status === "pending").map((pay) => {
