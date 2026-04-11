@@ -211,7 +211,7 @@ export default function TripPlan({ trip, user, onUpdate }) {
                   onClick={() => setDetailArrival(a)}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <p className="font-medium text-sm">{a.user_name || a.user_email?.split("@")[0]}</p>
+                    <p className="font-medium text-sm">{a.user_name}</p>
                     {a.user_email === user?.email && (
                       <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                         <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => editArrival(a)}>

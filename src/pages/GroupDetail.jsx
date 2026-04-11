@@ -50,7 +50,7 @@ export default function GroupDetail() {
           return {
             id: profile?.user_id || email,
             email,
-            full_name: profile?.full_name || profile?.username || email.split("@")[0],
+            full_name: profile?.full_name || "User",
             username: profile?.username || null,
             profile_photo: profile?.profile_photo || null,
           };
