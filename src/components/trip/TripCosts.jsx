@@ -17,9 +17,10 @@ import { format } from "date-fns";
 
 const categories = [
   { value: "food", label: "🍕 Food" },
-  { value: "transport", label: "🚕 Transport" },
+  { value: "drinks", label: "🍹 Drinks" },
+  { value: "transport", label: "🚕 Travel" },
   { value: "lodging", label: "🏨 Lodging" },
-  { value: "activity", label: "🎯 Activity" },
+  { value: "activity", label: "🎯 Activities" },
   { value: "shopping", label: "🛍 Shopping" },
   { value: "other", label: "📦 Other" },
 ];
@@ -40,6 +41,7 @@ export default function TripCosts({ trip, user }) {
   const [showAdd, setShowAdd] = useState(false);
   const [expandedExpense, setExpandedExpense] = useState(null);
   const [selectedMethod, setSelectedMethod] = useState({});
+  const [detailModal, setDetailModal] = useState(null); // 'owe' | 'received' | null
   const [splitMode, setSplitMode] = useState("equal"); // "equal" | "custom"
   const [form, setForm] = useState({
     description: "", amount: "", category: "other", split_among: [],
@@ -198,34 +200,26 @@ export default function TripCosts({ trip, user }) {
     (p) => p.receiver_email === user.email && p.status === "pending"
   ).length;
 
+  const oweExpenses = expenses.filter(e => e.split_among?.includes(user.email) && e.paid_by !== user.email);
+  const receivedExpenses = expenses.filter(e => e.paid_by === user.email && (e.split_among || []).some(em => em !== user.email));
+
   return (
     <div className="pb-24">
-      {/* Summary */}
-      {iOwe > 0 && (
-        <div className="rounded-2xl p-3 mb-3 flex items-center gap-3" style={{ background: "rgba(220,80,80,0.06)", border: "1px solid rgba(220,80,80,0.15)" }}>
-          <span className="text-xl">💸</span>
-          <div>
-            <p className="text-xs font-semibold" style={{ color: "#B04040" }}>You owe ${iOwe.toFixed(2)}</p>
-            <p className="text-[10px]" style={{ color: "#C07070" }}>across {expenses.filter(e => e.split_among?.includes(user.email) && e.paid_by !== user.email).length} expense(s)</p>
-          </div>
-        </div>
-      )}
-      {iAmOwed > 0 && (
-        <div className="rounded-2xl px-4 py-3.5 mb-3" style={{ background: "rgba(107,174,138,0.07)", border: "1px solid rgba(107,174,138,0.18)" }}>
-          <p className="text-2xl font-semibold tracking-tight" style={{ color: "#3A7A5A" }}>${iAmOwed.toFixed(2)}</p>
-          <p className="text-xs mt-0.5" style={{ color: "#6BAE8A" }}>owed to you</p>
-          <p className="text-[10px] mt-1" style={{ color: "#90BEA0" }}>settlement pending</p>
-        </div>
-      )}
-      <div className="grid grid-cols-3 gap-2 mb-5">
+      {/* Summary boxes */}
+      <div className="grid grid-cols-3 gap-2 mb-4">
         {[
-          { label: "Total", value: `$${total.toFixed(2)}`, accent: false },
-          { label: "You Owe", value: `$${iOwe.toFixed(2)}`, accent: iOwe > 0, accentClass: "text-rose-500" },
-          { label: "Pending", value: pendingConfirmation, accent: pendingConfirmation > 0, accentClass: "text-amber-500" },
-        ].map(({ label, value, accent, accentClass }) => (
-          <div key={label} className="rounded-2xl p-3 text-center" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.15)" }}>
+          { key: null, label: "total spent", value: `$${total.toFixed(2)}`, color: "#2A2018" },
+          { key: "owe", label: "you owe", value: `$${iOwe.toFixed(2)}`, color: iOwe > 0 ? "#B04040" : "#2A2018" },
+          { key: "received", label: "you're owed", value: `$${iAmOwed.toFixed(2)}`, color: iAmOwed > 0 ? "#3A7A5A" : "#2A2018" },
+        ].map(({ key, label, value, color }) => (
+          <div
+            key={label}
+            className={`rounded-2xl p-3 text-center ${key ? "cursor-pointer active:scale-95 transition-transform" : ""}`}
+            style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.15)" }}
+            onClick={() => key && setDetailModal(key)}
+          >
             <p className="text-[10px] mb-1" style={{ color: "#B0A090" }}>{label}</p>
-            <p className={`text-sm font-semibold ${accent && accentClass ? accentClass : ""}`} style={!accent ? { color: "#2A2018" } : {}}>{value}</p>
+            <p className="text-sm font-semibold" style={{ color }}>{value}</p>
           </div>
         ))}
       </div>
@@ -400,6 +394,43 @@ export default function TripCosts({ trip, user }) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Detail modal */}
+      {detailModal && (
+        <div className="fixed inset-0 z-50 flex items-end" onClick={() => setDetailModal(null)}>
+          <div className="w-full rounded-t-3xl p-5 pb-10 max-h-[75vh] overflow-y-auto" style={{ background: "#FAF7F4" }} onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: "rgba(200,162,124,0.3)" }} />
+            <h3 className="text-base font-semibold mb-4" style={{ color: "#2A2018" }}>
+              {detailModal === "owe" ? "what you owe" : "owed to you"}
+            </h3>
+            <div className="space-y-2">
+              {(detailModal === "owe" ? oweExpenses : receivedExpenses).map(exp => {
+                const share = detailModal === "owe"
+                  ? getShareAmount(exp, user.email)
+                  : (exp.split_among || []).filter(em => em !== user.email).reduce((s, em) => s + getShareAmount(exp, em), 0);
+                const pay = detailModal === "owe" ? getPayment(exp.id, user.email) : null;
+                return (
+                  <div key={exp.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(200,162,124,0.12)" }}>
+                    <div>
+                      <p className="text-sm font-medium" style={{ color: "#2A2018" }}>{exp.description}</p>
+                      <p className="text-[11px] mt-0.5" style={{ color: "#B0A090" }}>
+                        {detailModal === "owe" ? `to ${exp.paid_by_name || exp.paid_by?.split("@")[0]}` : `${(exp.split_among || []).filter(em => em !== user.email).length} people owe you`}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold" style={{ color: detailModal === "owe" ? "#B04040" : "#3A7A5A" }}>${share.toFixed(2)}</p>
+                      {pay && <p className="text-[10px]" style={{ color: "#B0A090" }}>{pay.status}</p>}
+                    </div>
+                  </div>
+                );
+              })}
+              {(detailModal === "owe" ? oweExpenses : receivedExpenses).length === 0 && (
+                <p className="text-sm text-center py-6" style={{ color: "#B0A090" }}>nothing here</p>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
