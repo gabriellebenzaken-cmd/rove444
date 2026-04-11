@@ -12,7 +12,7 @@ export default function Profile() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ username: "", bio: "", profile_photo: "" });
+  const [form, setForm] = useState({ display_name: "", username: "", bio: "", profile_photo: "" });
   const [payForm, setPayForm] = useState({ venmo: "", cashapp: "", paypal: "", zelle: "", instagram: "", twitter: "", tiktok: "", snapchat: "" });
   const [loading, setLoading] = useState(true);
   const [usernameError, setUsernameError] = useState("");
@@ -32,7 +32,7 @@ export default function Profile() {
    const p = profiles[0] || null;
    setProfile(p);
 
-   setForm({ username: p?.username || me.username || "", bio: p?.bio || me.bio || "", profile_photo: p?.profile_photo || me.profile_photo || "" });
+   setForm({ display_name: p?.display_name || "", username: p?.username || me.username || "", bio: p?.bio || me.bio || "", profile_photo: p?.profile_photo || me.profile_photo || "" });
    if (p) setPayForm({ venmo: p.venmo || "", cashapp: p.cashapp || "", paypal: p.paypal || "", zelle: p.zelle || "", instagram: p.instagram || "", twitter: p.twitter || "", tiktok: p.tiktok || "", snapchat: p.snapchat || "" });
 
     const allTrips = await base44.entities.Trip.list("-created_date", 50);
@@ -60,11 +60,11 @@ export default function Profile() {
      if (taken) { setUsernameError("Username already taken"); return; }
    }
    await base44.auth.updateMe({ username: form.username, profile_photo: form.profile_photo });
-   if (profile) {
-     await base44.entities.UserProfile.update(profile.id, { username: form.username, bio: form.bio, profile_photo: form.profile_photo });
-   }
-   setUser({ ...user, username: form.username, profile_photo: form.profile_photo });
-   setProfile(prev => prev ? { ...prev, username: form.username, bio: form.bio, profile_photo: form.profile_photo } : null);
+    if (profile) {
+      await base44.entities.UserProfile.update(profile.id, { display_name: form.display_name, username: form.username, bio: form.bio, profile_photo: form.profile_photo });
+    }
+    setUser({ ...user, username: form.username, profile_photo: form.profile_photo });
+    setProfile(prev => prev ? { ...prev, display_name: form.display_name, username: form.username, bio: form.bio, profile_photo: form.profile_photo } : null);
    setEditing(false);
    toast.success("Profile updated!");
   }
@@ -118,7 +118,7 @@ export default function Profile() {
             </label>
           )}
         </div>
-        <h2 className="text-xl font-semibold">{user?.full_name}</h2>
+        <h2 className="text-xl font-semibold">{profile?.display_name || user?.full_name}</h2>
         {user?.username && <p className="text-sm text-muted-foreground">@{user.username}</p>}
         <p className="text-xs text-muted-foreground mt-0.5">{user?.email}</p>
         {!editing && (profile?.bio || user?.bio) && <p className="text-sm text-center mt-2 max-w-[260px] text-muted-foreground">{profile?.bio || user?.bio}</p>}
@@ -174,8 +174,17 @@ export default function Profile() {
       })()}
 
       {/* Edit Form */}
-      {editing ? (
+       {editing ? (
         <div className="bg-white rounded-[18px] shadow-[0_2px_10px_rgba(0,0,0,0.06)] p-5 mb-4 space-y-4">
+          <div>
+            <Label>Display Name</Label>
+            <Input
+              value={form.display_name}
+              onChange={(e) => setForm({ ...form, display_name: e.target.value })}
+              placeholder="How you want to appear to others (e.g. John, Johnny)"
+              className="mt-1"
+            />
+          </div>
           <div>
             <Label>Username</Label>
             <div className="flex items-center mt-1">
