@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { UserPlus, Copy, Loader2 } from "lucide-react";
+import { UserPlus, Copy, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
+import FriendProfileModal from "../FriendProfileModal";
 
 export default function TripMembersManager({ trip, user, isAdmin, onMembersUpdate }) {
   const [members, setMembers] = useState([]);
@@ -15,6 +16,7 @@ export default function TripMembersManager({ trip, user, isAdmin, onMembersUpdat
   const [loading, setLoading] = useState(true);
   const [inviting, setInviting] = useState(false);
   const [inviteLink, setInviteLink] = useState("");
+  const [viewingMember, setViewingMember] = useState(null);
 
   useEffect(() => {
     if (showInviteModal) loadFriends();
@@ -143,25 +145,31 @@ export default function TripMembersManager({ trip, user, isAdmin, onMembersUpdat
       </div>
 
       <div className="space-y-2">
-        {members.length === 0 ? (
-          <p className="text-xs text-muted-foreground py-4 text-center">No members yet</p>
-        ) : (
-          members.map((m) => (
-            <div key={m.id} className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
-              <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-xs font-semibold shrink-0">
-                {m.full_name?.[0] || "?"}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium truncate">{m.full_name}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{m.username || m.email}</p>
-              </div>
-              {trip.admin_email === m.email && (
-                <span className="text-[10px] px-2 py-1 bg-primary/10 text-primary rounded-full shrink-0">Admin</span>
-              )}
-            </div>
-          ))
-        )}
+       {members.length === 0 ? (
+         <p className="text-xs text-muted-foreground py-4 text-center">No members yet</p>
+       ) : (
+         members.map((m) => (
+           <div key={m.id} className="flex items-center gap-2 p-3 bg-white rounded-lg border border-border cursor-pointer active:scale-95 transition-all" onClick={() => setViewingMember(m)}>
+             <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-xs font-semibold shrink-0 overflow-hidden">
+               {m.data?.profile_photo ? (
+                 <img src={m.data.profile_photo} alt="" className="w-9 h-9 rounded-full object-cover" />
+               ) : (
+                 m.full_name?.[0] || "?"
+               )}
+             </div>
+             <div className="flex-1 min-w-0">
+               <p className="text-xs font-medium truncate">{m.full_name}</p>
+               {m.data?.username && <p className="text-[10px] text-muted-foreground truncate">@{m.data.username}</p>}
+             </div>
+             {trip.admin_email === m.email && (
+               <span className="text-[10px] px-2 py-1 bg-primary/10 text-primary rounded-full shrink-0 shrink-0">Admin</span>
+             )}
+           </div>
+         ))
+       )}
       </div>
+
+      <FriendProfileModal friend={viewingMember} onClose={() => setViewingMember(null)} />
 
       <Dialog open={showInviteModal} onOpenChange={(v) => { if (!v) { setShowInviteModal(false); setSearchQuery(""); } }}>
         <DialogContent className="mx-4 rounded-2xl max-w-sm p-6 max-h-[90vh] flex flex-col">

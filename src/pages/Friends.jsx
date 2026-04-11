@@ -249,6 +249,18 @@ export default function Friends() {
     }
   }
 
+  async function cancelSentRequest(req) {
+    try {
+      await base44.entities.FriendRequest.delete(req.id);
+      console.log("[Friend] Request canceled:", req.id);
+      toast.success("Request canceled");
+      loadData();
+    } catch (err) {
+      console.error("Failed to cancel request:", err);
+      toast.error("Failed to cancel request");
+    }
+  }
+
   async function removeFriend(friendUser) {
     try {
       const friendship = allRequests.find(
@@ -380,13 +392,16 @@ export default function Friends() {
               {receivedRequests.length > 0 && (
                 <div>
                   <p className="text-[10px] text-muted-foreground font-semibold mb-2 uppercase tracking-widest">Received</p>
-                  {receivedRequests.map((req) => (
+                  {receivedRequests.map((req) => {
+                    const accepted = allRequests.find(r => r.id === req.id)?.status === "accepted";
+                    if (accepted) return null;
+                    return (
                     <div key={req.id} className="bg-white rounded-[18px] shadow-[0_1px_8px_rgba(0,0,0,0.06)] p-4 flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-1">
                         <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary">{req.sender_name?.[0] || "?"}</div>
-                        <div>
+                        <div className="flex-1">
                           <p className="font-medium text-sm">{req.sender_name || req.sender_email}</p>
-                          <p className="text-xs text-muted-foreground">{req.sender_email}</p>
+                          <p className="text-xs text-muted-foreground">request received</p>
                         </div>
                       </div>
                       <div className="flex gap-2">
@@ -394,7 +409,8 @@ export default function Friends() {
                         <Button size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => declineRequest(req)}><X className="h-4 w-4 text-destructive" /></Button>
                       </div>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               )}
               {sentRequests.length > 0 && (
@@ -402,13 +418,14 @@ export default function Friends() {
                   <p className="text-[10px] text-muted-foreground font-semibold mb-2 uppercase tracking-widest mt-3">Sent</p>
                   {sentRequests.map((req) => (
                     <div key={req.id} className="bg-white rounded-[18px] shadow-[0_1px_8px_rgba(0,0,0,0.06)] p-4 flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-1">
                         <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary">{req.receiver_name?.[0] || "?"}</div>
-                        <div>
+                        <div className="flex-1">
                           <p className="font-medium text-sm">{req.receiver_name || req.receiver_email}</p>
                           <p className="text-xs text-muted-foreground">request sent</p>
                         </div>
                       </div>
+                      <Button size="sm" variant="ghost" className="text-xs h-8 rounded-full text-muted-foreground hover:text-destructive" onClick={() => cancelSentRequest(req)}>Cancel</Button>
                     </div>
                   ))}
                 </div>
