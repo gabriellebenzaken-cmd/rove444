@@ -21,6 +21,10 @@
       ],
       "default": "Flight"
     },
+    "is_round_trip": {
+      "type": "boolean",
+      "default": false
+    },
     "arrival_location": {
       "type": "string",
       "description": "City or airport departing from"
@@ -45,11 +49,19 @@
     },
     "airline": {
       "type": "string",
-      "description": "Airline name (flight only)"
+      "description": "Airline name"
+    },
+    "outbound_flight_number": {
+      "type": "string",
+      "description": "Outbound flight number (e.g. UA123)"
+    },
+    "return_flight_number": {
+      "type": "string",
+      "description": "Return flight number for round trips"
     },
     "flight_number": {
       "type": "string",
-      "description": "Flight number (flight only, optional)"
+      "description": "Legacy single flight number field"
     }
   },
   "required": [

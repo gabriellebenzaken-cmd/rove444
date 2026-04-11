@@ -3,12 +3,48 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plane, Clock, MapPin, Plus, Trash2, Car, Train, HelpCircle } from "lucide-react";
+import { Plane, Clock, MapPin, Plus, Trash2, Car, Train, HelpCircle, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import TripMembersManager from "./TripMembersManager";
 import TripPendingRequests from "./TripPendingRequests";
+
+const EMPTY_FORM = {
+  travel_type: "Flight",
+  is_round_trip: false,
+  arrival_location: "",
+  destination: "",
+  arrival_date: "",
+  arrival_time: "",
+  departure_date: "",
+  departure_time: "",
+  airline: "",
+  outbound_flight_number: "",
+  return_flight_number: "",
+};
+
+// Attempt to parse airline IATA code from flight number (e.g. "UA123" → "UA")
+function parseAirlineCode(flightNum) {
+  const match = flightNum?.trim().match(/^([A-Z]{2,3})\d/i);
+  return match ? match[1].toUpperCase() : null;
+}
+
+const IATA_AIRLINES = {
+  AA: "American Airlines", UA: "United Airlines", DL: "Delta Air Lines",
+  WN: "Southwest Airlines", B6: "JetBlue", AS: "Alaska Airlines",
+  F9: "Frontier Airlines", NK: "Spirit Airlines", G4: "Allegiant Air",
+  BA: "British Airways", LH: "Lufthansa", AF: "Air France",
+  KL: "KLM", EK: "Emirates", QR: "Qatar Airways", SQ: "Singapore Airlines",
+  CX: "Cathay Pacific", JL: "Japan Airlines", NH: "ANA",
+  AC: "Air Canada", WS: "WestJet", FR: "Ryanair", U2: "easyJet",
+  VY: "Vueling", IB: "Iberia", AZ: "Alitalia", TK: "Turkish Airlines",
+};
+
+function guessAirline(flightNum) {
+  const code = parseAirlineCode(flightNum);
+  return code ? (IATA_AIRLINES[code] || null) : null;
+}
 
 export default function TripPlan({ trip, user, onUpdate }) {
   const isAdmin = trip?.admin_email === user?.email;
@@ -17,21 +53,9 @@ export default function TripPlan({ trip, user, onUpdate }) {
   const [members, setMembers] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({
-    travel_type: "Flight",
-    arrival_location: "",
-    destination: "",
-    arrival_date: "",
-    arrival_time: "",
-    departure_date: "",
-    departure_time: "",
-    airline: "",
-    flight_number: "",
-  });
+  const [form, setForm] = useState({ ...EMPTY_FORM });
 
-  useEffect(() => {
-    loadData();
-  }, [trip.id]);
+  useEffect(() => { loadData(); }, [trip.id]);
 
   async function loadData() {
     const allArrivals = await base44.entities.Arrival.filter({ trip_id: trip.id }, "-created_date", 50);
@@ -40,20 +64,31 @@ export default function TripPlan({ trip, user, onUpdate }) {
     setMembers(allUsers.filter((u) => trip.member_emails?.includes(u.email)));
   }
 
+  function handleFlightNumberChange(field, value) {
+    const updates = { [field]: value };
+    // Auto-fill airline if blank and we can guess from the flight number
+    if (!form.airline && value) {
+      const guessed = guessAirline(value);
+      if (guessed) updates.airline = guessed;
+    }
+    setForm((prev) => ({ ...prev, ...updates }));
+  }
+
   async function addArrival(e) {
     e.preventDefault();
+    const payload = { ...form };
     if (editingId) {
-      await base44.entities.Arrival.update(editingId, form);
+      await base44.entities.Arrival.update(editingId, payload);
       setEditingId(null);
     } else {
       await base44.entities.Arrival.create({
-        ...form,
+        ...payload,
         trip_id: trip.id,
         user_email: user.email,
         user_name: user.full_name,
       });
     }
-    setForm({ travel_type: "Flight", arrival_date: "", arrival_time: "", arrival_location: "", destination: "", airline: "", flight_number: "", departure_date: "", departure_time: "" });
+    setForm({ ...EMPTY_FORM });
     setShowAdd(false);
     loadData();
   }
@@ -61,6 +96,7 @@ export default function TripPlan({ trip, user, onUpdate }) {
   function editArrival(arrival) {
     setForm({
       travel_type: arrival.travel_type || "Flight",
+      is_round_trip: arrival.is_round_trip || false,
       arrival_location: arrival.arrival_location || "",
       destination: arrival.destination || "",
       arrival_date: arrival.arrival_date || "",
@@ -68,21 +104,16 @@ export default function TripPlan({ trip, user, onUpdate }) {
       departure_date: arrival.departure_date || "",
       departure_time: arrival.departure_time || "",
       airline: arrival.airline || "",
-      flight_number: arrival.flight_number || "",
+      outbound_flight_number: arrival.outbound_flight_number || arrival.flight_number || "",
+      return_flight_number: arrival.return_flight_number || "",
     });
     setEditingId(arrival.id);
     setShowAdd(true);
   }
 
-  function isAirportCode(str) {
-    return /^[A-Z]{3}$/.test(str);
-  }
-
-  function formatRoute(arrival) {
-    if (!arrival.arrival_location && !arrival.destination) return null;
-    const from = arrival.arrival_location ? (isAirportCode(arrival.arrival_location) ? arrival.arrival_location : arrival.arrival_location) : "?";
-    const to = arrival.destination ? (isAirportCode(arrival.destination) ? arrival.destination : arrival.destination) : null;
-    return to ? `${from} → ${to}` : from;
+  async function deleteArrival(id) {
+    await base44.entities.Arrival.delete(id);
+    loadData();
   }
 
   function getTravelIcon(type) {
@@ -94,9 +125,17 @@ export default function TripPlan({ trip, user, onUpdate }) {
     }
   }
 
-  async function deleteArrival(id) {
-    await base44.entities.Arrival.delete(id);
-    loadData();
+  function formatRoute(a) {
+    if (!a.arrival_location && !a.destination) return null;
+    const from = a.arrival_location || "?";
+    const to = a.destination;
+    return to ? `${from} → ${to}` : from;
+  }
+
+  function closeDialog() {
+    setEditingId(null);
+    setForm({ ...EMPTY_FORM });
+    setShowAdd(false);
   }
 
   return (
@@ -106,12 +145,7 @@ export default function TripPlan({ trip, user, onUpdate }) {
         <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
           <Plane className="h-4 w-4" /> Arrivals & Departures
         </h3>
-        <Button
-          variant="outline"
-          size="sm"
-          className="rounded-full mb-3"
-          onClick={() => setShowAdd(true)}
-        >
+        <Button variant="outline" size="sm" className="rounded-full mb-3" onClick={() => setShowAdd(true)}>
           <Plus className="h-3.5 w-3.5 mr-1" /> Add Your Travel
         </Button>
 
@@ -119,79 +153,87 @@ export default function TripPlan({ trip, user, onUpdate }) {
           <p className="text-xs text-muted-foreground py-4 text-center">No travel info added yet</p>
         ) : (
           <div className="space-y-3">
-            {arrivals.map((a) => (
-              <div key={a.id} className="bg-card rounded-xl border border-border p-4">
-                <div className="flex items-center justify-between mb-2">
-                   <p className="font-medium text-sm">{a.user_name || a.user_email?.split("@")[0]}</p>
-                   {a.user_email === user?.email && (
-                     <div className="flex gap-1">
-                       <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => editArrival(a)}>
-                         <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                       </Button>
-                       <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => deleteArrival(a.id)}>
-                         <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-                       </Button>
-                     </div>
-                   )}
-                 </div>
-                <div className="space-y-2 text-xs text-muted-foreground">
-                   {a.travel_type === "Flight" && (a.airline || a.flight_number) && (
-                     <div className="flex items-center gap-2">
-                       <Plane className="h-3 w-3" />
-                       <span>{a.airline}{a.airline && a.flight_number ? " " : ""}{a.flight_number}</span>
-                     </div>
-                   )}
-                   {a.travel_type !== "Flight" && (
-                     <div className="flex items-center gap-2">
-                       {getTravelIcon(a.travel_type)}
-                       <span className="capitalize">{a.travel_type}</span>
-                     </div>
-                   )}
-                   {formatRoute(a) && (
-                     <div className="flex items-center gap-2">
-                       <MapPin className="h-3 w-3" />
-                       <span>{formatRoute(a)}</span>
-                     </div>
-                   )}
-                   {a.arrival_date && (
-                     <div className="flex items-center gap-2">
-                       <Clock className="h-3 w-3" />
-                       <span>Arrives {format(new Date(a.arrival_date), "MMM d, h:mm a")}</span>
-                     </div>
-                   )}
-                   {a.departure_date && (
-                     <div className="flex items-center gap-2">
-                       <Clock className="h-3 w-3" />
-                       <span>Departs {format(new Date(a.departure_date), "MMM d, h:mm a")}</span>
-                     </div>
-                   )}
-                 </div>
-              </div>
-            ))}
+            {arrivals.map((a) => {
+              const outboundFlight = a.outbound_flight_number || a.flight_number;
+              const returnFlight = a.return_flight_number;
+              return (
+                <div key={a.id} className="bg-card rounded-xl border border-border p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-medium text-sm">{a.user_name || a.user_email?.split("@")[0]}</p>
+                    {a.user_email === user?.email && (
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => editArrival(a)}>
+                          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => deleteArrival(a.id)}>
+                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-1.5 text-xs text-muted-foreground">
+                    {a.travel_type === "Flight" ? (
+                      <>
+                        {(a.airline || outboundFlight) && (
+                          <div className="flex items-center gap-2">
+                            <Plane className="h-3 w-3 shrink-0" />
+                            <span>
+                              {a.airline}
+                              {a.airline && outboundFlight ? " · " : ""}
+                              {outboundFlight && <span className="font-mono">{outboundFlight}</span>}
+                              {a.is_round_trip && returnFlight && (
+                                <span className="text-muted-foreground"> / return: <span className="font-mono">{returnFlight}</span></span>
+                              )}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        {getTravelIcon(a.travel_type)}
+                        <span className="capitalize">{a.travel_type}</span>
+                      </div>
+                    )}
+                    {formatRoute(a) && (
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-3 w-3 shrink-0" />
+                        <span>{formatRoute(a)}</span>
+                      </div>
+                    )}
+                    {a.arrival_date && (
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-3 w-3 shrink-0" />
+                        <span>Arrives {format(new Date(a.arrival_date + "T00:00:00"), "MMM d")}{a.arrival_time ? ` at ${a.arrival_time}` : ""}</span>
+                      </div>
+                    )}
+                    {a.is_round_trip && a.departure_date && (
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-3 w-3 shrink-0" />
+                        <span>Returns {format(new Date(a.departure_date + "T00:00:00"), "MMM d")}{a.departure_time ? ` at ${a.departure_time}` : ""}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
 
       <TripMembersManager trip={trip} user={user} isAdmin={isAdmin} onMembersUpdate={loadData} />
 
-      <Dialog open={showAdd} onOpenChange={(open) => {
-        if (!open) {
-          setEditingId(null);
-          setForm({ travel_type: "Flight", arrival_date: "", arrival_time: "", arrival_location: "", destination: "", airline: "", flight_number: "", departure_date: "", departure_time: "" });
-        }
-        setShowAdd(open);
-      }}>
-        <DialogContent className="mx-4 rounded-2xl max-w-md p-5">
+      <Dialog open={showAdd} onOpenChange={(open) => { if (!open) closeDialog(); else setShowAdd(true); }}>
+        <DialogContent className="mx-4 rounded-2xl max-w-md p-5 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base">{editingId ? "Edit" : "Add"} Travel Info</DialogTitle>
           </DialogHeader>
           <form onSubmit={addArrival} className="space-y-3 mt-1">
+
+            {/* Travel type */}
             <div>
               <Label className="text-xs font-medium mb-1 block">Travel Type</Label>
               <Select value={form.travel_type} onValueChange={(val) => setForm({ ...form, travel_type: val })}>
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Flight">✈️ Flight</SelectItem>
                   <SelectItem value="Driving">🚗 Driving</SelectItem>
@@ -200,6 +242,24 @@ export default function TripPlan({ trip, user, onUpdate }) {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Round trip toggle (flights only) */}
+            {form.travel_type === "Flight" && (
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, is_round_trip: !prev.is_round_trip }))}
+                  className={`relative w-10 h-5 rounded-full transition-colors ${form.is_round_trip ? "bg-primary" : "bg-muted"}`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${form.is_round_trip ? "translate-x-5" : ""}`} />
+                </button>
+                <Label className="text-xs font-medium cursor-pointer" onClick={() => setForm((prev) => ({ ...prev, is_round_trip: !prev.is_round_trip }))}>
+                  Round Trip
+                </Label>
+              </div>
+            )}
+
+            {/* Route */}
             <div className="grid grid-cols-2 gap-2.5">
               <div>
                 <Label className="text-xs font-medium mb-1 block">From</Label>
@@ -210,41 +270,89 @@ export default function TripPlan({ trip, user, onUpdate }) {
                 <Input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} placeholder="Destination" className="h-9 text-sm" />
               </div>
             </div>
+
+            {/* Flight details */}
             {form.travel_type === "Flight" && (
-              <div className="grid grid-cols-2 gap-2.5 bg-muted/40 p-3 rounded-lg">
+              <div className="bg-muted/40 p-3 rounded-lg space-y-2.5">
+                <div>
+                  <Label className="text-xs font-medium mb-1 block">
+                    Outbound Flight # <span className="text-muted-foreground font-normal">(e.g. UA123)</span>
+                  </Label>
+                  <Input
+                    value={form.outbound_flight_number}
+                    onChange={(e) => handleFlightNumberChange("outbound_flight_number", e.target.value.toUpperCase())}
+                    placeholder="e.g. UA123"
+                    className="h-9 text-sm font-mono"
+                  />
+                </div>
+
+                {form.is_round_trip && (
+                  <div>
+                    <Label className="text-xs font-medium mb-1 block">
+                      Return Flight # <span className="text-muted-foreground font-normal">(e.g. UA456)</span>
+                    </Label>
+                    <Input
+                      value={form.return_flight_number}
+                      onChange={(e) => setForm({ ...form, return_flight_number: e.target.value.toUpperCase() })}
+                      placeholder="e.g. UA456"
+                      className="h-9 text-sm font-mono"
+                    />
+                  </div>
+                )}
+
                 <div>
                   <Label className="text-xs font-medium mb-1 block">Airline</Label>
-                  <Input value={form.airline} onChange={(e) => setForm({ ...form, airline: e.target.value })} placeholder="e.g. United" className="h-9 text-sm" />
-                </div>
-                <div>
-                  <Label className="text-xs font-medium mb-1 block">Flight # (optional)</Label>
-                  <Input value={form.flight_number} onChange={(e) => setForm({ ...form, flight_number: e.target.value })} placeholder="e.g. UA123" className="h-9 text-sm" />
+                  <Input
+                    value={form.airline}
+                    onChange={(e) => setForm({ ...form, airline: e.target.value })}
+                    placeholder="Auto-filled or enter manually"
+                    className="h-9 text-sm"
+                  />
                 </div>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <Label className="text-xs font-medium mb-1 block">Arrival date</Label>
-                <Input type="date" value={form.arrival_date} onChange={(e) => setForm({ ...form, arrival_date: e.target.value })} className="h-9 text-sm" />
-              </div>
-              <div>
-                <Label className="text-xs font-medium mb-1 block">Arrival time</Label>
-                <Input type="time" value={form.arrival_time} onChange={(e) => setForm({ ...form, arrival_time: e.target.value })} className="h-9 text-sm" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <Label className="text-xs font-medium mb-1 block">Departure date</Label>
-                <Input type="date" value={form.departure_date} onChange={(e) => setForm({ ...form, departure_date: e.target.value })} className="h-9 text-sm" />
-              </div>
-              <div>
-                <Label className="text-xs font-medium mb-1 block">Departure time</Label>
-                <Input type="time" value={form.departure_time} onChange={(e) => setForm({ ...form, departure_time: e.target.value })} className="h-9 text-sm" />
+
+            {/* Outbound dates */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground mb-1.5">
+                {form.is_round_trip ? "Outbound Arrival" : "Arrival"}
+              </p>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <Label className="text-xs font-medium mb-1 block">Date</Label>
+                  <Input type="date" value={form.arrival_date} onChange={(e) => setForm({ ...form, arrival_date: e.target.value })} className="h-9 text-sm" />
+                </div>
+                <div>
+                  <Label className="text-xs font-medium mb-1 block">Time</Label>
+                  <Input type="time" value={form.arrival_time} onChange={(e) => setForm({ ...form, arrival_time: e.target.value })} className="h-9 text-sm" />
+                </div>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button type="submit" className="flex-1 rounded-full h-9 text-sm" style={{ background: "#C8A27C", color: "white" }}>{editingId ? "Update" : "Save"}</Button>
-              <Button type="button" variant="outline" className="flex-1 rounded-full h-9 text-sm" onClick={() => { setEditingId(null); setShowAdd(false); setForm({ arrival_date: "", arrival_time: "", arrival_location: "", destination: "", airline: "", flight_number: "", departure_date: "", departure_time: "" }); }}>Cancel</Button>
+
+            {/* Return dates (round trip only) */}
+            {form.is_round_trip && (
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground mb-1.5">Return Departure</p>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <Label className="text-xs font-medium mb-1 block">Date</Label>
+                    <Input type="date" value={form.departure_date} onChange={(e) => setForm({ ...form, departure_date: e.target.value })} className="h-9 text-sm" />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-medium mb-1 block">Time</Label>
+                    <Input type="time" value={form.departure_time} onChange={(e) => setForm({ ...form, departure_time: e.target.value })} className="h-9 text-sm" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-1">
+              <Button type="submit" className="flex-1 rounded-full h-9 text-sm" style={{ background: "#C8A27C", color: "white" }}>
+                {editingId ? "Update" : "Save"}
+              </Button>
+              <Button type="button" variant="outline" className="flex-1 rounded-full h-9 text-sm" onClick={closeDialog}>
+                Cancel
+              </Button>
             </div>
           </form>
         </DialogContent>
