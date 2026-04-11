@@ -6,6 +6,16 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
+function timeAgo(dateStr) {
+  if (!dateStr) return null;
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return format(new Date(dateStr), "MMM d");
+}
+
 const TYPE_CONFIG = {
   friend_request: { icon: UserPlus, color: "#C8A27C", bg: "rgba(200,162,124,0.12)", actionable: true },
   friend_accepted: { icon: Check, color: "#6BAE8A", bg: "rgba(107,174,138,0.12)" },
@@ -148,7 +158,7 @@ export default function Notifications() {
                    <p className="text-sm leading-snug" style={{ color: "#2A2018", fontWeight: isUnread ? 500 : 400 }}>{n.message}</p>
                    {n.created_date && (
                      <p className="text-[11px] mt-1" style={{ color: "#B0A090" }}>
-                       {format(new Date(n.created_date), "MMM d, h:mm a")}
+                       {timeAgo(n.created_date)}
                      </p>
                    )}
                 </div>
