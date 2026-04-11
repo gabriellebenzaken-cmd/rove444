@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Search, UserPlus, Check, X, UserMinus, AlertCircle } from "lucide-react";
+import FriendProfileModal from "../components/FriendProfileModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -19,6 +20,7 @@ export default function Friends() {
   const [tab, setTab] = useState("friends");
   const [friendToRemove, setFriendToRemove] = useState(null);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [viewingFriend, setViewingFriend] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -409,7 +411,7 @@ export default function Friends() {
           ) : (
             friends.map((f) => (
               <div key={f.id} className="bg-white rounded-[18px] shadow-[0_1px_8px_rgba(0,0,0,0.06)] p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onClick={() => setViewingFriend(f)}>
                   <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary shrink-0">
                     {f.profile_photo ? (
                       <img src={f.profile_photo} className="w-10 h-10 rounded-full object-cover" alt="" />
@@ -417,12 +419,12 @@ export default function Friends() {
                       (f.full_name || f.display_name)?.[0] || "?"
                     )}
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-medium text-sm">{f.full_name || f.display_name || "Unknown"}</p>
                     <p className="text-xs text-muted-foreground">{f.username ? `@${f.username}` : f.email || "No contact"}</p>
                   </div>
                 </div>
-                <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => { setFriendToRemove(f); setShowRemoveConfirm(true); }}>
+                <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full shrink-0" onClick={() => { setFriendToRemove(f); setShowRemoveConfirm(true); }}>
                   <UserMinus className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </div>
@@ -438,23 +440,13 @@ export default function Friends() {
           </DialogHeader>
           <p className="text-sm text-muted-foreground mb-6">This will remove them from your friends list.</p>
           <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1 rounded-full"
-              onClick={() => setShowRemoveConfirm(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              className="flex-1 rounded-full"
-              onClick={() => removeFriend(friendToRemove)}
-            >
-              Remove
-            </Button>
+            <Button variant="outline" className="flex-1 rounded-full" onClick={() => setShowRemoveConfirm(false)}>Cancel</Button>
+            <Button variant="destructive" className="flex-1 rounded-full" onClick={() => removeFriend(friendToRemove)}>Remove</Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      <FriendProfileModal friend={viewingFriend} onClose={() => setViewingFriend(null)} />
     </div>
   );
 }

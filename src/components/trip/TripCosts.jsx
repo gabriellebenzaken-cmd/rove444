@@ -16,13 +16,12 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 const categories = [
-  { value: "food", label: "🍕 Food" },
-  { value: "drinks", label: "🍹 Drinks" },
+  { value: "food",      label: "🍕 Food" },
   { value: "transport", label: "🚕 Travel" },
-  { value: "lodging", label: "🏨 Lodging" },
-  { value: "activity", label: "🎯 Activities" },
-  { value: "shopping", label: "🛍 Shopping" },
-  { value: "other", label: "📦 Other" },
+  { value: "lodging",   label: "🏨 Lodging" },
+  { value: "activity",  label: "🎯 Activities" },
+  { value: "shopping",  label: "🛍 Shopping" },
+  { value: "other",     label: "📦 Other" },
 ];
 
 const paymentMethods = [
