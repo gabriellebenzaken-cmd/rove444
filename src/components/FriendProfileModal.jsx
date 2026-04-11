@@ -16,19 +16,35 @@ const payLinks = [
   { key: "zelle",   label: "Zelle",    href: null },
 ];
 
-export default function FriendProfileModal({ friend, onClose }) {
+export default function FriendProfileModal({ friend, onClose, currentUserEmail }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [friendStatus, setFriendStatus] = useState(null); // null | 'friends' | 'pending' | 'none'
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     if (!friend) return;
     setLoading(true);
-    base44.entities.UserProfile.filter({ user_email: friend.email }, "-created_date", 1)
-      .then((results) => {
-        setProfile(results[0] || null);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    setFriendStatus(null);
+
+    Promise.all([
+      base44.entities.UserProfile.filter({ user_email: friend.email }, "-created_date", 1),
+      base44.auth.me(),
+    ]).then(async ([results, me]) => {
+      setProfile(results[0] || null);
+      setCurrentUser(me);
+      if (me && friend.email && me.email !== friend.email) {
+        const reqs = await base44.entities.FriendRequest.list("-created_date", 200).catch(() => []);
+        const rel = reqs.find(r =>
+          (r.sender_id === me.id && r.receiver_email === friend.email) ||
+          (r.receiver_id === me.id && r.sender_email === friend.email)
+        );
+        if (rel?.status === "accepted") setFriendStatus("friends");
+        else if (rel?.status === "pending") setFriendStatus("pending");
+        else setFriendStatus("none");
+      }
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, [friend?.email]);
 
   if (!friend) return null;
@@ -36,6 +52,22 @@ export default function FriendProfileModal({ friend, onClose }) {
   const displayName = profile?.full_name || friend.full_name || friend.display_name || "Unknown";
   const username = profile?.username || friend.username;
   const photo = profile?.profile_photo || friend.profile_photo;
+
+  async function sendFriendRequest() {
+    if (!currentUser || !friend.email) return;
+    await base44.entities.FriendRequest.create({
+      sender_id: currentUser.id, receiver_id: friend.id || "",
+      sender_email: currentUser.email, receiver_email: friend.email,
+      sender_name: currentUser.full_name, receiver_name: displayName,
+      status: "pending",
+    });
+    await base44.entities.Notification.create({
+      user_email: friend.email, type: "friend_request",
+      message: `${currentUser.full_name} sent you a friend request`,
+      related_user_email: currentUser.email, related_user_name: currentUser.full_name, is_read: false,
+    }).catch(() => {});
+    setFriendStatus("pending");
+  }
 
   return (
     <div
@@ -74,8 +106,14 @@ export default function FriendProfileModal({ friend, onClose }) {
             {username && (
               <p className="text-sm mt-0.5" style={{ color: "#B0A090" }}>@{username.replace(/^@/, "")}</p>
             )}
-            {!username && friend.email && (
-              <p className="text-sm mt-0.5" style={{ color: "#B0A090" }}>{friend.email}</p>
+            {friendStatus === "none" && (
+              <button onClick={sendFriendRequest} className="mt-3 px-5 py-1.5 rounded-full text-sm font-semibold" style={{ background: "#C8A27C", color: "white" }}>Add Friend</button>
+            )}
+            {friendStatus === "pending" && (
+              <span className="mt-3 px-5 py-1.5 rounded-full text-sm" style={{ background: "rgba(200,162,124,0.15)", color: "#9A8A7A" }}>Pending</span>
+            )}
+            {friendStatus === "friends" && (
+              <span className="mt-3 px-5 py-1.5 rounded-full text-sm" style={{ background: "rgba(107,174,138,0.15)", color: "#5A9E7A" }}>Friends ✓</span>
             )}
           </div>
 

@@ -4,6 +4,8 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, Link2, Users, UserMinus, LogOut, MapPin, Crown, UserPlus, Plus, MessageSquare } from "lucide-react";
+import FriendProfileModal from "../components/FriendProfileModal";
+import GroupChat from "../components/GroupChat";
 import GroupPendingInvites from "@/components/group/GroupPendingInvites";
 import InviteMembersModal from "@/components/group/InviteMembersModal";
 import CreateTripDialog from "../components/trips/CreateTripDialog";
@@ -21,6 +23,8 @@ export default function GroupDetail() {
   const [showCreateTrip, setShowCreateTrip] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState(null);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [activeTab, setActiveTab] = useState("members");
+  const [viewingMember, setViewingMember] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -104,6 +108,20 @@ export default function GroupDetail() {
         )}
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 mb-5 bg-muted/70 rounded-full p-1">
+        {[{ key: "members", label: `Members (${members.length})` }, { key: "chat", label: "Chat" }].map(t => (
+          <button key={t.key} onClick={() => setActiveTab(t.key)}
+            className={`flex-1 py-2 text-xs font-medium rounded-full transition-all ${activeTab === t.key ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "chat" && <GroupChat group={group} user={user} />}
+
+      {activeTab === "members" && (<>
+
       {/* Action buttons */}
       <div className="grid grid-cols-3 gap-2 mb-6">
         <button
@@ -153,7 +171,7 @@ export default function GroupDetail() {
             const isGroupAdmin = m.email === group.admin_email;
             return (
               <div key={m.id} className="bg-card rounded-xl border border-border p-3 flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => setViewingMember({ id: m.id, email: m.email, full_name: m.full_name, display_name: m.full_name })}>
                   <div className="relative">
                     <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-xs font-semibold text-primary">
                       {m.profile_photo
@@ -174,7 +192,7 @@ export default function GroupDetail() {
                   </div>
                 </div>
                 {isAdmin && m.email !== user.email && (
-                  <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={() => setMemberToRemove(m)}>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={(e) => { e.stopPropagation(); setMemberToRemove(m); }}>
                     <UserMinus className="h-3.5 w-3.5 text-muted-foreground" />
                   </Button>
                 )}
@@ -183,6 +201,8 @@ export default function GroupDetail() {
           })}
         </div>
       </div>
+
+      </>)}
 
       {trips.length > 0 && (
         <div>
@@ -206,6 +226,12 @@ export default function GroupDetail() {
           </div>
         </div>
       )}
+
+      <FriendProfileModal
+        friend={viewingMember}
+        onClose={() => setViewingMember(null)}
+        currentUserEmail={user?.email}
+      />
 
       <InviteMembersModal
         group={group}

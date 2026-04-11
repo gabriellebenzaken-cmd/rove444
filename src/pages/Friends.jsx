@@ -421,7 +421,7 @@ export default function Friends() {
                   </div>
                   <div className="min-w-0">
                     <p className="font-medium text-sm">{f.full_name || f.display_name || "Unknown"}</p>
-                    <p className="text-xs text-muted-foreground">{f.username ? `@${f.username}` : f.email || "No contact"}</p>
+                    {f.username && <p className="text-xs text-muted-foreground">@{f.username.replace(/^@/, "")}</p>}
                   </div>
                 </div>
                 <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full shrink-0" onClick={() => { setFriendToRemove(f); setShowRemoveConfirm(true); }}>
