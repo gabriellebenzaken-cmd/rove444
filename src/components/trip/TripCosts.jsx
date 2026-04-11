@@ -43,6 +43,9 @@ export default function TripCosts({ trip, user }) {
   const [expandedExpense, setExpandedExpense] = useState(null);
   const [selectedMethod, setSelectedMethod] = useState({});
   const [detailModal, setDetailModal] = useState(null); // 'owe' | 'received' | null
+  const [form, setForm] = useState({ description: "", amount: "", category: "other", split_among: [] });
+  const [splitMode, setSplitMode] = useState("equal");
+  const [customAmounts, setCustomAmounts] = useState({});
 
   useEffect(() => { loadData(); }, [trip.id]);
 

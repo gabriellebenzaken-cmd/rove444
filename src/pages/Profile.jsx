@@ -134,14 +134,14 @@ export default function Profile() {
       {/* Payment & Social Links (display when not editing) */}
       {!editing && profile && (() => {
         const payLinks = [
-          { key: "venmo", label: "Venmo", prefix: "https://venmo.com/" },
-          { key: "cashapp", label: "Cash App", prefix: "https://cash.app/" },
-          { key: "paypal", label: "PayPal", prefix: "https://paypal.me/" },
-          { key: "zelle", label: "Zelle", prefix: null },
-          { key: "instagram", label: "Instagram", prefix: "https://instagram.com/" },
-          { key: "twitter", label: "X", prefix: "https://x.com/" },
-          { key: "tiktok", label: "TikTok", prefix: "https://tiktok.com/@" },
-          { key: "snapchat", label: "Snap", prefix: "https://snapchat.com/add/" },
+          { key: "venmo",     label: "Venmo",     href: (h) => `https://venmo.com/${h.replace(/^@/, "")}` },
+          { key: "cashapp",   label: "Cash App",  href: (h) => `https://cash.app/$${h.replace(/^\$/, "")}` },
+          { key: "paypal",    label: "PayPal",    href: (h) => `https://paypal.me/${h.replace(/^[@\/]/, "")}` },
+          { key: "zelle",     label: "Zelle",     href: null },
+          { key: "instagram", label: "Instagram", href: (h) => `https://instagram.com/${h.replace(/^@/, "")}` },
+          { key: "twitter",   label: "X",         href: (h) => `https://x.com/${h.replace(/^@/, "")}` },
+          { key: "tiktok",    label: "TikTok",    href: (h) => `https://tiktok.com/@${h.replace(/^@/, "")}` },
+          { key: "snapchat",  label: "Snapchat",  href: (h) => `https://snapchat.com/add/${h.replace(/^@/, "")}` },
         ].filter(l => profile[l.key]);
         if (payLinks.length === 0) return null;
         return (
@@ -150,16 +150,16 @@ export default function Profile() {
             <div className="flex flex-wrap gap-2">
               {payLinks.map(l => {
                 const handle = profile[l.key];
-                const href = l.prefix ? `${l.prefix}${handle.replace(/^[@$\/]/, "")}` : null;
-                return href ? (
-                  <a key={l.key} href={href} target="_blank" rel="noopener noreferrer"
-                    className="px-3 py-1.5 rounded-full text-xs font-medium"
-                    style={{ background: "rgba(200,162,124,0.1)", color: "#7A6A5A" }}>
-                    {l.label}
+                const url = l.href ? l.href(handle) : null;
+                return url ? (
+                  <a key={l.key} href={url} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold active:opacity-70"
+                    style={{ background: "rgba(200,162,124,0.15)", color: "#7A5A3A" }}>
+                    {l.label} <span style={{ fontSize: 10 }}>↗</span>
                   </a>
                 ) : (
-                  <span key={l.key} className="px-3 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(200,162,124,0.1)", color: "#7A6A5A" }}>
-                    {l.label}: {handle}
+                  <span key={l.key} className="px-3 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(200,162,124,0.1)", color: "#9A8A7A" }}>
+                    Zelle: {handle}
                   </span>
                 );
               })}
