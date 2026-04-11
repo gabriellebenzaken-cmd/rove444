@@ -14,6 +14,34 @@ const NAV_ITEMS = [
 export default function Layout() {
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [tabStacks, setTabStacks] = useState({
+    "/": ["/"],
+    "/groups": ["/groups"],
+    "/friends": ["/friends"],
+    "/costs": ["/costs"],
+    "/profile": ["/profile"],
+  });
+
+  // Track current tab and update stacks
+  useEffect(() => {
+    const currentTab = NAV_ITEMS.find((item) =>
+      location.pathname === item.path || location.pathname.startsWith(item.path)
+    )?.path;
+
+    if (currentTab && location.pathname !== tabStacks[currentTab]?.[tabStacks[currentTab].length - 1]) {
+      setTabStacks((prev) => ({
+        ...prev,
+        [currentTab]: [...(prev[currentTab] || [currentTab]), location.pathname],
+      }));
+    }
+  }, [location.pathname]);
+
+  const handleTabClick = (path) => {
+    if (tabStacks[path]?.[tabStacks[path].length - 1] === location.pathname) {
+      // Reset stack to root on active tab click
+      setTabStacks((prev) => ({ ...prev, [path]: [path] }));
+    }
+  };
 
   // Hide top bell on detail pages with their own header
   const hideTopBell = location.pathname.startsWith("/trip/") ||
@@ -60,10 +88,11 @@ export default function Layout() {
               : location.pathname.startsWith(item.path);
             return (
               <Link
-                       key={item.path}
-                       to={item.path}
-                       className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-2xl transition-all duration-200"
-                       style={{ color: isActive ? "#C8A27C" : "#B5A898", WebkitTapHighlightColor: "transparent" }}
+                 key={item.path}
+                 to={item.path}
+                 onClick={() => handleTabClick(item.path)}
+                 className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-2xl transition-all duration-200"
+                 style={{ color: isActive ? "#C8A27C" : "#B5A898", WebkitTapHighlightColor: "transparent" }}
               >
                 <item.icon className={`h-[19px] w-[19px] ${isActive ? "stroke-[2.2px]" : "stroke-[1.6px]"}`} />
                 <span className={`text-[9px] tracking-wide ${isActive ? "font-semibold" : "font-medium"}`}>{item.label}</span>

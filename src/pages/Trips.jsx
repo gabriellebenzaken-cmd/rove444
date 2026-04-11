@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Plus, MapPin, Users, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import CreateTripDialog from "../components/trips/CreateTripDialog";
+import PullToRefresh from "../components/PullToRefresh";
 
 function TripCard({ trip, index, coverImages, past }) {
   return (
@@ -46,6 +48,7 @@ export default function Trips() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [user, setUser] = useState(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     loadData();
@@ -60,6 +63,7 @@ export default function Trips() {
     );
     setTrips(myTrips);
     setLoading(false);
+    queryClient.invalidateQueries({ queryKey: ["trips"] });
   }
 
   const today = new Date().toISOString().split("T")[0];
@@ -74,6 +78,7 @@ export default function Trips() {
   ];
 
   return (
+    <PullToRefresh onRefresh={loadData}>
     <div className="px-5 pt-14">
       <div className="flex items-center justify-between mb-7">
         <div>
@@ -133,5 +138,6 @@ export default function Trips() {
         onCreated={loadData}
       />
     </div>
+    </PullToRefresh>
   );
 }

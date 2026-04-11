@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Plus, Users, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CreateGroupDialog from "../components/groups/CreateGroupDialog";
+import PullToRefresh from "../components/PullToRefresh";
 
 export default function Groups() {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [user, setUser] = useState(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     loadData();
@@ -24,6 +27,7 @@ export default function Groups() {
         (g) => g.member_emails?.includes(me.email) || g.admin_email === me.email
       );
       setGroups(myGroups);
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
     } catch (err) {
       console.error("[Groups] loadData failed:", err);
     } finally {
@@ -32,6 +36,7 @@ export default function Groups() {
   }
 
   return (
+    <PullToRefresh onRefresh={loadData}>
     <div className="px-5 pt-12">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-[28px] font-bold tracking-tight leading-none">Groups</h1>
@@ -87,5 +92,6 @@ export default function Groups() {
         onCreated={loadData}
       />
     </div>
+    </PullToRefresh>
   );
 }

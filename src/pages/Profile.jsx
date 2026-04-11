@@ -20,6 +20,7 @@ export default function Profile() {
   const [groups, setGroups] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   useEffect(() => { loadData(); }, []);
@@ -311,7 +312,7 @@ export default function Profile() {
       </Dialog>
 
       {/* Delete Confirm */}
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      <Dialog open={showDeleteConfirm} onOpenChange={(v) => { setShowDeleteConfirm(v); if (!v) setDeleteConfirmText(""); }}>
         <DialogContent className="mx-4 rounded-2xl max-w-sm">
           <DialogHeader>
             <DialogTitle>Delete Account?</DialogTitle>
@@ -319,15 +320,25 @@ export default function Profile() {
           <p className="text-sm text-muted-foreground leading-relaxed">
             This will permanently delete your Rove account and remove you from all trips and groups. This action cannot be undone.
           </p>
-          <p className="text-xs text-muted-foreground bg-muted rounded-xl px-3 py-2">
-            To complete account deletion, please contact support at <strong>support@rove.app</strong> with your email address.
-          </p>
+          <p className="text-xs font-medium mb-2">Type <strong>DELETE</strong> to confirm:</p>
+          <Input
+            value={deleteConfirmText}
+            onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+            placeholder="DELETE"
+            className="text-center font-mono"
+          />
+          {deleteConfirmText === "DELETE" && (
+            <p className="text-xs text-muted-foreground bg-muted rounded-xl px-3 py-2">
+              To complete account deletion, please contact support at <strong>support@rove.app</strong> with your email address.
+            </p>
+          )}
           <div className="flex gap-2 mt-2">
             <Button variant="outline" className="flex-1 rounded-full" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
             <Button
               variant="destructive"
               className="flex-1 rounded-full"
-              onClick={() => { setShowDeleteConfirm(false); toast.info("Deletion request noted. We'll reach out shortly."); }}
+              disabled={deleteConfirmText !== "DELETE"}
+              onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(""); toast.info("Deletion request noted. We'll reach out shortly."); }}
             >
               Request Deletion
             </Button>

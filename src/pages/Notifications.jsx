@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Bell, UserPlus, Check, MapPin, Users, ArrowLeft, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import PullToRefresh from "../components/PullToRefresh";
 
 function timeAgo(dateStr) {
   if (!dateStr) return null;
@@ -35,6 +37,7 @@ export default function Notifications() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     loadData();
@@ -49,6 +52,7 @@ export default function Notifications() {
     // Mark all unread as read
     const unread = (all || []).filter(n => !n.is_read);
     await Promise.all(unread.map(n => base44.entities.Notification.update(n.id, { is_read: true })));
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
   }
 
   async function clearAll() {
@@ -266,6 +270,7 @@ export default function Notifications() {
   }
 
   return (
+    <PullToRefresh onRefresh={loadData}>
     <div className="px-5 pt-12 pb-32">
       <div className="flex items-center gap-3 mb-6">
         <button
@@ -378,5 +383,6 @@ export default function Notifications() {
         </div>
       )}
     </div>
+    </PullToRefresh>
   );
 }

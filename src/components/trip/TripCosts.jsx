@@ -11,6 +11,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import MobileSelect from "../MobileSelect";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -504,7 +505,7 @@ export default function TripCosts({ trip, user }) {
                               );
                             })()}
                             <div className="flex gap-2">
-                              <Select value={selectedMethod[exp.id] || "other"} onValueChange={(v) => setSelectedMethod({ ...selectedMethod, [exp.id]: v })}>
+                               <MobileSelect value={selectedMethod[exp.id] || "other"} onChange={(v) => setSelectedMethod({ ...selectedMethod, [exp.id]: v })} options={paymentMethods} placeholder="Method" />
                                 <SelectTrigger className="h-8 text-xs rounded-full flex-1 border-0" style={{ background: "rgba(200,162,124,0.12)" }}>
                                   <SelectValue placeholder="Method" />
                                 </SelectTrigger>
@@ -638,7 +639,7 @@ export default function TripCosts({ trip, user }) {
               </div>
               <div>
                 <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Category</Label>
-                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                <MobileSelect value={form.category} onChange={(v) => setForm({ ...form, category: v })} options={categories} />
                   <SelectTrigger className="h-9 text-xs" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}><SelectValue /></SelectTrigger>
                   <SelectContent>{categories.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
                 </Select>
@@ -703,27 +704,26 @@ export default function TripCosts({ trip, user }) {
 
             <div>
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Applies to</Label>
-              <Select
+              <MobileSelect
                 value={form.trip_wide ? "trip_wide" : String(form.day_number)}
-                onValueChange={(v) => {
+                onChange={(v) => {
                   if (v === "trip_wide") setForm({ ...form, trip_wide: true, day_number: null });
                   else setForm({ ...form, trip_wide: false, day_number: parseInt(v) });
                 }}
-              >
-                <SelectTrigger className="h-9 text-xs" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="trip_wide">Trip-wide</SelectItem>
-                  {(() => {
-                    if (!trip.start_date || !trip.end_date) return null;
+                options={[
+                  { value: "trip_wide", label: "Trip-wide" },
+                  ...(() => {
+                    if (!trip.start_date || !trip.end_date) return [];
                     const start = new Date(trip.start_date);
                     const end = new Date(trip.end_date);
                     const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
-                    return Array.from({ length: days }, (_, i) => (
-                      <SelectItem key={i + 1} value={String(i + 1)}>Day {i + 1}</SelectItem>
-                    ));
-                  })()}
-                </SelectContent>
-              </Select>
+                    return Array.from({ length: days }, (_, i) => ({
+                      value: String(i + 1),
+                      label: `Day ${i + 1}`,
+                    }));
+                  })(),
+                ]}
+              />
             </div>
 
                 <button type="submit" className="w-full h-10 rounded-full text-sm font-semibold mt-4" style={{ background: "#C8A27C", color: "white" }}>Add Expense</button>
