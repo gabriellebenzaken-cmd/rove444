@@ -28,7 +28,7 @@ function TripCard({ trip, index, coverImages, past }) {
         <div className="px-4 py-2.5 flex items-center justify-between">
           <p className="text-[11px] font-normal" style={{color:'#B0A090'}}>
             {trip.start_date && trip.end_date
-              ? `${format(new Date(trip.start_date), "MMM d")} – ${format(new Date(trip.end_date), "MMM d, yyyy")}`
+              ? `${format(new Date(trip.start_date + 'T00:00:00'), "MMM d")} – ${format(new Date(trip.end_date + 'T00:00:00'), "MMM d, yyyy")}`
               : 'Dates TBD'}
           </p>
           <div className="flex items-center gap-1">
