@@ -206,8 +206,17 @@ export default function TripCosts({ trip, user }) {
   const oweExpenses = expenses.filter(e => e.split_among?.includes(user.email) && e.paid_by !== user.email);
   const receivedExpenses = expenses.filter(e => e.paid_by === user.email && (e.split_among || []).some(em => em !== user.email));
 
+  function resolveName(email) {
+    const profile = payerProfiles[email];
+    if (profile?.full_name) return profile.full_name;
+    if (profile?.username) return `@${profile.username}`;
+    const member = members.find(m => m.email === email);
+    if (member?.full_name) return member.full_name;
+    return email.split("@")[0];
+  }
+
   // Net balances: who owes who
-  const netBalances = {}; // key: `${fromEmail}|${toEmail}` -> { from, fromName, to, toName, amount }
+  const netBalances = {};
   expenses.forEach((exp) => {
     const owersExPayer = (exp.split_among || []).filter(e => e !== exp.paid_by);
     owersExPayer.forEach((owerEmail) => {
@@ -219,11 +228,11 @@ export default function TripCosts({ trip, user }) {
       if (netBalances[reverseKey]) {
         netBalances[reverseKey].amount -= share;
         if (netBalances[reverseKey].amount <= 0) {
-          netBalances[key] = { from: owerEmail, fromName: members.find(m=>m.email===owerEmail)?.full_name || owerEmail.split("@")[0], to: exp.paid_by, toName: exp.paid_by_name || exp.paid_by.split("@")[0], amount: Math.abs(netBalances[reverseKey].amount) };
+          netBalances[key] = { from: owerEmail, fromName: resolveName(owerEmail), to: exp.paid_by, toName: resolveName(exp.paid_by), amount: Math.abs(netBalances[reverseKey].amount) };
           delete netBalances[reverseKey];
         }
       } else {
-        if (!netBalances[key]) netBalances[key] = { from: owerEmail, fromName: members.find(m=>m.email===owerEmail)?.full_name || owerEmail.split("@")[0], to: exp.paid_by, toName: exp.paid_by_name || exp.paid_by.split("@")[0], amount: 0 };
+        if (!netBalances[key]) netBalances[key] = { from: owerEmail, fromName: resolveName(owerEmail), to: exp.paid_by, toName: resolveName(exp.paid_by), amount: 0 };
         netBalances[key].amount += share;
       }
     });
