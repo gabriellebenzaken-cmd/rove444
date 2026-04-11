@@ -25,6 +25,7 @@ export default function GroupDetail() {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState("members");
   const [viewingMember, setViewingMember] = useState(null);
+  const [profileMap, setProfileMap] = useState({});
 
   useEffect(() => {
     loadData();
@@ -50,6 +51,13 @@ export default function GroupDetail() {
           base44.entities.UserProfile.list("-created_date", 500),
           base44.entities.Trip.list("-created_date", 50),
         ]);
+        // Build profile map keyed by email for render-time lookup
+        const map = {};
+        profiles.forEach(p => {
+          map[p.user_email] = p;
+        });
+        setProfileMap(map);
+        
         // Build member list from group.member_emails + fresh UserProfile data
         const enriched = (g.member_emails || []).map((email) => {
           const profile = profiles.find((p) => p.user_email === email);
@@ -192,15 +200,20 @@ export default function GroupDetail() {
         </h3>
         <div className="space-y-2">
           {members.map((m) => {
+            // Use fresh UserProfile data for member identity
+            const profile = profileMap[m.email];
+            const displayName = profile?.full_name || m.full_name || "User";
+            const displayUsername = profile?.username;
+            const displayPhoto = profile?.profile_photo;
             const isGroupAdmin = m.email === group.admin_email;
             return (
               <div key={m.id} className="bg-card rounded-xl border border-border p-3 flex items-center justify-between">
-                <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => setViewingMember({ id: m.id, email: m.email, full_name: m.full_name, display_name: m.full_name })}>
+                <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => setViewingMember({ id: m.id, email: m.email, full_name: displayName, display_name: displayName })}>
                   <div className="relative">
                     <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-xs font-semibold text-primary">
-                      {m.profile_photo
-                        ? <img src={m.profile_photo} className="w-9 h-9 rounded-full object-cover" alt="" />
-                        : (m.full_name?.[0] || "?")}
+                      {displayPhoto
+                        ? <img src={displayPhoto} className="w-9 h-9 rounded-full object-cover" alt="" />
+                        : (displayName?.[0] || "?")}
                     </div>
                     {isGroupAdmin && (
                       <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center" style={{background:'#C8A27C'}}>
@@ -209,9 +222,9 @@ export default function GroupDetail() {
                     )}
                   </div>
                   <div>
-                     <p className="text-sm font-medium">{m.full_name}</p>
+                     <p className="text-sm font-medium">{displayName}</p>
                      <p className="text-xs text-muted-foreground">
-                       {m.username ? `@${m.username} · ` : ""}{isGroupAdmin ? "Admin" : "Member"}
+                       {displayUsername ? `@${displayUsername} · ` : ""}{isGroupAdmin ? "Admin" : "Member"}
                      </p>
                   </div>
                 </div>

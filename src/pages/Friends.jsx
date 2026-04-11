@@ -21,6 +21,7 @@ export default function Friends() {
   const [friendToRemove, setFriendToRemove] = useState(null);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [viewingFriend, setViewingFriend] = useState(null);
+  const [profileMap, setProfileMap] = useState({});
 
   useEffect(() => {
     loadData();
@@ -31,6 +32,21 @@ export default function Friends() {
     });
     return () => unsubscribe?.();
   }, []);
+
+  // Build fresh UserProfile map for rendering identity
+  useEffect(() => {
+    base44.entities.UserProfile.list("-created_date", 500)
+      .then((profiles) => {
+        const map = {};
+        profiles.forEach(p => {
+          map[p.user_email] = p;
+        });
+        setProfileMap(map);
+      })
+      .catch(() => {});
+  }, []);
+
+
 
   async function loadData() {
     try {
@@ -114,13 +130,21 @@ export default function Friends() {
       // Received requests (others sent TO me) — only the receiver can accept/decline
       setReceivedRequests(reqs.filter((r) => (r.receiver_id === me.id || r.receiver_email === me.email) && r.status === "pending"));
 
+      // Refresh profile map for fresh identity data
+      const profiles = await base44.entities.UserProfile.list("-created_date", 500).catch(() => []);
+      const map = {};
+      profiles.forEach(p => {
+        map[p.user_email] = p;
+      });
+      setProfileMap(map);
+
       setLoading(false);
-    } catch (err) {
+      } catch (err) {
       console.error("[Friends] loadData() failed:", err);
       setError(err.message || "Failed to load friends");
       setLoading(false);
-    }
-  }
+      }
+      }
 
   function handleSearchClick() {
     handleSearch();
@@ -451,26 +475,34 @@ export default function Friends() {
               <p className="text-muted-foreground text-sm">search by name or username to connect</p>
             </div>
           ) : (
-            friends.map((f) => (
+            friends.map((f) => {
+              // Use fresh UserProfile data for identity
+              const profile = profileMap[f.email];
+              const displayName = profile?.full_name || f.full_name || f.display_name || "Unknown";
+              const displayUsername = profile?.username;
+              const displayPhoto = profile?.profile_photo;
+              
+              return (
               <div key={f.id} className="bg-white rounded-[18px] shadow-[0_1px_8px_rgba(0,0,0,0.06)] p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onClick={() => setViewingFriend(f)}>
                   <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-sm font-semibold text-primary shrink-0">
-                    {f.profile_photo ? (
-                      <img src={f.profile_photo} className="w-10 h-10 rounded-full object-cover" alt="" />
+                    {displayPhoto ? (
+                      <img src={displayPhoto} className="w-10 h-10 rounded-full object-cover" alt="" />
                     ) : (
-                      (f.full_name || f.display_name)?.[0] || "?"
+                      displayName?.[0] || "?"
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-medium text-sm">{f.full_name || f.display_name || "Unknown"}</p>
-                    {f.username && <p className="text-xs text-muted-foreground">@{f.username.replace(/^@/, "")}</p>}
+                    <p className="font-medium text-sm">{displayName}</p>
+                    {displayUsername && <p className="text-xs text-muted-foreground">@{displayUsername.replace(/^@/, "")}</p>}
                   </div>
                 </div>
                 <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full shrink-0" onClick={() => { setFriendToRemove(f); setShowRemoveConfirm(true); }}>
                   <UserMinus className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </div>
-            ))
+            );
+            })
           )}
         </div>
       )}
