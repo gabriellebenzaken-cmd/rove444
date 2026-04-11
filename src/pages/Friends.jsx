@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Search, UserPlus, Check, X, UserMinus, AlertCircle } from "lucide-react";
 import FriendProfileModal from "../components/FriendProfileModal";
+import PullToRefresh from "../components/PullToRefresh";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -322,6 +323,7 @@ export default function Friends() {
   ];
 
   return (
+    <PullToRefresh onRefresh={loadData}>
     <div className="px-5 pt-12 pb-24">
       <h1 className="text-[28px] font-bold tracking-tight mb-5 leading-none">Friends</h1>
 
@@ -522,5 +524,6 @@ export default function Friends() {
 
       <FriendProfileModal friend={viewingFriend} onClose={() => setViewingFriend(null)} />
     </div>
+    </PullToRefresh>
   );
 }

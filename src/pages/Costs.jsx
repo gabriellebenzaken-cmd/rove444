@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { DollarSign, ArrowRight, Receipt } from "lucide-react";
 import { format } from "date-fns";
+import PullToRefresh from "../components/PullToRefresh";
 
 export default function Costs() {
   const [user, setUser] = useState(null);
@@ -128,6 +129,7 @@ export default function Costs() {
   }
 
   return (
+    <PullToRefresh onRefresh={loadData}>
     <div className="px-5 pt-14 pb-24">
       <div className="mb-7">
         <p className="text-xs font-medium tracking-widest uppercase" style={{ color: "#C8A27C", letterSpacing: "0.12em" }}>Overview</p>
@@ -286,5 +288,6 @@ export default function Costs() {
         </div>
       )}
     </div>
+    </PullToRefresh>
   );
 }
