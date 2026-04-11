@@ -15,7 +15,10 @@ export default function InviteMembersModal({ group, user, isOpen, onClose, onSuc
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (isOpen) loadFriends();
+    if (isOpen) {
+      setSearchQuery("");
+      loadFriends();
+    }
   }, [isOpen]);
 
   async function loadFriends() {
@@ -166,19 +169,19 @@ export default function InviteMembersModal({ group, user, isOpen, onClose, onSuc
           <DialogTitle>Add Members</DialogTitle>
         </DialogHeader>
 
+        <Input
+          placeholder="Search friends..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="rounded-lg mb-3"
+        />
+
         {loading ? (
           <div className="flex justify-center py-8">
             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <>
-            <Input
-              placeholder="Search friends..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="rounded-lg mb-4"
-            />
-
             <div className="flex-1 overflow-y-auto space-y-2 mb-4 -mx-2 px-2">
               {filteredFriends.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-6">
@@ -204,11 +207,7 @@ export default function InviteMembersModal({ group, user, isOpen, onClose, onSuc
                     />
                     <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-xs font-semibold text-primary shrink-0">
                       {friend.profile_photo ? (
-                        <img
-                          src={friend.profile_photo}
-                          className="w-9 h-9 rounded-full object-cover"
-                          alt=""
-                        />
+                        <img src={friend.profile_photo} className="w-9 h-9 rounded-full object-cover" alt="" />
                       ) : (
                         friend.full_name?.[0] || "?"
                       )}
@@ -225,18 +224,13 @@ export default function InviteMembersModal({ group, user, isOpen, onClose, onSuc
             </div>
 
             {selectedFriends.length > 0 && (
-              <div className="text-xs text-muted-foreground mb-4 text-center">
+              <div className="text-xs text-muted-foreground mb-3 text-center">
                 {selectedFriends.length} selected
               </div>
             )}
 
             <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1 rounded-full"
-                onClick={onClose}
-                disabled={submitting}
-              >
+              <Button variant="outline" className="flex-1 rounded-full" onClick={onClose} disabled={submitting}>
                 Cancel
               </Button>
               <Button
@@ -245,9 +239,7 @@ export default function InviteMembersModal({ group, user, isOpen, onClose, onSuc
                 disabled={submitting || selectedFriends.length === 0}
               >
                 {submitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Inviting...
-                  </>
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Inviting...</>
                 ) : (
                   `Invite (${selectedFriends.length})`
                 )}
