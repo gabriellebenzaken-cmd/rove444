@@ -208,7 +208,7 @@ export default function TripDetail() {
                 Copy Link
               </Button>
               {navigator.share && (
-                <Button variant="outline" className="flex-1 rounded-full" onClick={() => navigator.share({ title: trip.name, url: `${window.location.origin}/join/trip/${trip.invite_code}` })}>
+                <Button variant="outline" className="flex-1 rounded-full" onClick={async () => { try { await navigator.share({ title: trip.name, url: `${window.location.origin}/join/trip/${trip.invite_code}` }); } catch { /* dismissed */ } }}>
                   Share
                 </Button>
               )}
