@@ -185,10 +185,10 @@ export default function GroupDetail() {
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-medium">{m.full_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {m.username ? `@${m.username}` : m.email} · {isGroupAdmin ? "Admin" : "Member"}
-                    </p>
+                     <p className="text-sm font-medium">{m.full_name}</p>
+                     <p className="text-xs text-muted-foreground">
+                       {m.username ? `@${m.username} · ` : ""}{isGroupAdmin ? "Admin" : "Member"}
+                     </p>
                   </div>
                 </div>
                 {isAdmin && m.email !== user.email && (

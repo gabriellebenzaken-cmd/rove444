@@ -21,7 +21,7 @@ const TYPE_CONFIG = {
   friend_accepted: { icon: Check, color: "#6BAE8A", bg: "rgba(107,174,138,0.12)" },
   trip_added: { icon: MapPin, color: "#7090B0", bg: "rgba(112,144,176,0.12)" },
   group_added: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)" },
-  group_invite: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)", actionable: false },
+  group_invite: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)", actionable: true },
   group_accepted: { icon: Check, color: "#6BAE8A", bg: "rgba(107,174,138,0.12)" },
   group_declined: { icon: X, color: "#EF4444", bg: "rgba(239,68,68,0.12)" },
   trip_approved: { icon: Check, color: "#6BAE8A", bg: "rgba(107,174,138,0.12)" },
@@ -56,16 +56,13 @@ export default function Notifications() {
 
   async function acceptFriendRequest(n) {
     try {
-      const req = await base44.entities.FriendRequest.filter(
-        { sender_email: n.related_user_email, receiver_email: user.email, status: "pending" },
-        "-created_date",
-        1
+      // Fetch all pending requests and find the one from sender to me
+      const allReqs = await base44.entities.FriendRequest.list("-created_date", 200);
+      const req = allReqs.find(
+        (r) => r.sender_email === n.related_user_email && r.receiver_email === user.email && r.status === "pending"
       );
-      if (req.length === 0) {
-        toast.error("Request not found");
-        return;
-      }
-      await base44.entities.FriendRequest.update(req[0].id, { status: "accepted" });
+      if (!req) { toast.error("Request not found"); return; }
+      await base44.entities.FriendRequest.update(req.id, { status: "accepted" });
       await base44.entities.Notification.delete(n.id);
       toast.success("Friend added!");
       loadData();
@@ -76,21 +73,53 @@ export default function Notifications() {
 
   async function declineFriendRequest(n) {
     try {
-      const req = await base44.entities.FriendRequest.filter(
-        { sender_email: n.related_user_email, receiver_email: user.email, status: "pending" },
-        "-created_date",
-        1
+      const allReqs = await base44.entities.FriendRequest.list("-created_date", 200);
+      const req = allReqs.find(
+        (r) => r.sender_email === n.related_user_email && r.receiver_email === user.email && r.status === "pending"
       );
-      if (req.length === 0) {
-        toast.error("Request not found");
-        return;
-      }
-      await base44.entities.FriendRequest.update(req[0].id, { status: "declined" });
+      if (!req) { toast.error("Request not found"); return; }
+      await base44.entities.FriendRequest.update(req.id, { status: "declined" });
       await base44.entities.Notification.delete(n.id);
       toast.success("Request declined");
       loadData();
     } catch (err) {
       toast.error("Failed to decline");
+    }
+  }
+
+  async function acceptGroupInvite(n) {
+    try {
+      const allInvites = await base44.entities.GroupInvite.list("-created_date", 200);
+      const inv = allInvites.find(
+        (i) => i.group_id === n.related_group_id && i.invitee_email === user.email && i.status === "pending"
+      );
+      if (!inv) { toast.error("Invite not found"); return; }
+      await base44.entities.GroupInvite.update(inv.id, { status: "accepted" });
+      const group = await base44.entities.Group.list("-created_date", 200).then(gs => gs.find(g => g.id === n.related_group_id));
+      if (group) {
+        const updated = [...new Set([...(group.member_emails || []), user.email])];
+        await base44.entities.Group.update(group.id, { member_emails: updated });
+      }
+      await base44.entities.Notification.delete(n.id);
+      toast.success("Joined group!");
+      loadData();
+    } catch (err) {
+      toast.error("Failed to accept invite");
+    }
+  }
+
+  async function declineGroupInvite(n) {
+    try {
+      const allInvites = await base44.entities.GroupInvite.list("-created_date", 200);
+      const inv = allInvites.find(
+        (i) => i.group_id === n.related_group_id && i.invitee_email === user.email && i.status === "pending"
+      );
+      if (inv) await base44.entities.GroupInvite.update(inv.id, { status: "declined" });
+      await base44.entities.Notification.delete(n.id);
+      toast.success("Invite declined");
+      loadData();
+    } catch (err) {
+      toast.error("Failed to decline invite");
     }
   }
 
@@ -163,19 +192,29 @@ export default function Notifications() {
                    )}
                 </div>
                 {cfg.actionable && (
-                   <div className="flex gap-1.5 shrink-0">
-                     {n.type === "friend_request" && (
-                       <>
-                         <Button size="sm" className="h-7 px-2.5 text-xs rounded-full" onClick={() => acceptFriendRequest(n)}>
-                           <Check className="h-3 w-3" />
-                         </Button>
-                         <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs rounded-full" onClick={() => declineFriendRequest(n)}>
-                           <X className="h-3 w-3" />
-                         </Button>
-                       </>
-                     )}
-                   </div>
-                 )}
+                  <div className="flex gap-1.5 shrink-0">
+                    {n.type === "friend_request" && (
+                      <>
+                        <Button size="sm" className="h-7 px-2.5 text-xs rounded-full" onClick={() => acceptFriendRequest(n)}>
+                          <Check className="h-3 w-3" />
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs rounded-full" onClick={() => declineFriendRequest(n)}>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </>
+                    )}
+                    {n.type === "group_invite" && n.related_group_id && (
+                      <>
+                        <Button size="sm" className="h-7 px-2.5 text-xs rounded-full" onClick={() => acceptGroupInvite(n)}>
+                          <Check className="h-3 w-3" />
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs rounded-full" onClick={() => declineGroupInvite(n)}>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                )}
                 {isUnread && !cfg.actionable && (
                    <div className="w-2 h-2 rounded-full mt-2 shrink-0" style={{ background: "#C8A27C" }} />
                  )}

@@ -100,11 +100,11 @@ export default function Friends() {
       setFriends(friendList);
       console.log("[Friends] Final friends list:", friendList);
 
-      // Sent requests (I initiated, still pending)
-      setSentRequests(reqs.filter((r) => r.sender_id === me.id && r.status === "pending"));
+      // Sent requests (I initiated, still pending) — only show MY outgoing
+      setSentRequests(reqs.filter((r) => (r.sender_id === me.id || r.sender_email === me.email) && r.status === "pending"));
 
-      // Received requests (others sent to me, still pending)
-      setReceivedRequests(reqs.filter((r) => r.receiver_id === me.id && r.status === "pending"));
+      // Received requests (others sent TO me) — only the receiver can accept/decline
+      setReceivedRequests(reqs.filter((r) => (r.receiver_id === me.id || r.receiver_email === me.email) && r.status === "pending"));
 
       setLoading(false);
     } catch (err) {

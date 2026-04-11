@@ -303,7 +303,7 @@ export default function JoinInvite() {
 
           <div className="bg-muted/50 rounded-xl p-3 mb-4 text-sm">
             <p className="text-muted-foreground">Organized by</p>
-            <p className="font-semibold">{entity.admin_name || entity.admin_email?.split("@")[0]}</p>
+            <p className="font-semibold">{entity.admin_name || "Admin"}</p>
           </div>
 
           {isMember ? (
@@ -351,8 +351,7 @@ export default function JoinInvite() {
                         {req.user_name?.[0] || "?"}
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{req.user_name}</p>
-                        <p className="text-xs text-muted-foreground">{req.user_email}</p>
+                        <p className="text-sm font-medium">{req.user_name || "Member"}</p>
                       </div>
                     </div>
                     <div className="flex gap-1.5">

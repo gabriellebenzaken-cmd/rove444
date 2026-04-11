@@ -93,8 +93,7 @@ export default function GroupPendingInvites({ group, isAdmin, onUpdate }) {
                 {(inv.invitee_name || inv.invitee_email)?.[0]?.toUpperCase() || "?"}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium truncate">{inv.invitee_name || inv.invitee_email}</p>
-                <p className="text-xs text-muted-foreground truncate">{inv.invitee_email}</p>
+                <p className="text-sm font-medium truncate">{inv.invitee_name || "Member"}</p>
               </div>
             </div>
             <div className="flex gap-1.5 shrink-0">
