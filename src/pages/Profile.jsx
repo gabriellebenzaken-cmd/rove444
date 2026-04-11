@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LogOut, Edit3, Save, X, Settings, Trash2, Shield, ChevronRight, Camera, Upload } from "lucide-react";
+import MobileSelect from "@/components/MobileSelect";
+import { LogOut, Edit3, Save, X, Settings, Trash2, Shield, ChevronRight, Camera, Upload, Monitor, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
+import { getThemePreference, setThemePreference } from "@/lib/theme";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -22,8 +24,12 @@ export default function Profile() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [appearance, setAppearance] = useState('system');
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    loadData();
+    setAppearance(getThemePreference());
+  }, []);
 
   async function loadData() {
    const me = await base44.auth.me();
@@ -280,6 +286,25 @@ export default function Profile() {
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </a>
+
+            <div className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-muted transition-colors">
+              <div className="flex items-center gap-3">
+                <Monitor className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Appearance</span>
+              </div>
+              <MobileSelect
+                value={appearance}
+                onChange={(val) => {
+                  setAppearance(val);
+                  setThemePreference(val);
+                }}
+                options={[
+                  { value: 'system', label: 'System' },
+                  { value: 'light', label: 'Light' },
+                  { value: 'dark', label: 'Dark' },
+                ]}
+              />
+            </div>
 
             <button
               className="flex items-center justify-between w-full px-4 py-3 rounded-xl hover:bg-muted transition-colors"

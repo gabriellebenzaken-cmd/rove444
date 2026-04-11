@@ -6,6 +6,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
+import { initializeTheme } from '@/lib/theme';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -40,11 +41,9 @@ const AuthenticatedApp = () => {
   const [onboardingError, setOnboardingError] = useState(false);
   const [isProfileReady, setIsProfileReady] = useState(false);
 
-  // Apply dark mode if system preference is dark
+  // Initialize theme from preference or system on app load
   useEffect(() => {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.documentElement.classList.add('dark');
-    }
+    initializeTheme();
   }, []);
 
   useEffect(() => {
