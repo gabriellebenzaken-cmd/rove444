@@ -30,7 +30,11 @@ export default function GroupChat({ group, user }) {
     const unsub = base44.entities.TripMessage.subscribe((event) => {
       if (event.data?.trip_id === group.id) {
         setMessages(prev => {
-          if (event.type === "create") return [...prev, event.data];
+          if (event.type === "create") {
+            // Deduplicate: don't add if already present (optimistic append)
+            if (prev.some(m => m.id === event.data.id)) return prev;
+            return [...prev, event.data];
+          }
           if (event.type === "update") return prev.map(m => m.id === event.id ? event.data : m);
           if (event.type === "delete") return prev.filter(m => m.id !== event.id);
           return prev;
