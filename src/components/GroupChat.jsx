@@ -73,10 +73,19 @@ export default function GroupChat({ group, user }) {
   }
 
   async function handleVote(msg, optionIndex) {
-    const votes = { ...(msg.poll_votes || {}) };
-    Object.keys(votes).forEach(k => { votes[k] = (votes[k] || []).filter(e => e !== user.email); });
-    if (!votes[optionIndex]) votes[optionIndex] = [];
-    votes[optionIndex].push(user.email);
+    const votes = {};
+    // Deep copy vote arrays
+    Object.keys(msg.poll_votes || {}).forEach(k => { votes[k] = [...(msg.poll_votes[k] || [])]; });
+    // Remove user's previous vote from all options
+    Object.keys(votes).forEach(k => { votes[k] = votes[k].filter(e => e !== user.email); });
+    // Toggle: if clicking the already-voted option, just remove vote; else add
+    const alreadyVoted = String(Object.keys(msg.poll_votes || {}).find(k => (msg.poll_votes[k] || []).includes(user.email))) === String(optionIndex);
+    if (!alreadyVoted) {
+      if (!votes[optionIndex]) votes[optionIndex] = [];
+      votes[optionIndex].push(user.email);
+    }
+    // Optimistic update
+    setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, poll_votes: votes } : m));
     await base44.entities.TripMessage.update(msg.id, { poll_votes: votes });
   }
 
