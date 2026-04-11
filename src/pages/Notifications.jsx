@@ -20,7 +20,7 @@ const TYPE_CONFIG = {
   friend_request: { icon: UserPlus, color: "#C8A27C", bg: "rgba(200,162,124,0.12)", actionable: true },
   friend_accepted: { icon: Check, color: "#6BAE8A", bg: "rgba(107,174,138,0.12)" },
   trip_added: { icon: MapPin, color: "#7090B0", bg: "rgba(112,144,176,0.12)" },
-  trip_request: { icon: MapPin, color: "#7090B0", bg: "rgba(112,144,176,0.12)" },
+  trip_request: { icon: MapPin, color: "#7090B0", bg: "rgba(112,144,176,0.12)", actionable: true },
   group_added: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)" },
   group_invite: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)", actionable: true },
   group_join_request: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)" },
@@ -131,6 +131,76 @@ export default function Notifications() {
     }
   }
 
+  async function approveTripRequest(n) {
+    try {
+      const allReqs = await base44.entities.TripJoinRequest.list("-created_date", 200);
+      const req = allReqs.find(
+        (r) => r.trip_id === n.related_trip_id && r.user_email === n.related_user_email && r.status === "pending"
+      );
+      if (!req) { toast.error("Request not found"); return; }
+      
+      // Update request status
+      await base44.entities.TripJoinRequest.update(req.id, { status: "approved" });
+      
+      // Add user to trip
+      const trips = await base44.entities.Trip.list("-created_date", 200);
+      const trip = trips.find(t => t.id === n.related_trip_id);
+      if (trip) {
+        const updated = [...new Set([...(trip.member_emails || []), n.related_user_email])];
+        await base44.entities.Trip.update(trip.id, { member_emails: updated });
+      }
+      
+      // Notify user
+      await base44.entities.Notification.create({
+        user_email: n.related_user_email,
+        type: "trip_approved",
+        message: `You were added to ${trip?.name || "the trip"}`,
+        related_trip_id: n.related_trip_id,
+        is_read: false,
+      });
+      
+      // Remove the request notification
+      await base44.entities.Notification.delete(n.id);
+      removeNotif(n.id);
+      toast.success("Request approved!");
+    } catch (err) {
+      console.error("Failed to approve trip request:", err);
+      toast.error("Failed to approve request");
+    }
+  }
+
+  async function declineTripRequest(n) {
+    try {
+      const allReqs = await base44.entities.TripJoinRequest.list("-created_date", 200);
+      const req = allReqs.find(
+        (r) => r.trip_id === n.related_trip_id && r.user_email === n.related_user_email && r.status === "pending"
+      );
+      if (!req) { toast.error("Request not found"); return; }
+      
+      // Update request status
+      await base44.entities.TripJoinRequest.update(req.id, { status: "denied" });
+      
+      // Notify user
+      const trips = await base44.entities.Trip.list("-created_date", 200);
+      const trip = trips.find(t => t.id === n.related_trip_id);
+      await base44.entities.Notification.create({
+        user_email: n.related_user_email,
+        type: "trip_denied",
+        message: `Your request to join ${trip?.name || "the trip"} was declined`,
+        related_trip_id: n.related_trip_id,
+        is_read: false,
+      });
+      
+      // Remove the request notification
+      await base44.entities.Notification.delete(n.id);
+      removeNotif(n.id);
+      toast.success("Request declined");
+    } catch (err) {
+      console.error("Failed to decline trip request:", err);
+      toast.error("Failed to decline request");
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center py-32">
@@ -212,15 +282,25 @@ export default function Notifications() {
                       </>
                     )}
                     {n.type === "group_invite" && n.related_group_id && (
-                      <>
-                        <Button size="sm" className="h-7 px-2.5 text-xs rounded-full" onClick={() => acceptGroupInvite(n)}>
-                          <Check className="h-3 w-3" />
-                        </Button>
-                        <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs rounded-full" onClick={() => declineGroupInvite(n)}>
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </>
-                    )}
+                       <>
+                         <Button size="sm" className="h-7 px-2.5 text-xs rounded-full" onClick={() => acceptGroupInvite(n)}>
+                           <Check className="h-3 w-3" />
+                         </Button>
+                         <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs rounded-full" onClick={() => declineGroupInvite(n)}>
+                           <X className="h-3 w-3" />
+                         </Button>
+                       </>
+                     )}
+                     {n.type === "trip_request" && n.related_trip_id && (
+                       <>
+                         <Button size="sm" className="h-7 px-2.5 text-xs rounded-full" onClick={() => approveTripRequest(n)}>
+                           <Check className="h-3 w-3" />
+                         </Button>
+                         <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs rounded-full" onClick={() => declineTripRequest(n)}>
+                           <X className="h-3 w-3" />
+                         </Button>
+                       </>
+                     )}
                   </div>
                 )}
                 {isUnread && !cfg.actionable && (
