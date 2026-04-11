@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { format } from "date-fns";
 import TripMembersManager from "./TripMembersManager";
 import TripPendingRequests from "./TripPendingRequests";
+import FlightDetailModal from "./FlightDetailModal";
 
 const EMPTY_FORM = {
   travel_type: "Flight",
@@ -53,6 +54,7 @@ export default function TripPlan({ trip, user, onUpdate }) {
   const [members, setMembers] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [detailArrival, setDetailArrival] = useState(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
   useEffect(() => { loadData(); }, [trip.id]);
@@ -157,11 +159,15 @@ export default function TripPlan({ trip, user, onUpdate }) {
               const outboundFlight = a.outbound_flight_number || a.flight_number;
               const returnFlight = a.return_flight_number;
               return (
-                <div key={a.id} className="bg-card rounded-xl border border-border p-4">
+                <div
+                  key={a.id}
+                  className="bg-card rounded-xl border border-border p-4 cursor-pointer active:scale-[0.98] transition-transform"
+                  onClick={() => setDetailArrival(a)}
+                >
                   <div className="flex items-center justify-between mb-2">
                     <p className="font-medium text-sm">{a.user_name || a.user_email?.split("@")[0]}</p>
                     {a.user_email === user?.email && (
-                      <div className="flex gap-1">
+                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                         <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => editArrival(a)}>
                           <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                         </Button>
@@ -221,6 +227,12 @@ export default function TripPlan({ trip, user, onUpdate }) {
       </div>
 
       <TripMembersManager trip={trip} user={user} isAdmin={isAdmin} onMembersUpdate={loadData} />
+
+      <FlightDetailModal
+        arrival={detailArrival}
+        open={!!detailArrival}
+        onClose={() => setDetailArrival(null)}
+      />
 
       <Dialog open={showAdd} onOpenChange={(open) => { if (!open) closeDialog(); else setShowAdd(true); }}>
         <DialogContent className="mx-4 rounded-2xl max-w-md p-5 max-h-[90vh] overflow-y-auto">
