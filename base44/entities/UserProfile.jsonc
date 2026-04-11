@@ -18,6 +18,10 @@
       "type": "string",
       "description": "Full name of the user"
     },
+    "display_name": {
+      "type": "string",
+      "description": "Public-facing display name (e.g. first name, nickname). Falls back to full_name if not set."
+    },
     "bio": {
       "type": "string",
       "description": "User bio"

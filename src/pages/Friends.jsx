@@ -390,8 +390,8 @@ export default function Friends() {
                         ) : (u.full_name?.[0] || "?")}
                       </div>
                       <div>
-                        <p className="font-medium text-sm">{u.full_name || "Unknown"}</p>
-                        <p className="text-xs text-muted-foreground">{u.username ? `@${u.username}` : u.user_email || ""}</p>
+                        <p className="font-medium text-sm">{u.display_name || u.full_name || "Unknown"}</p>
+                          <p className="text-xs text-muted-foreground">{u.username ? `@${u.username}` : u.user_email || ""}</p>
                       </div>
                     </div>
                     {isFriend ? (
@@ -404,7 +404,7 @@ export default function Friends() {
                     ) : isOutgoing ? (
                       <span className="text-xs text-muted-foreground">Sent</span>
                     ) : (
-                      <Button size="sm" variant="outline" className="rounded-full" onClick={() => sendRequest({ id: u.user_id, email: u.user_email, full_name: u.full_name })}>
+                      <Button size="sm" variant="outline" className="rounded-full" onClick={() => sendRequest({ id: u.user_id, email: u.user_email, full_name: u.display_name || u.full_name })}>
                         <UserPlus className="h-3.5 w-3.5 mr-1" /> Add
                       </Button>
                     )}
@@ -478,7 +478,7 @@ export default function Friends() {
             friends.map((f) => {
               // Use fresh UserProfile data for identity
               const profile = profileMap[f.email];
-              const displayName = profile?.full_name || f.full_name || f.display_name || "Unknown";
+              const displayName = profile?.display_name || profile?.full_name || f.full_name || f.display_name || "Unknown";
               const displayUsername = profile?.username;
               const displayPhoto = profile?.profile_photo;
               

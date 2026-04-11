@@ -202,7 +202,7 @@ export default function GroupDetail() {
           {members.map((m) => {
             // Use fresh UserProfile data for member identity
             const profile = profileMap[m.email];
-            const displayName = profile?.full_name || m.full_name || "User";
+            const displayName = profile?.display_name || profile?.full_name || m.full_name || "User";
             const displayUsername = profile?.username;
             const displayPhoto = profile?.profile_photo;
             const isGroupAdmin = m.email === group.admin_email;
