@@ -48,6 +48,7 @@ export default function Trips() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [user, setUser] = useState(null);
+  const [activeTab, setActiveTab] = useState('upcoming');
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -83,7 +84,7 @@ export default function Trips() {
       <div className="flex items-center justify-between mb-7">
         <div>
           <p className="text-xs font-medium tracking-widest uppercase" style={{color:'#C8A27C', letterSpacing:'0.12em'}}>Your Adventures</p>
-          <h1 className="text-[28px] font-semibold tracking-tight leading-tight mt-0.5" style={{color:'#1A1A1A', letterSpacing:'-0.025em'}}>Trips</h1>
+          <h1 className="text-[28px] font-semibold tracking-tight leading-tight mt-0.5 dark:text-[#F0EAE0]" style={{color:'#1A1A1A', letterSpacing:'-0.025em'}}>Trips</h1>
         </div>
         <button
           onClick={() => setShowCreate(true)}
@@ -93,6 +94,26 @@ export default function Trips() {
           <Plus className="h-3.5 w-3.5" /> New Trip
         </button>
       </div>
+
+      {/* Tabs */}
+      {!loading && trips.length > 0 && (
+        <div className="flex gap-1 mb-5 p-1 rounded-full" style={{background:'rgba(0,0,0,0.06)'}}>
+          <button
+            onClick={() => setActiveTab('upcoming')}
+            className="flex-1 py-2 text-xs font-semibold rounded-full transition-all"
+            style={activeTab === 'upcoming' ? {background:'#C8A27C', color:'white', boxShadow:'0 1px 8px rgba(200,162,124,0.3)'} : {color:'#9A8A7A'}}
+          >
+            Upcoming
+          </button>
+          <button
+            onClick={() => setActiveTab('past')}
+            className="flex-1 py-2 text-xs font-semibold rounded-full transition-all"
+            style={activeTab === 'past' ? {background:'#C8A27C', color:'white', boxShadow:'0 1px 8px rgba(200,162,124,0.3)'} : {color:'#9A8A7A'}}
+          >
+            Past
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-24">
@@ -110,23 +131,24 @@ export default function Trips() {
           </button>
         </div>
       ) : (
-        <div className="space-y-6">
-          {activeTrips.length > 0 && (
-            <div className="space-y-4">
-              {activeTrips.map((trip, i) => (
+        <div className="space-y-4 pb-24">
+          {activeTab === 'upcoming' && (
+            activeTrips.length === 0 ? (
+              <p className="text-center text-sm py-16" style={{color:'#9A8A7A'}}>no upcoming trips</p>
+            ) : (
+              activeTrips.map((trip, i) => (
                 <TripCard key={trip.id} trip={trip} index={i} coverImages={coverImages} />
-              ))}
-            </div>
+              ))
+            )
           )}
-          {pastTrips.length > 0 && (
-            <div>
-              <p className="text-[10px] font-semibold tracking-widest uppercase mb-3" style={{color:'#C8A27C', letterSpacing:'0.12em'}}>Past Trips</p>
-              <div className="space-y-3">
-                {pastTrips.map((trip, i) => (
-                  <TripCard key={trip.id} trip={trip} index={i + activeTrips.length} coverImages={coverImages} past />
-                ))}
-              </div>
-            </div>
+          {activeTab === 'past' && (
+            pastTrips.length === 0 ? (
+              <p className="text-center text-sm py-16" style={{color:'#9A8A7A'}}>no past trips</p>
+            ) : (
+              pastTrips.map((trip, i) => (
+                <TripCard key={trip.id} trip={trip} index={i} coverImages={coverImages} past />
+              ))
+            )
           )}
         </div>
       )}
