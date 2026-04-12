@@ -84,7 +84,7 @@ export default function Trips() {
       <div className="flex items-center justify-between mb-7">
         <div>
           <p className="text-xs font-medium tracking-widest uppercase" style={{color:'#C8A27C', letterSpacing:'0.12em'}}>Your Adventures</p>
-          <h1 className="text-[28px] font-semibold tracking-tight leading-tight mt-0.5 dark:text-[#F0EAE0]" style={{color:'#1A1A1A', letterSpacing:'-0.025em'}}>Trips</h1>
+          <h1 className="text-[28px] font-semibold tracking-tight leading-tight mt-0.5 text-[#1A1A1A] dark:text-[#F0EAE0]" style={{letterSpacing:'-0.025em'}}>Trips</h1>
         </div>
         <button
           onClick={() => setShowCreate(true)}
