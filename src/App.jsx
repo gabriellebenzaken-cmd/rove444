@@ -20,6 +20,7 @@ import TripDetail from './pages/TripDetail';
 import GroupDetail from './pages/GroupDetail';
 import JoinInvite from './pages/JoinInvite';
 import Privacy from './pages/Privacy';
+import LegalConsentBanner from './components/LegalConsentBanner';
 import Terms from './pages/Terms';
 import Notifications from './pages/Notifications';
 import OnboardingModal from './components/OnboardingModal';
@@ -124,6 +125,7 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <>
+    <LegalConsentBanner />
     {currentUser && !currentUser.onboarded && !onboardingError && (
       <OnboardingModal user={currentUser} onComplete={() => base44.auth.me().then(setCurrentUser).catch(() => setOnboardingError(true))} />
     )}
