@@ -22,6 +22,7 @@ const TYPE_CONFIG = {
   friend_request: { icon: UserPlus, color: "#C8A27C", bg: "rgba(200,162,124,0.12)", actionable: true },
   friend_accepted: { icon: Check, color: "#6BAE8A", bg: "rgba(107,174,138,0.12)" },
   trip_added: { icon: MapPin, color: "#7090B0", bg: "rgba(112,144,176,0.12)" },
+  trip_invite: { icon: MapPin, color: "#7090B0", bg: "rgba(112,144,176,0.12)", actionable: true },
   trip_request: { icon: MapPin, color: "#7090B0", bg: "rgba(112,144,176,0.12)", actionable: true },
   group_added: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)" },
   group_invite: { icon: Users, color: "#9070B0", bg: "rgba(144,112,176,0.12)", actionable: true },
@@ -91,6 +92,35 @@ export default function Notifications() {
       await base44.entities.Notification.delete(n.id);
       removeNotif(n.id);
       toast.success("Request declined");
+    } catch (err) {
+      toast.error("Failed to decline");
+    }
+  }
+
+  async function acceptTripInvite(n) {
+    try {
+      const trips = await base44.entities.Trip.list("-created_date", 200);
+      const trip = trips.find(t => t.id === n.related_trip_id);
+      if (!trip) { toast.error("Trip not found"); return; }
+      const already = trip.member_emails?.includes(user.email);
+      if (!already) {
+        await base44.entities.Trip.update(trip.id, {
+          member_emails: [...new Set([...(trip.member_emails || []), user.email])],
+        });
+      }
+      await base44.entities.Notification.delete(n.id);
+      removeNotif(n.id);
+      toast.success(`Joined "${trip.name}"!`);
+    } catch (err) {
+      toast.error("Failed to join trip");
+    }
+  }
+
+  async function declineTripInvite(n) {
+    try {
+      await base44.entities.Notification.delete(n.id);
+      removeNotif(n.id);
+      toast.success("Invite declined");
     } catch (err) {
       toast.error("Failed to decline");
     }
@@ -338,6 +368,16 @@ export default function Notifications() {
                           <Check className="h-3 w-3" />
                         </Button>
                         <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs rounded-full" onClick={() => declineFriendRequest(n)}>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </>
+                    )}
+                    {n.type === "trip_invite" && n.related_trip_id && (
+                      <>
+                        <Button size="sm" className="h-7 px-2.5 text-xs rounded-full" onClick={() => acceptTripInvite(n)}>
+                          <Check className="h-3 w-3" />
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs rounded-full" onClick={() => declineTripInvite(n)}>
                           <X className="h-3 w-3" />
                         </Button>
                       </>

@@ -98,7 +98,7 @@ export default function CreateTripDialog({ open, onOpenChange, user, onCreated, 
         });
         await base44.entities.Notification.create({
           user_email: email,
-          type: "trip_added",
+          type: "trip_invite",
           message: `${user.full_name} invited you to join "${createdTrip.name}"`,
           related_user_email: user.email,
           related_user_name: user.full_name,
