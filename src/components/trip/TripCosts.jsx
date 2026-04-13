@@ -185,8 +185,9 @@ export default function TripCosts({ trip, user }) {
     .filter((e) => e.split_among?.includes(user.email) && e.paid_by !== user.email)
     .reduce((s, e) => {
       const pay = getPayment(e.id, user.email);
-      if (!pay || pay.status === "rejected" || pay.status === "unpaid") return s + getShareAmount(e, user.email);
-      return s;
+      if (pay?.status === "confirmed") return s;
+      if (pay?.status === "pending") return s;
+      return s + getShareAmount(e, user.email);
     }, 0);
 
   const iAmOwed = expenses
@@ -195,8 +196,8 @@ export default function TripCosts({ trip, user }) {
       const owersExcludingMe = (e.split_among || []).filter(em => em !== user.email);
       return s + owersExcludingMe.reduce((ss, email) => {
         const pay = getPayment(e.id, email);
-        if (!pay || pay.status === "rejected" || pay.status === "unpaid") return ss + getShareAmount(e, email);
-        return ss;
+        if (pay?.status === "confirmed") return ss;
+        return ss + getShareAmount(e, email);
       }, 0);
     }, 0);
 
@@ -275,7 +276,7 @@ export default function TripCosts({ trip, user }) {
       {/* Who Owes Who */}
       {balanceRows.length > 0 && (
         <div className="mb-4">
-          <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#C8A27C" }}>Who Owes Who</p>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#C8A27C" }}>Settle Up</p>
           <div className="space-y-2">
             {balanceRows.map((b, i) => {
               const settleLinks = getSettleLinks(b.to);
@@ -562,10 +563,16 @@ export default function TripCosts({ trip, user }) {
                 return list.map(exp => {
                   const status = getExpenseStatus(exp);
                   const settled = status === "settled" || exp.is_settled;
-                  const myShare = detailModal === "owe" ? getShareAmount(exp, user.email)
-                    : detailModal === "received" ? (exp.split_among || []).filter(em => em !== user.email).reduce((s, em) => s + getShareAmount(exp, em), 0)
-                    : exp.amount;
                   const myPay = getPayment(exp.id, user.email);
+                  const myShare = detailModal === "owe"
+                    ? (myPay?.status === "confirmed" ? 0 : getShareAmount(exp, user.email))
+                    : detailModal === "received"
+                    ? (exp.split_among || []).filter(em => em !== user.email).reduce((s, em) => {
+                        const p = getPayment(exp.id, em);
+                        if (p?.status === "confirmed") return s;
+                        return s + getShareAmount(exp, em);
+                      }, 0)
+                    : exp.amount;
                   return (
                     <div key={exp.id} className="p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(200,162,124,0.12)" }}>
                       <div className="flex items-start justify-between mb-1">
@@ -581,9 +588,9 @@ export default function TripCosts({ trip, user }) {
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-sm font-semibold" style={{ color: detailModal === "owe" ? "#B04040" : detailModal === "received" ? "#3A7A5A" : "#2A2018" }}>${myShare.toFixed(2)}</p>
-                          {settled ? (
+                          {settled || myShare === 0 ? (
                             <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(107,174,138,0.15)", color: "#5A9E7A" }}>Settled</span>
-                          ) : myPay?.status === "pending" ? (
+                          ) : detailModal === "owe" && myPay?.status === "pending" ? (
                             <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(255,193,50,0.15)", color: "#9A7840" }}>Pending</span>
                           ) : (
                             <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(220,80,80,0.08)", color: "#B04040" }}>Unpaid</span>
@@ -631,8 +638,17 @@ export default function TripCosts({ trip, user }) {
                 <Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0.00" className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
               </div>
               <div>
-                 <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Category</Label>
-                 <MobileSelect value={form.category} onChange={(v) => setForm({ ...form, category: v })} options={categories} />
+                <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Category</Label>
+                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                  <SelectTrigger className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(c => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -716,7 +732,10 @@ export default function TripCosts({ trip, user }) {
               />
             </div>
 
-                <button type="submit" className="w-full h-10 rounded-full text-sm font-semibold mt-4" style={{ background: "#C8A27C", color: "white" }}>Add Expense</button>
+                {(!form.description || !form.amount) && (
+              <p className="text-xs text-center" style={{ color: "#B04040" }}>Please fill in description and amount</p>
+            )}
+            <button type="submit" disabled={!form.description || !form.amount} className="w-full h-10 rounded-full text-sm font-semibold mt-2 disabled:opacity-40" style={{ background: "#C8A27C", color: "white" }}>Add Expense</button>
               </form>
             </div>
           </div>

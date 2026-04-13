@@ -73,8 +73,9 @@ export default function Costs() {
     .filter((e) => e.split_among?.includes(user?.email) && e.paid_by !== user?.email)
     .reduce((s, e) => {
       const pay = getPayment(e.id, user.email);
-      if (!pay || pay.status === "rejected" || pay.status === "unpaid") return s + getShareAmount(e, user.email);
-      return s;
+      if (pay?.status === "confirmed") return s;
+      if (pay?.status === "pending") return s; // pending counts as in-flight, not still owed
+      return s + getShareAmount(e, user.email);
     }, 0);
 
   const iAmOwed = expenses
@@ -83,8 +84,8 @@ export default function Costs() {
       const owersExcludingMe = (e.split_among || []).filter(em => em !== user.email);
       return s + owersExcludingMe.reduce((ss, email) => {
         const pay = getPayment(e.id, email);
-        if (!pay || pay.status === "rejected" || pay.status === "unpaid") return ss + getShareAmount(e, email);
-        return ss;
+        if (pay?.status === "confirmed") return ss;
+        return ss + getShareAmount(e, email);
       }, 0);
     }, 0);
 
@@ -168,7 +169,7 @@ export default function Costs() {
           {/* Who Owes Who */}
           {balanceRows.length > 0 && (
             <div className="mb-5">
-              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#C8A27C" }}>Who Owes Who</p>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#C8A27C" }}>Settle Up</p>
               <div className="space-y-2">
                 {balanceRows.map((b, i) => {
                   const settleLinks = getSettleLinks(b.to);
@@ -252,10 +253,16 @@ export default function Costs() {
                 if (list.length === 0) return <p className="text-sm text-center py-6" style={{ color: "#B0A090" }}>nothing here</p>;
                 return list.map(exp => {
                   const trip = trips.find(t => t.id === exp.trip_id);
-                  const myShare = detailModal === "owe" ? getShareAmount(exp, user.email)
-                    : detailModal === "received" ? (exp.split_among || []).filter(em => em !== user.email).reduce((s, em) => s + getShareAmount(exp, em), 0)
-                    : exp.amount;
                   const myPay = getPayment(exp.id, user.email);
+                  const myShare = detailModal === "owe"
+                    ? (myPay?.status === "confirmed" ? 0 : getShareAmount(exp, user.email))
+                    : detailModal === "received"
+                    ? (exp.split_among || []).filter(em => em !== user.email).reduce((s, em) => {
+                        const p = getPayment(exp.id, em);
+                        if (p?.status === "confirmed") return s;
+                        return s + getShareAmount(exp, em);
+                      }, 0)
+                    : exp.amount;
                   const settled = exp.is_settled || myPay?.status === "confirmed";
                   return (
                     <div key={exp.id} className="p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(200,162,124,0.12)" }}>
@@ -270,9 +277,9 @@ export default function Costs() {
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-sm font-semibold" style={{ color: detailModal === "owe" ? "#B04040" : detailModal === "received" ? "#3A7A5A" : "#2A2018" }}>${myShare.toFixed(2)}</p>
-                          {settled ? (
+                          {settled || myShare === 0 ? (
                             <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(107,174,138,0.15)", color: "#5A9E7A" }}>Settled</span>
-                          ) : myPay?.status === "pending" ? (
+                          ) : detailModal === "owe" && myPay?.status === "pending" ? (
                             <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(255,193,50,0.15)", color: "#9A7840" }}>Pending</span>
                           ) : (
                             <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(220,80,80,0.08)", color: "#B04040" }}>Unpaid</span>
