@@ -95,7 +95,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.01em;
-    overscroll-behavior-y: none;
+
     -webkit-overflow-scrolling: touch;
   }
 

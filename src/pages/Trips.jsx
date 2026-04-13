@@ -131,7 +131,7 @@ export default function Trips() {
           </button>
         </div>
       ) : (
-        <div className="space-y-4 pb-24">
+        <div className="space-y-4">
           {activeTab === 'upcoming' && (
             activeTrips.length === 0 ? (
               <p className="text-center text-sm py-16" style={{color:'#9A8A7A'}}>✦ no upcoming trips yet</p>
