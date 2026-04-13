@@ -20,51 +20,119 @@ export default function Terms() {
         </div>
 
         <div className="space-y-6 text-sm leading-relaxed text-muted-foreground">
-          <p>
-            By using Rove, you agree to these Terms of Service. Please read them carefully.
-          </p>
 
-          <div>
-            <h2 className="text-base font-semibold mb-2 text-foreground">1. Use of the Service</h2>
-            <p>Rove is a travel planning and expense-sharing platform. You agree to use Rove only for lawful purposes and in a way that does not infringe the rights of others.</p>
+          <p>Welcome to Rove. By using the app, you agree to the following terms.</p>
+
+          <Section title="1. Overview">
+            <p>Rove is a travel planning and expense-sharing platform that allows users to organize trips, track shared costs, and coordinate payments with others.</p>
+            <p>Rove does not process payments or act as a financial intermediary.</p>
+          </Section>
+
+          <Section title="2. User Accounts">
+            <ul>
+              <li>You must sign in using a valid Google account</li>
+              <li>You are responsible for maintaining the security of your account</li>
+              <li>You are responsible for all activity that occurs under your account</li>
+            </ul>
+          </Section>
+
+          <Section title="3. User Content">
+            <p>You are responsible for all content you create or share on Rove, including:</p>
+            <ul>
+              <li>Trip details</li>
+              <li>Expenses</li>
+              <li>Payment information</li>
+              <li>Messages</li>
+            </ul>
+            <p className="mt-2">You agree not to:</p>
+            <ul>
+              <li>Enter false or misleading information for fraudulent purposes</li>
+              <li>Impersonate another person</li>
+              <li>Use the app for unlawful activity</li>
+            </ul>
+          </Section>
+
+          <Section title="4. Expenses & Payments">
+            <p>Rove allows users to track shared expenses, but:</p>
+            <ul>
+              <li>We do not verify the accuracy of any expenses</li>
+              <li>We do not enforce or guarantee payments</li>
+              <li>We are not responsible for disputes between users</li>
+            </ul>
+            <p className="mt-2">All payments occur outside of Rove using third-party platforms such as Venmo, PayPal, Cash App, or Zelle.</p>
+            <p className="mt-2">Users are solely responsible for:</p>
+            <ul>
+              <li>Verifying what they owe</li>
+              <li>Completing payments</li>
+              <li>Resolving any disagreements</li>
+            </ul>
+          </Section>
+
+          <Section title="5. Leaving a Trip & Member Removal">
+            <ul>
+              <li>Users may leave a trip at any time</li>
+              <li>Trip admins may remove members</li>
+            </ul>
+            <p className="mt-2">Leaving or being removed from a trip:</p>
+            <ul>
+              <li>Does not erase past expenses or balances</li>
+              <li>Does not remove financial obligations between users</li>
+            </ul>
+            <p className="mt-2">Rove is not responsible for collecting or enforcing payments after a user leaves a trip.</p>
+          </Section>
+
+          <Section title="6. No Financial Liability">
+            <p>Rove is a coordination tool only.</p>
+            <p>We are not liable for:</p>
+            <ul>
+              <li>Unpaid balances</li>
+              <li>Incorrect expense entries</li>
+              <li>Financial losses between users</li>
+            </ul>
+          </Section>
+
+          <Section title="7. Availability & Changes">
+            <p>We may update, modify, or discontinue parts of the app at any time without notice.</p>
+            <p>We do not guarantee uninterrupted or error-free service.</p>
+          </Section>
+
+          <Section title="8. Termination">
+            <p>We may suspend or terminate accounts that:</p>
+            <ul>
+              <li>Violate these terms</li>
+              <li>Engage in harmful or abusive behavior</li>
+              <li>Use the app unlawfully</li>
+            </ul>
+          </Section>
+
+          <Section title="9. Limitation of Liability">
+            <p>To the fullest extent permitted by law, Rove is not liable for any indirect, incidental, or consequential damages arising from the use of the app.</p>
+          </Section>
+
+          <Section title="10. Changes to Terms">
+            <p>We may update these Terms from time to time. Continued use of Rove means you accept the updated Terms.</p>
+          </Section>
+
+          <Section title="11. Contact">
+            <p>If you have any questions, contact us at: <a href="mailto:support@rove.app" className="underline font-semibold" style={{ color: "#C8A27C" }}>support@rove.app</a></p>
+          </Section>
+
+          <div className="rounded-2xl p-4 mt-6" style={{ background: "rgba(200,162,124,0.1)", border: "1px solid rgba(200,162,124,0.2)" }}>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#C8A27C" }}>TL;DR</p>
+            <p className="text-sm">Rove helps you organize trips and track costs, but you are responsible for your own payments and decisions.</p>
           </div>
 
-          <div>
-            <h2 className="text-base font-semibold mb-2 text-foreground">2. Account Responsibility</h2>
-            <p>You are responsible for maintaining the security of your account and for all activities that occur under it. You must be at least 13 years old to use Rove.</p>
-          </div>
-
-          <div>
-            <h2 className="text-base font-semibold mb-2 text-foreground">3. Payments & Expenses</h2>
-            <p>Rove does not process or facilitate payments. All financial transactions occur outside the app using third-party services. Rove is not responsible for any payment disputes or unresolved balances between users.</p>
-          </div>
-
-          <div>
-            <h2 className="text-base font-semibold mb-2 text-foreground">4. User Content</h2>
-            <p>You retain ownership of content you post on Rove. By submitting content, you grant Rove a license to display it within the service. You are responsible for the content you share.</p>
-          </div>
-
-          <div>
-            <h2 className="text-base font-semibold mb-2 text-foreground">5. Limitation of Liability</h2>
-            <p>Rove is provided "as is" without warranties of any kind. We are not liable for any damages arising from your use of the service, including disputes between users.</p>
-          </div>
-
-          <div>
-            <h2 className="text-base font-semibold mb-2 text-foreground">6. Termination</h2>
-            <p>We reserve the right to suspend or terminate accounts that violate these terms. You may stop using Rove at any time.</p>
-          </div>
-
-          <div>
-            <h2 className="text-base font-semibold mb-2 text-foreground">7. Changes to Terms</h2>
-            <p>We may update these Terms from time to time. Continued use of Rove after changes means you accept the updated Terms.</p>
-          </div>
-
-          <div>
-            <h2 className="text-base font-semibold mb-2 text-foreground">8. Contact</h2>
-            <p>Questions? Contact us at <a href="mailto:support@rove.app" className="underline" style={{ color: "#C8A27C" }}>support@rove.app</a></p>
-          </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Section({ title, children }) {
+  return (
+    <div>
+      <h2 className="text-base font-semibold mb-2 text-foreground">{title}</h2>
+      <div className="space-y-2">{children}</div>
     </div>
   );
 }
