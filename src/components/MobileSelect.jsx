@@ -45,6 +45,7 @@ export default function MobileSelect({
     <>
       {/* Trigger button */}
       <button
+        type="button"
         onClick={() => setOpen(true)}
         disabled={disabled}
         className="w-full flex items-center justify-between px-3 py-2 border border-input rounded-md bg-background text-foreground text-sm"
@@ -61,6 +62,7 @@ export default function MobileSelect({
             <div className="space-y-2">
               {options.map((opt) => (
                 <button
+                  type="button"
                   key={opt.value}
                   onClick={() => {
                     onChange(opt.value);

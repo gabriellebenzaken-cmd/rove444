@@ -43,7 +43,7 @@ export default function TripCosts({ trip, user }) {
   const [expandedExpense, setExpandedExpense] = useState(null);
   const [selectedMethod, setSelectedMethod] = useState({});
   const [detailModal, setDetailModal] = useState(null); // 'owe' | 'received' | null
-  const [form, setForm] = useState({ description: "", amount: "", category: "other", split_among: [], day_number: null, trip_wide: true });
+  const [form, setForm] = useState({ description: "", amount: "", category: "other", split_among: trip.member_emails || [], day_number: null, trip_wide: true });
   const [splitMode, setSplitMode] = useState("equal");
   const [customAmounts, setCustomAmounts] = useState({});
 
@@ -76,7 +76,7 @@ export default function TripCosts({ trip, user }) {
     return expense.amount / count;
   }
 
-  const activeSplitList = form.split_among.length > 0 ? form.split_among : (trip.member_emails || []);
+  const activeSplitList = form.split_among;
 
   function equalShare() {
     if (!form.amount || activeSplitList.length === 0) return 0;
@@ -86,7 +86,7 @@ export default function TripCosts({ trip, user }) {
   async function addExpense(e) {
     e.preventDefault();
     if (!form.description || !form.amount) return;
-    const splitList = form.split_among.length > 0 ? form.split_among : trip.member_emails;
+    const splitList = form.split_among.length > 0 ? form.split_among : trip.member_emails || [];
 
     let custom_split_amounts = null;
     if (splitMode === "custom") {
@@ -109,7 +109,7 @@ export default function TripCosts({ trip, user }) {
       trip_wide: form.trip_wide,
       day_number: form.trip_wide ? null : form.day_number,
     });
-    setForm({ description: "", amount: "", category: "other", split_among: [], day_number: null, trip_wide: true });
+    setForm({ description: "", amount: "", category: "other", split_among: trip.member_emails || [], day_number: null, trip_wide: true });
     setCustomAmounts({});
     setSplitMode("equal");
     setShowAdd(false);
@@ -654,20 +654,31 @@ export default function TripCosts({ trip, user }) {
             <div>
               <Label className="text-xs font-medium mb-1.5 block" style={{ color: "#9A8A7A" }}>Split among</Label>
               <div className="space-y-1.5 mb-2">
-                {members.map((m) => (
-                  <label key={m.email} className="flex items-center gap-2 text-xs cursor-pointer">
-                    <Checkbox
-                      checked={form.split_among.length === 0 || form.split_among.includes(m.email)}
-                      onCheckedChange={(checked) =>
-                        setForm({
-                          ...form,
-                          split_among: checked ? [...form.split_among, m.email] : form.split_among.filter((e) => e !== m.email),
-                        })
-                      }
-                    />
-                    <span style={{ color: "#3A3028" }}>{m.full_name}{m.email === user.email ? " (You)" : ""}</span>
-                  </label>
-                ))}
+                {members.map((m) => {
+                  const isSelected = form.split_among.includes(m.email);
+                  return (
+                    <button
+                      type="button"
+                      key={m.email}
+                      onClick={() => setForm({
+                        ...form,
+                        split_among: isSelected
+                          ? form.split_among.filter((e) => e !== m.email)
+                          : [...form.split_among, m.email],
+                      })}
+                      className="flex items-center gap-2 text-xs w-full rounded-lg px-2 py-1.5 transition-colors"
+                      style={{
+                        background: isSelected ? "rgba(200,162,124,0.12)" : "transparent",
+                        border: `1px solid ${isSelected ? "rgba(200,162,124,0.35)" : "rgba(200,162,124,0.1)"}`,
+                      }}
+                    >
+                      <div className="w-4 h-4 rounded-full border flex items-center justify-center shrink-0" style={{ borderColor: isSelected ? "#C8A27C" : "#C0B0A0", background: isSelected ? "#C8A27C" : "transparent" }}>
+                        {isSelected && <span style={{ color: "white", fontSize: 9 }}>✓</span>}
+                      </div>
+                      <span style={{ color: isSelected ? "#3A3028" : "#9A8A7A" }}>{m.full_name}{m.email === user.email ? " (You)" : ""}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -712,8 +723,8 @@ export default function TripCosts({ trip, user }) {
               <MobileSelect
                 value={form.trip_wide ? "trip_wide" : String(form.day_number)}
                 onChange={(v) => {
-                  if (v === "trip_wide") setForm({ ...form, trip_wide: true, day_number: null });
-                  else setForm({ ...form, trip_wide: false, day_number: parseInt(v) });
+                  if (v === "trip_wide") setForm((f) => ({ ...f, trip_wide: true, day_number: null }));
+                  else setForm((f) => ({ ...f, trip_wide: false, day_number: parseInt(v) }));
                 }}
                 options={[
                   { value: "trip_wide", label: "Trip-wide" },
