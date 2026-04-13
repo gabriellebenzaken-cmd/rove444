@@ -11,47 +11,62 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Flight number too short' }, { status: 400 });
     }
 
+    const apiKey = Deno.env.get('AVIATIONSTACK_API_KEY');
+    if (!apiKey) {
+      return Response.json({ error: 'Aviationstack API key not configured' }, { status: 500 });
+    }
+
     const flightNum = flight_number.trim().toUpperCase();
-    const dateContext = date
-      ? `The flight date is ${date}. Look up the real-time status of this flight on this date.`
-      : `No specific date provided. Return scheduled route information.`;
+    const url = new URL('http://api.aviationstack.com/v1/flights');
+    url.searchParams.append('access_key', apiKey);
+    url.searchParams.append('flight_iata', flightNum);
+    if (date) {
+      url.searchParams.append('flight_date', date);
+    }
 
-    const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt: `Look up flight ${flightNum}. ${dateContext}
+    const response = await fetch(url.toString());
+    const data = await response.json();
 
-Return ONLY a JSON object (use null for unknown):
-{
-  "airline": "full airline name or null",
-  "airline_code": "2-letter IATA code or null",
-  "departure_airport": "3-letter IATA airport code or null",
-  "arrival_airport": "3-letter IATA airport code or null",
-  "scheduled_departure_time": "HH:MM 24h local or null",
-  "scheduled_arrival_time": "HH:MM 24h local or null",
-  "live_status": "on_time" | "delayed" | "landed" | "unknown" (only set if real-time data available for this date, otherwise "unknown"),
-  "found": true or false,
-  "ambiguous": true if multiple routes and route cannot be determined, otherwise false,
-  "confidence": "high" if certain, "low" if uncertain
-}
-Only return facts you are highly confident about.`,
-      add_context_from_internet: true,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          airline: { type: ["string", "null"] },
-          airline_code: { type: ["string", "null"] },
-          departure_airport: { type: ["string", "null"] },
-          arrival_airport: { type: ["string", "null"] },
-          scheduled_departure_time: { type: ["string", "null"] },
-          scheduled_arrival_time: { type: ["string", "null"] },
-          live_status: { type: ["string", "null"] },
-          found: { type: "boolean" },
-          ambiguous: { type: "boolean" },
-          confidence: { type: ["string", "null"] }
-        }
-      }
+    if (!response.ok || !data.data || data.data.length === 0) {
+      return Response.json({
+        found: false,
+        live_status: 'unknown',
+        airline: null,
+        airline_code: null,
+        departure_airport: null,
+        arrival_airport: null,
+        scheduled_departure_time: null,
+        scheduled_arrival_time: null,
+        terminal: null,
+        gate: null,
+      });
+    }
+
+    const flight = data.data[0];
+
+    const statusMap = {
+      'scheduled': 'on_time',
+      'active': 'on_time',
+      'landed': 'landed',
+      'cancelled': 'unknown',
+      'delayed': 'delayed',
+    };
+
+    const flightStatus = flight.flight_status?.toLowerCase() || 'unknown';
+    const liveStatus = statusMap[flightStatus] || 'unknown';
+
+    return Response.json({
+      found: true,
+      live_status: liveStatus,
+      airline: flight.airline?.name || null,
+      airline_code: flight.airline?.iata_code || null,
+      departure_airport: flight.departure?.airport || null,
+      arrival_airport: flight.arrival?.airport || null,
+      scheduled_departure_time: flight.departure?.scheduled ? new Date(flight.departure.scheduled).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : null,
+      scheduled_arrival_time: flight.arrival?.scheduled ? new Date(flight.arrival.scheduled).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : null,
+      terminal: flight.departure?.terminal || null,
+      gate: flight.departure?.gate || null,
     });
-
-    return Response.json(result);
   } catch (error) {
     return Response.json({ error: error.message, found: false }, { status: 500 });
   }
