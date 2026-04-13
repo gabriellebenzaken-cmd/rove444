@@ -720,26 +720,37 @@ export default function TripCosts({ trip, user }) {
 
             <div>
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Applies to</Label>
-              <MobileSelect
-                value={form.trip_wide ? "trip_wide" : String(form.day_number)}
-                onChange={(v) => {
-                  if (v === "trip_wide") setForm((f) => ({ ...f, trip_wide: true, day_number: null }));
-                  else setForm((f) => ({ ...f, trip_wide: false, day_number: parseInt(v) }));
-                }}
-                options={[
-                  { value: "trip_wide", label: "Trip-wide" },
-                  ...(() => {
-                    if (!trip.start_date || !trip.end_date) return [];
-                    const start = new Date(trip.start_date);
-                    const end = new Date(trip.end_date);
-                    const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
-                    return Array.from({ length: days }, (_, i) => ({
-                      value: String(i + 1),
-                      label: `Day ${i + 1}`,
-                    }));
-                  })(),
-                ]}
-              />
+              {(() => {
+                const dayOptions = [];
+                if (trip.start_date && trip.end_date) {
+                  const start = new Date(trip.start_date);
+                  const end = new Date(trip.end_date);
+                  const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                  for (let i = 1; i <= days; i++) dayOptions.push(i);
+                }
+                return (
+                  <Select
+                    value={form.trip_wide ? "trip_wide" : String(form.day_number)}
+                    onValueChange={(v) => {
+                      if (v === "trip_wide") setForm((f) => ({ ...f, trip_wide: true, day_number: null }));
+                      else setForm((f) => ({ ...f, trip_wide: false, day_number: parseInt(v) }));
+                    }}
+                  >
+                    <SelectTrigger className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}>
+                      <SelectValue placeholder="Select scope" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="trip_wide">Trip-wide</SelectItem>
+                      {dayOptions.map(d => (
+                        <SelectItem key={d} value={String(d)}>Day {d}</SelectItem>
+                      ))}
+                      {dayOptions.length === 0 && (
+                        <SelectItem value="trip_wide" disabled>No days (set trip dates to enable)</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                );
+              })()}
             </div>
 
                 {(!form.description || !form.amount) && (
