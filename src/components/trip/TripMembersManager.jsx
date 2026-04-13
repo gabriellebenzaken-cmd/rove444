@@ -30,8 +30,18 @@ export default function TripMembersManager({ trip, user, isAdmin, onMembersUpdat
 
   async function loadMembers() {
     try {
-      const m = await base44.entities.User.list("-created_date", 200) || [];
-      const activeMembers = m.filter((u) => trip.member_emails?.includes(u.email));
+      const tripMembers = await base44.entities.TripMember.filter(
+        { trip_id: trip.id, status: "active" },
+        "-created_date",
+        200
+      );
+      // Shape into objects compatible with the rest of the UI
+      const activeMembers = tripMembers.map(tm => ({
+        id: tm.id,
+        email: tm.user_email,
+        full_name: tm.user_name || tm.user_email.split("@")[0],
+        data: {},
+      }));
       setMembers(activeMembers);
     } catch (err) {
       console.error("Failed to load members:", err);
