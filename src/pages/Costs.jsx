@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { DollarSign } from "lucide-react";
+import { DollarSign, X } from "lucide-react";
 import { format } from "date-fns";
 import PullToRefresh from "../components/PullToRefresh";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function Costs() {
   const [user, setUser] = useState(null);
@@ -12,6 +13,10 @@ export default function Costs() {
   const [trips, setTrips] = useState([]);
   const [profiles, setProfiles] = useState({});
   const [loading, setLoading] = useState(true);
+  // 'owe' | 'owed' | null — overall summary modal
+  const [summaryModal, setSummaryModal] = useState(null);
+  // trip object — trip-specific balance modal
+  const [tripModal, setTripModal] = useState(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -25,11 +30,9 @@ export default function Costs() {
       base44.entities.UserProfile.list("-created_date", 200),
     ]);
 
-    // Active member trips
     const activeMemberTripIds = new Set(
       allTrips.filter(t => t.member_emails?.includes(me.email) || t.admin_email === me.email).map(t => t.id)
     );
-    // Past trips where user still has financial history (e.g. after leaving)
     const involvedTripIds = new Set(
       allExpenses
         .filter(e => e.paid_by === me.email || e.split_among?.includes(me.email))
@@ -100,7 +103,6 @@ export default function Costs() {
         }, 0);
       }, 0);
 
-    // Settle up per trip
     const netBalances = {};
     tripExpenses.forEach(exp => {
       const owersExPayer = (exp.split_among || []).filter(e => e !== exp.paid_by);
@@ -122,8 +124,7 @@ export default function Costs() {
         }
       });
     });
-    const balanceRows = Object.values(netBalances)
-      .filter(b => b.amount > 0.01 && (b.from === user.email || b.to === user.email));
+    const balanceRows = Object.values(netBalances).filter(b => b.amount > 0.01);
 
     return { iOwe, iAmOwed, balanceRows, expenseCount: tripExpenses.length };
   }
@@ -145,13 +146,27 @@ export default function Costs() {
     return (b.start_date || "").localeCompare(a.start_date || "");
   });
 
-  // Pre-compute summaries
   const summaries = {};
   sortedTrips.forEach(t => { summaries[t.id] = computeTripSummary(t.id); });
 
   const tripsWithData = sortedTrips.filter(t => summaries[t.id].expenseCount > 0);
   const totalOwe = tripsWithData.reduce((s, t) => s + summaries[t.id].iOwe, 0);
   const totalOwed = tripsWithData.reduce((s, t) => s + summaries[t.id].iAmOwed, 0);
+
+  // Build flattened lists for overall summary modals
+  const allOweRows = tripsWithData.flatMap(t =>
+    summaries[t.id].balanceRows
+      .filter(b => b.from === user.email)
+      .map(b => ({ ...b, tripName: t.name }))
+  );
+  const allOwedRows = tripsWithData.flatMap(t =>
+    summaries[t.id].balanceRows
+      .filter(b => b.to === user.email)
+      .map(b => ({ ...b, tripName: t.name }))
+  );
+
+  // Trip-specific modal data
+  const tripModalSummary = tripModal ? summaries[tripModal.id] : null;
 
   return (
     <PullToRefresh onRefresh={loadData}>
@@ -171,16 +186,26 @@ export default function Costs() {
           </div>
         ) : (
           <>
-            {/* Overall summary */}
+            {/* Overall summary cards — tap to view breakdown */}
             <div className="grid grid-cols-2 gap-2 mb-6">
-              <div className="rounded-2xl p-3 text-center" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.15)" }}>
+              <button
+                onClick={() => setSummaryModal("owe")}
+                className="rounded-2xl p-3 text-center active:scale-95 transition-transform"
+                style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.15)" }}
+              >
                 <p className="text-[10px] mb-1" style={{ color: "#B0A090" }}>you owe</p>
                 <p className="text-sm font-semibold" style={{ color: totalOwe > 0 ? "#B04040" : "#2A2018" }}>${totalOwe.toFixed(2)}</p>
-              </div>
-              <div className="rounded-2xl p-3 text-center" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.15)" }}>
+                {totalOwe > 0 && <p className="text-[9px] mt-0.5" style={{ color: "#C8A27C" }}>tap to view →</p>}
+              </button>
+              <button
+                onClick={() => setSummaryModal("owed")}
+                className="rounded-2xl p-3 text-center active:scale-95 transition-transform"
+                style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.15)" }}
+              >
                 <p className="text-[10px] mb-1" style={{ color: "#B0A090" }}>you're owed</p>
                 <p className="text-sm font-semibold" style={{ color: totalOwed > 0 ? "#3A7A5A" : "#2A2018" }}>${totalOwed.toFixed(2)}</p>
-              </div>
+                {totalOwed > 0 && <p className="text-[9px] mt-0.5" style={{ color: "#C8A27C" }}>tap to view →</p>}
+              </button>
             </div>
 
             {/* Per-trip sections */}
@@ -189,12 +214,14 @@ export default function Costs() {
                 const { iOwe, iAmOwed, balanceRows } = summaries[trip.id];
                 const isPast = trip.end_date && trip.end_date < today;
                 const isSettled = iOwe < 0.01 && iAmOwed < 0.01;
+                const netAmount = iAmOwed - iOwe;
 
                 return (
                   <div key={trip.id} className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.15)", opacity: isSettled && isPast ? 0.65 : 1 }}>
-                    {/* Trip header row — tappable to navigate */}
-                    <Link to={`/trip/${trip.id}`} className="flex items-center justify-between px-4 py-3 active:bg-black/5 transition-colors">
-                      <div className="flex-1 min-w-0 pr-2">
+                    {/* Trip header — split into title (navigate) and amount (open modal) */}
+                    <div className="flex items-center px-4 py-3">
+                      {/* Title area → navigate to trip */}
+                      <Link to={`/trip/${trip.id}`} className="flex-1 min-w-0 pr-3 active:opacity-70 transition-opacity">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <p className="text-sm font-semibold truncate" style={{ color: "#2A2018" }}>{trip.name}</p>
                           {isPast && (
@@ -205,50 +232,42 @@ export default function Costs() {
                           {trip.destination}
                           {trip.start_date ? ` · ${format(new Date(trip.start_date + "T00:00:00"), "MMM d")}` : ""}
                         </p>
-                      </div>
-                      <div className="text-right shrink-0">
+                      </Link>
+
+                      {/* Amount → open trip balance modal */}
+                      <button
+                        onClick={() => setTripModal(trip)}
+                        className="text-right shrink-0 active:scale-95 transition-transform px-2 py-1 rounded-xl"
+                        style={{ background: isSettled ? "transparent" : "rgba(200,162,124,0.08)" }}
+                      >
                         {iOwe > 0.01 && <p className="text-xs font-semibold" style={{ color: "#B04040" }}>−${iOwe.toFixed(2)}</p>}
                         {iAmOwed > 0.01 && <p className="text-xs font-semibold" style={{ color: "#3A7A5A" }}>+${iAmOwed.toFixed(2)}</p>}
-                        {isSettled && <p className="text-[10px]" style={{ color: "#9A8A7A" }}>All settled ✓</p>}
-                      </div>
-                    </Link>
+                        {isSettled
+                          ? <p className="text-[10px]" style={{ color: "#9A8A7A" }}>Settled ✓</p>
+                          : <p className="text-[9px] mt-0.5" style={{ color: "#C8A27C" }}>settle →</p>
+                        }
+                      </button>
+                    </div>
 
-                    {/* Settle up rows for this trip */}
-                    {balanceRows.length > 0 && (
-                      <div className="px-4 pb-3 space-y-2" style={{ borderTop: "1px solid rgba(200,162,124,0.1)" }}>
+                    {/* Compact settle-up rows preview (only if user is involved) */}
+                    {balanceRows.filter(b => b.from === user.email || b.to === user.email).length > 0 && (
+                      <div className="px-4 pb-3 space-y-1.5" style={{ borderTop: "1px solid rgba(200,162,124,0.1)" }}>
                         <p className="text-[10px] font-semibold uppercase tracking-wider pt-2.5" style={{ color: "#C8A27C" }}>Settle Up</p>
-                        {balanceRows.map((b, i) => {
-                          const settleLinks = getSettleLinks(b.to);
-                          const isMe = b.from === user.email;
-                          return (
-                            <div key={i} className="rounded-xl p-2.5" style={{ background: "rgba(200,162,124,0.06)" }}>
-                              <div className="flex items-center justify-between mb-1">
+                        {balanceRows
+                          .filter(b => b.from === user.email || b.to === user.email)
+                          .map((b, i) => {
+                            const isMe = b.from === user.email;
+                            return (
+                              <div key={i} className="flex items-center justify-between rounded-xl px-2.5 py-2" style={{ background: "rgba(200,162,124,0.06)" }}>
                                 <p className="text-xs" style={{ color: "#3A3028" }}>
                                   <span className="font-semibold">{isMe ? "You" : resolveName(b.from)}</span>
                                   <span style={{ color: "#B0A090" }}> → </span>
                                   <span className="font-semibold">{b.to === user.email ? "You" : resolveName(b.to)}</span>
                                 </p>
-                                <span className="text-xs font-semibold" style={{ color: isMe ? "#B04040" : "#3A7A5A" }}>${b.amount.toFixed(2)}</span>
+                                <span className="text-xs font-semibold ml-2 shrink-0" style={{ color: isMe ? "#B04040" : "#3A7A5A" }}>${b.amount.toFixed(2)}</span>
                               </div>
-                              {settleLinks.length > 0 && isMe && (
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className="text-[10px]" style={{ color: "#B0A090" }}>settle via</span>
-                                  {settleLinks.map(l => l.href ? (
-                                    <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer"
-                                      className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                                      style={{ background: "rgba(200,162,124,0.15)", color: "#7A5A3A" }}>
-                                      {l.label} ↗
-                                    </a>
-                                  ) : (
-                                    <span key={l.label} className="px-2 py-0.5 rounded-full text-[10px]" style={{ background: "rgba(200,162,124,0.08)", color: "#9A8A7A" }}>
-                                      Zelle: {l.info}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
                       </div>
                     )}
                   </div>
@@ -258,6 +277,130 @@ export default function Costs() {
           </>
         )}
       </div>
+
+      {/* Overall "You Owe" summary modal */}
+      <Dialog open={summaryModal === "owe"} onOpenChange={(v) => { if (!v) setSummaryModal(null); }}>
+        <DialogContent className="max-w-md w-[calc(100%-2rem)] rounded-3xl p-0 gap-0 overflow-hidden" style={{ background: "#FAF7F4", maxHeight: "calc(100vh - 120px)", display: "flex", flexDirection: "column" }}>
+          <DialogHeader className="px-5 pt-5 pb-3 shrink-0">
+            <DialogTitle style={{ color: "#2A2018" }}>What You Owe</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto px-5 pb-6 space-y-3">
+            {allOweRows.length === 0 ? (
+              <p className="text-sm text-center py-8" style={{ color: "#B0A090" }}>You're all settled up 🎉</p>
+            ) : allOweRows.map((b, i) => {
+              const settleLinks = getSettleLinks(b.to);
+              return (
+                <div key={i} className="rounded-2xl p-3" style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(200,162,124,0.12)" }}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div>
+                      <p className="text-xs font-semibold" style={{ color: "#2A2018" }}>
+                        You → {resolveName(b.to)}
+                      </p>
+                      <p className="text-[10px]" style={{ color: "#B0A090" }}>{b.tripName}</p>
+                    </div>
+                    <span className="text-sm font-semibold" style={{ color: "#B04040" }}>${b.amount.toFixed(2)}</span>
+                  </div>
+                  {settleLinks.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                      <span className="text-[10px]" style={{ color: "#B0A090" }}>settle via</span>
+                      {settleLinks.map(l => l.href ? (
+                        <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer"
+                          className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                          style={{ background: "rgba(200,162,124,0.15)", color: "#7A5A3A" }}>
+                          {l.label} ↗
+                        </a>
+                      ) : (
+                        <span key={l.label} className="px-2 py-0.5 rounded-full text-[10px]" style={{ background: "rgba(200,162,124,0.08)", color: "#9A8A7A" }}>
+                          Zelle: {l.info}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Overall "You're Owed" summary modal */}
+      <Dialog open={summaryModal === "owed"} onOpenChange={(v) => { if (!v) setSummaryModal(null); }}>
+        <DialogContent className="max-w-md w-[calc(100%-2rem)] rounded-3xl p-0 gap-0 overflow-hidden" style={{ background: "#FAF7F4", maxHeight: "calc(100vh - 120px)", display: "flex", flexDirection: "column" }}>
+          <DialogHeader className="px-5 pt-5 pb-3 shrink-0">
+            <DialogTitle style={{ color: "#2A2018" }}>Owed to You</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto px-5 pb-6 space-y-3">
+            {allOwedRows.length === 0 ? (
+              <p className="text-sm text-center py-8" style={{ color: "#B0A090" }}>Nobody owes you anything right now</p>
+            ) : allOwedRows.map((b, i) => (
+              <div key={i} className="rounded-2xl p-3" style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(200,162,124,0.12)" }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold" style={{ color: "#2A2018" }}>
+                      {resolveName(b.from)} → You
+                    </p>
+                    <p className="text-[10px]" style={{ color: "#B0A090" }}>{b.tripName}</p>
+                  </div>
+                  <span className="text-sm font-semibold" style={{ color: "#3A7A5A" }}>${b.amount.toFixed(2)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Trip-specific balance modal */}
+      <Dialog open={!!tripModal} onOpenChange={(v) => { if (!v) setTripModal(null); }}>
+        <DialogContent className="max-w-md w-[calc(100%-2rem)] rounded-3xl p-0 gap-0 overflow-hidden" style={{ background: "#FAF7F4", maxHeight: "calc(100vh - 120px)", display: "flex", flexDirection: "column" }}>
+          <DialogHeader className="px-5 pt-5 pb-1 shrink-0">
+            <DialogTitle style={{ color: "#2A2018" }}>{tripModal?.name}</DialogTitle>
+            {tripModal?.destination && (
+              <p className="text-xs mt-0.5" style={{ color: "#B0A090" }}>{tripModal.destination}</p>
+            )}
+          </DialogHeader>
+          <div className="overflow-y-auto px-5 pb-6 space-y-3 mt-3">
+            {tripModalSummary?.balanceRows.length === 0 ? (
+              <p className="text-sm text-center py-8" style={{ color: "#B0A090" }}>All settled up for this trip 🎉</p>
+            ) : (
+              <>
+                <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#C8A27C" }}>Balances</p>
+                {tripModalSummary?.balanceRows.map((b, i) => {
+                  const isMe = b.from === user.email;
+                  const settleLinks = isMe ? getSettleLinks(b.to) : [];
+                  return (
+                    <div key={i} className="rounded-2xl p-3" style={{ background: "rgba(255,255,255,0.9)", border: `1px solid ${isMe ? "rgba(176,64,64,0.15)" : "rgba(58,122,90,0.15)"}` }}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className="text-xs" style={{ color: "#3A3028" }}>
+                          <span className="font-semibold">{isMe ? "You" : resolveName(b.from)}</span>
+                          <span style={{ color: "#B0A090" }}> owes </span>
+                          <span className="font-semibold">{b.to === user.email ? "you" : resolveName(b.to)}</span>
+                        </p>
+                        <span className="text-sm font-semibold" style={{ color: isMe ? "#B04040" : "#3A7A5A" }}>${b.amount.toFixed(2)}</span>
+                      </div>
+                      {settleLinks.length > 0 && (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px]" style={{ color: "#B0A090" }}>settle via</span>
+                          {settleLinks.map(l => l.href ? (
+                            <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer"
+                              className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                              style={{ background: "rgba(200,162,124,0.15)", color: "#7A5A3A" }}>
+                              {l.label} ↗
+                            </a>
+                          ) : (
+                            <span key={l.label} className="px-2 py-0.5 rounded-full text-[10px]" style={{ background: "rgba(200,162,124,0.08)", color: "#9A8A7A" }}>
+                              Zelle: {l.info}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </PullToRefresh>
   );
 }
