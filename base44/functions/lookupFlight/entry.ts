@@ -6,13 +6,15 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { flight_number } = await req.json();
+    const { flight_number, date } = await req.json();
     if (!flight_number || flight_number.trim().length < 3) {
       return Response.json({ error: 'Flight number too short' }, { status: 400 });
     }
 
+    const dateContext = date ? `\nThe flight date is ${date}. Use this to return the specific route flown on that date.` : `\nNo date provided — return the most common/default scheduled route for this flight number. If the flight operates multiple routes or the route cannot be confidently determined, set ambiguous:true.`;
+
     const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt: `Look up the scheduled flight details for flight ${flight_number.trim().toUpperCase()}.
+      prompt: `Look up the scheduled flight details for flight ${flight_number.trim().toUpperCase()}.${dateContext}
 Return ONLY a JSON object with these fields (use null for unknown):
 {
   "airline": "full airline name or null",
@@ -24,7 +26,8 @@ Return ONLY a JSON object with these fields (use null for unknown):
   "scheduled_departure_time": "HH:MM in 24h local time or null",
   "scheduled_arrival_time": "HH:MM in 24h local time or null",
   "duration_minutes": number or null,
-  "found": true or false
+  "found": true or false,
+  "ambiguous": true if multiple routes exist and no date was given to disambiguate, otherwise false
 }
 Only return facts you are highly confident about. Return found:false if the flight number is not recognized.`,
       add_context_from_internet: true,
@@ -40,7 +43,8 @@ Only return facts you are highly confident about. Return found:false if the flig
           scheduled_departure_time: { type: ["string", "null"] },
           scheduled_arrival_time: { type: ["string", "null"] },
           duration_minutes: { type: ["number", "null"] },
-          found: { type: "boolean" }
+          found: { type: "boolean" },
+          ambiguous: { type: "boolean" }
         }
       }
     });

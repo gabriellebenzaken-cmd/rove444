@@ -63,6 +63,20 @@ export default function TripPlan({ trip, user, onUpdate }) {
 
   useEffect(() => { loadData(); }, [trip.id]);
 
+  // Re-run outbound lookup when arrival_date changes and flight number exists
+  useEffect(() => {
+    if (form.travel_type === "Flight" && form.outbound_flight_number?.length >= 4 && form.arrival_date) {
+      doFlightLookup(form.outbound_flight_number, false, form.arrival_date);
+    }
+  }, [form.arrival_date]);
+
+  // Re-run return lookup when departure_date changes and return flight number exists
+  useEffect(() => {
+    if (form.travel_type === "Flight" && form.is_round_trip && form.return_flight_number?.length >= 4 && form.departure_date) {
+      doFlightLookup(form.return_flight_number, true, form.departure_date);
+    }
+  }, [form.departure_date]);
+
   async function loadData() {
     const allArrivals = await base44.entities.Arrival.filter({ trip_id: trip.id }, "-created_date", 50);
     setArrivals(allArrivals);
@@ -84,29 +98,31 @@ export default function TripPlan({ trip, user, onUpdate }) {
       setReturnLookupStatus(null);
       if (returnLookupTimer.current) clearTimeout(returnLookupTimer.current);
       if (upper.length >= 4) {
-        returnLookupTimer.current = setTimeout(() => doFlightLookup(upper, true), 800);
+        returnLookupTimer.current = setTimeout(() => doFlightLookup(upper, true, form.departure_date || null), 800);
       } else if (upper.length > 0) {
         const guessed = guessAirline(upper);
-        if (guessed) setForm((prev) => ({ ...prev, [field]: upper, airline: prev.airline || guessed }));
+        if (guessed) setForm((prev) => ({ ...prev, airline: prev.airline || guessed }));
       }
     } else {
       setLookupStatus(null);
       if (lookupTimer.current) clearTimeout(lookupTimer.current);
       if (upper.length >= 4) {
-        lookupTimer.current = setTimeout(() => doFlightLookup(upper, false), 800);
+        lookupTimer.current = setTimeout(() => doFlightLookup(upper, false, form.arrival_date || null), 800);
       } else if (upper.length > 0) {
         const guessed = guessAirline(upper);
-        if (guessed) setForm((prev) => ({ ...prev, [field]: upper, airline: prev.airline || guessed }));
+        if (guessed) setForm((prev) => ({ ...prev, airline: prev.airline || guessed }));
       }
     }
   }
 
-  async function doFlightLookup(flightNum, isReturn = false) {
+  async function doFlightLookup(flightNum, isReturn = false, date = null) {
     if (isReturn) setReturnLookingUp(true);
     else setLookingUp(true);
+
     try {
-      const res = await base44.functions.invoke('lookupFlight', { flight_number: flightNum });
+      const res = await base44.functions.invoke('lookupFlight', { flight_number: flightNum, date: date || null });
       const data = res.data;
+
       if (data?.found) {
         if (isReturn) {
           setForm((prev) => ({
@@ -114,7 +130,7 @@ export default function TripPlan({ trip, user, onUpdate }) {
             airline: prev.airline || data.airline || prev.airline,
             departure_time: data.scheduled_departure_time || prev.departure_time,
           }));
-          setReturnLookupStatus('found');
+          setReturnLookupStatus(data.ambiguous ? 'ambiguous' : 'found');
         } else {
           setForm((prev) => ({
             ...prev,
@@ -123,8 +139,11 @@ export default function TripPlan({ trip, user, onUpdate }) {
             destination: data.arrival_airport || prev.destination,
             arrival_time: data.scheduled_arrival_time || prev.arrival_time,
           }));
-          setLookupStatus('found');
+          setLookupStatus(data.ambiguous ? 'ambiguous' : 'found');
         }
+      } else if (data?.ambiguous) {
+        if (isReturn) setReturnLookupStatus('ambiguous');
+        else setLookupStatus('ambiguous');
       } else {
         if (isReturn) setReturnLookupStatus('not_found');
         else setLookupStatus('not_found');
@@ -133,6 +152,7 @@ export default function TripPlan({ trip, user, onUpdate }) {
       if (isReturn) setReturnLookupStatus('not_found');
       else setLookupStatus('not_found');
     }
+
     if (isReturn) setReturnLookingUp(false);
     else setLookingUp(false);
   }
@@ -383,6 +403,9 @@ export default function TripPlan({ trip, user, onUpdate }) {
                       ✓ Route auto-filled{form.arrival_location && form.destination ? `: ${form.arrival_location} → ${form.destination}` : ""}
                     </p>
                   )}
+                  {lookupStatus === 'ambiguous' && (
+                    <p className="text-[11px] mt-1 font-medium" style={{ color: "#C87C2A" }}>Multiple flights found — add date for accuracy</p>
+                  )}
                   {lookupStatus === 'not_found' && (
                     <p className="text-[11px] text-destructive mt-1">Flight not found — enter details manually</p>
                   )}
@@ -406,6 +429,9 @@ export default function TripPlan({ trip, user, onUpdate }) {
                     </div>
                     {returnLookupStatus === 'found' && (
                       <p className="text-[11px] mt-1 font-medium" style={{ color: "#3A7A5A" }}>✓ Return flight details auto-filled</p>
+                    )}
+                    {returnLookupStatus === 'ambiguous' && (
+                      <p className="text-[11px] mt-1 font-medium" style={{ color: "#C87C2A" }}>Multiple flights found — add date for accuracy</p>
                     )}
                     {returnLookupStatus === 'not_found' && (
                       <p className="text-[11px] text-destructive mt-1">Flight not found — enter details manually</p>
