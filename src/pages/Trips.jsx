@@ -124,7 +124,7 @@ export default function Trips() {
           <div className="w-16 h-16 rounded-[22px] flex items-center justify-center mb-5" style={{background:'rgba(200,162,124,0.15)'}}>
             <MapPin className="h-7 w-7" style={{color:'#C8A27C'}} />
           </div>
-          <h3 className="font-semibold text-lg mb-1.5" style={{color:'#1A1A1A'}}>Start planning your first trip ✈️</h3>
+          <h3 className="font-semibold text-lg mb-1.5" style={{color:'#1A1A1A'}}>✦ start planning your first trip</h3>
           <p className="text-sm mb-7" style={{color:'#9A8A7A'}}>Tap "New Trip" to get started</p>
           <button onClick={() => setShowCreate(true)} className="px-7 py-2.5 rounded-full text-sm font-semibold" style={{background:'#C8A27C', color:'white', boxShadow:'0 2px 14px rgba(200,162,124,0.35)'}}>
             Create Trip
@@ -134,7 +134,7 @@ export default function Trips() {
         <div className="space-y-4 pb-24">
           {activeTab === 'upcoming' && (
             activeTrips.length === 0 ? (
-              <p className="text-center text-sm py-16" style={{color:'#9A8A7A'}}>No upcoming trips yet</p>
+              <p className="text-center text-sm py-16" style={{color:'#9A8A7A'}}>✦ no upcoming trips yet</p>
             ) : (
               activeTrips.map((trip, i) => (
                 <TripCard key={trip.id} trip={trip} index={i} coverImages={coverImages} />
@@ -143,7 +143,7 @@ export default function Trips() {
           )}
           {activeTab === 'past' && (
             pastTrips.length === 0 ? (
-              <p className="text-center text-sm py-16" style={{color:'#9A8A7A'}}>No past trips yet</p>
+              <p className="text-center text-sm py-16" style={{color:'#9A8A7A'}}>✦ no past trips yet</p>
             ) : (
               pastTrips.map((trip, i) => (
                 <TripCard key={trip.id} trip={trip} index={i} coverImages={coverImages} past />

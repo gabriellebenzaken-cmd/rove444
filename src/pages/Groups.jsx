@@ -54,7 +54,7 @@ export default function Groups() {
           <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Users className="h-6 w-6 text-primary" />
           </div>
-          <h3 className="font-semibold text-lg mb-1">no groups yet</h3>
+          <h3 className="font-semibold text-lg mb-1">✦ no groups yet</h3>
           <p className="text-muted-foreground text-sm mb-6">create a group to plan trips together</p>
           <Button onClick={() => setShowCreate(true)} className="rounded-full px-6">
             Create Group

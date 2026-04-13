@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarDays, Plus, Trash2, Clock, MapPin, Star } from "lucide-react";
+import { CalendarDays, Plus, Trash2, Clock, MapPin } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { format, eachDayOfInterval, parseISO } from "date-fns";
 import BottomSheet from "../BottomSheet";
@@ -69,7 +69,7 @@ export default function TripItinerary({ trip, user }) {
       <WeatherWidget trip={trip} />
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold flex items-center gap-2">
-          <CalendarDays className="h-4 w-4" /> Itinerary
+          <span style={{fontSize:'0.7em', opacity:0.7}}>✦</span> Itinerary
         </h3>
         <Button variant="outline" size="sm" className="rounded-full" onClick={() => setShowAdd(true)}>
           <Plus className="h-3.5 w-3.5 mr-1" /> Add
@@ -77,7 +77,7 @@ export default function TripItinerary({ trip, user }) {
       </div>
 
       {displayDays.length === 0 && items.length === 0 ? (
-        <p className="text-xs text-muted-foreground py-8 text-center">No activities planned yet</p>
+        <p className="text-xs text-muted-foreground py-8 text-center">✦ no activities planned yet</p>
       ) : (
         <div className="space-y-5">
           {displayDays.map((day, idx) => (
@@ -98,7 +98,7 @@ export default function TripItinerary({ trip, user }) {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <p className="text-sm font-medium">{item.title}</p>
-                            {item.is_required && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
+                            {item.is_required && <span className="text-[10px]" style={{color:'#C8A27C'}}>✦</span>}
                           </div>
                           <div className="flex flex-wrap gap-2 mt-1 text-xs text-muted-foreground">
                             {item.time && (

@@ -52,7 +52,7 @@ export default function TripStay({ trip, user }) {
     <div className="pb-24">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold flex items-center gap-2">
-          <Home className="h-4 w-4" /> Lodging
+          <span style={{fontSize:'0.7em', opacity:0.7}}>✦</span> Lodging
         </h3>
         <Button variant="outline" size="sm" className="rounded-full" onClick={() => setShowAdd(true)}>
           <Plus className="h-3.5 w-3.5 mr-1" /> Add
@@ -60,7 +60,7 @@ export default function TripStay({ trip, user }) {
       </div>
 
       {lodgings.length === 0 ? (
-        <p className="text-xs text-muted-foreground py-8 text-center">No lodging added yet</p>
+        <p className="text-xs text-muted-foreground py-8 text-center">✦ no lodging added yet</p>
       ) : (
         <div className="space-y-3">
           {lodgings.map((l) => (
