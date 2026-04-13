@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Plane, Car, Train, HelpCircle, Clock, ArrowRight, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { useLiveFlightStatus } from "@/hooks/useLiveFlightStatus";
+import { guessAirline } from "@/utils/airlines";
 
 function formatDate(date, time) {
   if (!date) return null;
@@ -140,10 +141,7 @@ export default function FlightDetailModal({ arrival, open, onClose }) {
             {/* Airline + live status */}
             <div className="flex items-center justify-between">
               <div>
-                {arrival.airline
-                  ? <p className="font-semibold text-sm">{arrival.airline}</p>
-                  : <p className="text-sm text-muted-foreground">Airline not specified</p>
-                }
+                <p className="font-semibold text-sm">{arrival.airline || guessAirline(outboundFlight) || "Flight"}</p>
               </div>
               {outboundFlight && (
                 inTrackingWindow ? (
@@ -151,7 +149,7 @@ export default function FlightDetailModal({ arrival, open, onClose }) {
                     ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                     : <FlightStatusBadge status={liveStatus || "unknown"} />
                 ) : (
-                  <span className="text-[11px] text-muted-foreground">Tracking 24h before departure</span>
+                  <span className="text-[11px] text-muted-foreground">Scheduled</span>
                 )
               )}
             </div>

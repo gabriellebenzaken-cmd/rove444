@@ -2,6 +2,7 @@ import { Plane, Car, Train, HelpCircle, MapPin, Clock, Trash2 } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { useLiveFlightStatus } from "@/hooks/useLiveFlightStatus";
+import { guessAirline } from "@/utils/airlines";
 
 function getHoursUntilDeparture(dateStr, timeStr) {
   if (!dateStr) return null;
@@ -10,16 +11,20 @@ function getHoursUntilDeparture(dateStr, timeStr) {
   return (dep - new Date()) / (1000 * 60 * 60);
 }
 
-function FlightStatusIndicator({ status, loading }) {
+function FlightStatusIndicator({ status, loading, inTrackingWindow }) {
   if (loading) {
     return <span className="text-[10px] text-muted-foreground">Loading…</span>;
+  }
+  
+  if (!inTrackingWindow && !status) {
+    return <span className="text-[10px] text-muted-foreground">Scheduled</span>;
   }
   
   const map = {
     on_time: { label: "On Time", color: "#22c55e" },
     delayed: { label: "Delayed", color: "#f59e0b" },
     landed: { label: "Landed", color: "#6366f1" },
-    unknown: { label: "Status Unknown", color: "#9ca3af" },
+    unknown: { label: "Unable to retrieve", color: "#9ca3af" },
   };
   
   const cfg = map[status] || map.unknown;
@@ -97,8 +102,8 @@ export default function TravelCard({ arrival, user, onEdit, onDelete, onClick })
                 <div className="flex items-center gap-2">
                   <Plane className="h-3 w-3 shrink-0" />
                   <span>
-                    {arrival.airline}
-                    {arrival.airline && outboundFlight ? " · " : ""}
+                    {arrival.airline || guessAirline(outboundFlight) || "Flight"}
+                    {(arrival.airline || guessAirline(outboundFlight)) && outboundFlight ? " · " : ""}
                     {outboundFlight && <span className="font-mono">{outboundFlight}</span>}
                     {arrival.is_round_trip && returnFlight && (
                       <span className="text-muted-foreground"> / <span className="font-mono">{returnFlight}</span></span>
@@ -106,7 +111,7 @@ export default function TravelCard({ arrival, user, onEdit, onDelete, onClick })
                   </span>
                 </div>
                 {outboundFlight && (
-                  <FlightStatusIndicator status={liveStatus} loading={liveLoading} />
+                  <FlightStatusIndicator status={liveStatus} loading={liveLoading} inTrackingWindow={inTrackingWindow} />
                 )}
               </div>
             )}

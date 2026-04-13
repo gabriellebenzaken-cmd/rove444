@@ -3,13 +3,15 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plane, Clock, MapPin, Plus, Trash2, Car, Train, HelpCircle } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
+import { guessAirline } from "@/utils/airlines";
 import TripMembersManager from "./TripMembersManager";
 import TripPendingRequests from "./TripPendingRequests";
 import FlightDetailModal from "./FlightDetailModal";
+import TravelCard from "./TravelCard";
 
 const EMPTY_FORM = {
   travel_type: "Flight",
@@ -25,26 +27,7 @@ const EMPTY_FORM = {
   return_flight_number: "",
 };
 
-function parseAirlineCode(flightNum) {
-  const match = flightNum?.trim().match(/^([A-Z]{2,3})\d/i);
-  return match ? match[1].toUpperCase() : null;
-}
 
-const IATA_AIRLINES = {
-  AA: "American Airlines", UA: "United Airlines", DL: "Delta Air Lines",
-  WN: "Southwest Airlines", B6: "JetBlue", AS: "Alaska Airlines",
-  F9: "Frontier Airlines", NK: "Spirit Airlines", G4: "Allegiant Air",
-  BA: "British Airways", LH: "Lufthansa", AF: "Air France",
-  KL: "KLM", EK: "Emirates", QR: "Qatar Airways", SQ: "Singapore Airlines",
-  CX: "Cathay Pacific", JL: "Japan Airlines", NH: "ANA",
-  AC: "Air Canada", WS: "WestJet", FR: "Ryanair", U2: "easyJet",
-  VY: "Vueling", IB: "Iberia", AZ: "Alitalia", TK: "Turkish Airlines",
-};
-
-function guessAirline(flightNum) {
-  const code = parseAirlineCode(flightNum);
-  return code ? (IATA_AIRLINES[code] || null) : null;
-}
 
 export default function TripPlan({ trip, user, onUpdate }) {
   const isAdmin = trip?.admin_email === user?.email;
@@ -117,31 +100,7 @@ export default function TripPlan({ trip, user, onUpdate }) {
     loadData();
   }
 
-  function getTravelIcon(type) {
-    switch (type) {
-      case "Flight": return <Plane className="h-3 w-3" />;
-      case "Driving": return <Car className="h-3 w-3" />;
-      case "Train": return <Train className="h-3 w-3" />;
-      default: return <HelpCircle className="h-3 w-3" />;
-    }
-  }
 
-  function formatRoute(a) {
-    if (!a.arrival_location && !a.destination) return null;
-    const from = a.arrival_location || "?";
-    const to = a.destination;
-    return to ? `${from} → ${to}` : from;
-  }
-
-  function formatTime(timeStr) {
-    if (!timeStr) return null;
-    const [hStr, mStr] = timeStr.split(":");
-    const h = parseInt(hStr, 10);
-    const m = mStr || "00";
-    const ampm = h >= 12 ? "PM" : "AM";
-    const h12 = h % 12 || 12;
-    return `${h12}:${m} ${ampm}`;
-  }
 
   function closeDialog() {
     setEditingId(null);
@@ -164,73 +123,16 @@ export default function TripPlan({ trip, user, onUpdate }) {
           <p className="text-xs text-muted-foreground py-4 text-center">Add your flight or travel details</p>
         ) : (
           <div className="space-y-3">
-            {arrivals.map((a) => {
-              const outboundFlight = a.outbound_flight_number || a.flight_number;
-              const returnFlight = a.return_flight_number;
-              return (
-                <div
-                  key={a.id}
-                  className="bg-card rounded-xl border border-border p-4 cursor-pointer active:scale-[0.98] transition-transform"
-                  onClick={() => setDetailArrival(a)}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="font-medium text-sm">{a.user_name}</p>
-                    {a.user_email === user?.email && (
-                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => editArrival(a)}>
-                          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => deleteArrival(a.id)}>
-                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-1.5 text-xs text-muted-foreground">
-                    {a.travel_type === "Flight" ? (
-                      <>
-                        {(a.airline || outboundFlight) && (
-                          <div className="flex items-center gap-2">
-                            <Plane className="h-3 w-3 shrink-0" />
-                            <span>
-                              {a.airline}
-                              {a.airline && outboundFlight ? " · " : ""}
-                              {outboundFlight && <span className="font-mono">{outboundFlight}</span>}
-                              {a.is_round_trip && returnFlight && (
-                                <span className="text-muted-foreground"> / return: <span className="font-mono">{returnFlight}</span></span>
-                              )}
-                            </span>
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        {getTravelIcon(a.travel_type)}
-                        <span className="capitalize">{a.travel_type}</span>
-                      </div>
-                    )}
-                    {formatRoute(a) && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-3 w-3 shrink-0" />
-                        <span>{formatRoute(a)}</span>
-                      </div>
-                    )}
-                    {a.arrival_date && (
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-3 w-3 shrink-0" />
-                        <span>Arrives {format(new Date(a.arrival_date + "T00:00:00"), "MMM d")}{a.arrival_time ? ` at ${formatTime(a.arrival_time)}` : ""}</span>
-                      </div>
-                    )}
-                    {a.is_round_trip && a.departure_date && (
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-3 w-3 shrink-0" />
-                        <span>Returns {format(new Date(a.departure_date + "T00:00:00"), "MMM d")}{a.departure_time ? ` at ${formatTime(a.departure_time)}` : ""}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            {arrivals.map((a) => (
+              <TravelCard
+                key={a.id}
+                arrival={a}
+                user={user}
+                onEdit={editArrival}
+                onDelete={deleteArrival}
+                onClick={() => setDetailArrival(a)}
+              />
+            ))}
           </div>
         )}
       </div>
