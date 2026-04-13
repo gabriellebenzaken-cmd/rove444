@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plane, Car, Train, HelpCircle, Clock, ArrowRight, Loader2 } from "lucide-react";
 import { format } from "date-fns";
-import { base44 } from "@/api/base44Client";
+import { useLiveFlightStatus } from "@/hooks/useLiveFlightStatus";
 
 function formatDate(date, time) {
   if (!date) return null;
@@ -110,68 +109,13 @@ function NonFlightDetail({ arrival }) {
   );
 }
 
-// Live tracking hook — only polls within 24h of departure, stops after landing
-function useLiveStatus(flightNum, dateStr, timeStr) {
-  const [status, setStatus] = useState(null); // null | 'on_time' | 'delayed' | 'landed' | 'unknown'
-  const [loading, setLoading] = useState(false);
-  const intervalRef = useRef(null);
-
-  useEffect(() => {
-    if (!flightNum || !dateStr) return;
-
-    async function fetchStatus() {
-      const hours = hoursUntilDeparture(dateStr, timeStr);
-      if (hours === null || hours > 24 || hours < -6) return; // not in window
-
-      setLoading(true);
-      try {
-        const res = await base44.functions.invoke("lookupFlight", {
-          flight_number: flightNum,
-          date: dateStr,
-        });
-        const data = res.data;
-        if (data?.found) {
-          setStatus(data.live_status || "unknown");
-        } else {
-          setStatus("unknown");
-        }
-      } catch {
-        setStatus("unknown");
-      }
-      setLoading(false);
-    }
-
-    const hours = hoursUntilDeparture(dateStr, timeStr);
-    if (hours !== null && hours <= 24 && hours > -6) {
-      fetchStatus();
-      // Poll every 3 min while in window, stop after landed
-      intervalRef.current = setInterval(() => {
-        setStatus((prev) => {
-          if (prev === "landed") {
-            clearInterval(intervalRef.current);
-            return prev;
-          }
-          return prev;
-        });
-        fetchStatus();
-      }, 3 * 60 * 1000);
-    }
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [flightNum, dateStr, timeStr]);
-
-  return { status, loading };
-}
-
 export default function FlightDetailModal({ arrival, open, onClose }) {
   const isFlight = arrival?.travel_type === "Flight";
   const outboundFlight = arrival?.outbound_flight_number || arrival?.flight_number;
   const outboundHours = hoursUntilDeparture(arrival?.arrival_date, arrival?.arrival_time);
   const inTrackingWindow = outboundHours !== null && outboundHours <= 24 && outboundHours > -6;
 
-  const { status: liveStatus, loading: liveLoading } = useLiveStatus(
+  const { status: liveStatus, loading: liveLoading } = useLiveFlightStatus(
     (arrival && inTrackingWindow) ? outboundFlight : null,
     arrival?.arrival_date,
     arrival?.arrival_time
