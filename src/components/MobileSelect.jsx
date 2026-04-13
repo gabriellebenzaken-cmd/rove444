@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, X } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import BottomSheet from "./BottomSheet";
 
 export default function MobileSelect({
@@ -23,7 +23,6 @@ export default function MobileSelect({
   const selected = options.find((opt) => opt.value === value);
 
   if (!isMobile) {
-    // Fallback to web-style select on desktop
     return (
       <select
         value={value || ""}
@@ -43,7 +42,6 @@ export default function MobileSelect({
 
   return (
     <>
-      {/* Trigger button */}
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -54,9 +52,8 @@ export default function MobileSelect({
         <ChevronDown className="h-4 w-4 text-muted-foreground" />
       </button>
 
-      {/* Bottom sheet menu */}
       {open && (
-        <BottomSheet isOpen={open} onClose={() => setOpen(false)}>
+        <BottomSheet open={open} onClose={() => setOpen(false)}>
           <div className="p-4 pb-6">
             {label && <h3 className="text-sm font-semibold mb-3">{label}</h3>}
             <div className="space-y-2">
@@ -68,13 +65,14 @@ export default function MobileSelect({
                     onChange(opt.value);
                     setOpen(false);
                   }}
-                  className={`w-full px-4 py-3 rounded-lg text-left font-medium transition-all ${
+                  className={`w-full px-4 py-3 rounded-xl text-left font-medium transition-all flex items-center justify-between ${
                     selected?.value === opt.value
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-foreground hover:bg-muted/80"
                   }`}
                 >
-                  {opt.label}
+                  <span>{opt.label}</span>
+                  {selected?.value === opt.value && <Check className="h-4 w-4" />}
                 </button>
               ))}
             </div>
