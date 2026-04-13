@@ -6,15 +6,11 @@ export default function PullToRefresh({ children, onRefresh }) {
   const [refreshing, setRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const touchStartY = useRef(0);
-  const scrollableRef = useRef(null);
   const PULL_THRESHOLD = 80;
 
   useEffect(() => {
-    const el = scrollableRef.current;
-    if (!el) return;
-
     const handleTouchStart = (e) => {
-      if (el.scrollTop === 0) {
+      if (window.scrollY === 0) {
         touchStartY.current = e.touches[0].clientY;
         setPulling(true);
       }
@@ -45,19 +41,19 @@ export default function PullToRefresh({ children, onRefresh }) {
       }
     };
 
-    el.addEventListener("touchstart", handleTouchStart, { passive: true });
-    el.addEventListener("touchmove", handleTouchMove, { passive: false });
-    el.addEventListener("touchend", handleTouchEnd, { passive: true });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
 
     return () => {
-      el.removeEventListener("touchstart", handleTouchStart);
-      el.removeEventListener("touchmove", handleTouchMove);
-      el.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
     };
   }, [pulling, pullDistance, onRefresh]);
 
   return (
-    <div ref={scrollableRef} className="w-full h-full overflow-y-auto">
+  <div className="w-full">
       {/* Pull-to-refresh indicator */}
       <div
         className="flex items-center justify-center overflow-hidden transition-all"

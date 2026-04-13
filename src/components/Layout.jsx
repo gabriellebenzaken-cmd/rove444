@@ -59,7 +59,7 @@ export default function Layout() {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-background font-sans flex flex-col">
+    <div className="bg-background font-sans" style={{ minHeight: '100dvh' }}>
       {/* Top-right bell — only on main pages */}
       {!hideTopBell && (
        <Link
@@ -76,7 +76,7 @@ export default function Layout() {
         </Link>
       )}
 
-      <main className="flex-1 pb-24 max-w-lg mx-auto w-full">
+      <main className="pb-24 max-w-lg mx-auto w-full">
         <Outlet />
       </main>
 

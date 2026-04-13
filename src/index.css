@@ -86,12 +86,18 @@
     @apply border-border outline-ring/50;
   }
 
+  html, body {
+    height: 100%;
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.01em;
-    overscroll-behavior: none;
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
   }
 
   h1, h2, h3 {
