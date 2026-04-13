@@ -14,19 +14,12 @@ function formatDate(date, time) {
   }
 }
 
-function hoursUntilDeparture(dateStr, timeStr) {
-  if (!dateStr) return null;
-  const time = timeStr || "00:00";
-  const dep = new Date(`${dateStr}T${time}:00`);
-  return (dep - new Date()) / (1000 * 60 * 60);
-}
-
 function FlightStatusBadge({ status }) {
   const map = {
-    on_time: { label: "On Time",        color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
-    delayed: { label: "Delayed",        color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
-    landed:  { label: "Landed",         color: "#6366f1", bg: "rgba(99,102,241,0.1)" },
-    unknown: { label: "Status Unknown", color: "#9ca3af", bg: "rgba(156,163,175,0.1)" },
+    on_time: { label: "On Time",                    color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
+    delayed: { label: "Delayed",                    color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+    landed:  { label: "Landed",                     color: "#6366f1", bg: "rgba(99,102,241,0.1)" },
+    unknown: { label: "Unable to retrieve status", color: "#9ca3af", bg: "rgba(156,163,175,0.1)" },
   };
   const cfg = map[status] || map.unknown;
   return (
@@ -113,11 +106,9 @@ function NonFlightDetail({ arrival }) {
 export default function FlightDetailModal({ arrival, open, onClose }) {
   const isFlight = arrival?.travel_type === "Flight";
   const outboundFlight = arrival?.outbound_flight_number || arrival?.flight_number;
-  const outboundHours = hoursUntilDeparture(arrival?.arrival_date, arrival?.arrival_time);
-  const inTrackingWindow = outboundHours !== null && outboundHours <= 24 && outboundHours > -6;
 
-  const { status: liveStatus, loading: liveLoading } = useLiveFlightStatus(
-    (arrival && inTrackingWindow) ? outboundFlight : null,
+  const { status: liveStatus, loading: liveLoading, inWindow } = useLiveFlightStatus(
+    arrival ? outboundFlight : null,
     arrival?.arrival_date,
     arrival?.arrival_time
   );
@@ -144,12 +135,12 @@ export default function FlightDetailModal({ arrival, open, onClose }) {
                 <p className="font-semibold text-sm">{arrival.airline || guessAirline(outboundFlight) || "Flight"}</p>
               </div>
               {outboundFlight && (
-                inTrackingWindow ? (
+               inWindow ? (
                   liveLoading
                     ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                     : <FlightStatusBadge status={liveStatus || "unknown"} />
                 ) : (
-                  <span className="text-[11px] text-muted-foreground">Scheduled</span>
+                  <span className="text-[11px] text-muted-foreground">Tracking available 24h before departure</span>
                 )
               )}
             </div>
@@ -183,8 +174,8 @@ export default function FlightDetailModal({ arrival, open, onClose }) {
             {!outboundFlight && !arrival.airline && (
               <p className="text-[11px] text-muted-foreground text-center pt-1">No flight details recorded</p>
             )}
-            {outboundFlight && !inTrackingWindow && (
-              <p className="text-[11px] text-muted-foreground text-center pt-1">Scheduled — live tracking begins 24h before departure</p>
+            {outboundFlight && !inWindow && (
+              <p className="text-[11px] text-muted-foreground text-center pt-1">Live tracking begins 24h before departure</p>
             )}
           </div>
         ) : (

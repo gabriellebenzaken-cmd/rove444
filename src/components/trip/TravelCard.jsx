@@ -4,27 +4,20 @@ import { format } from "date-fns";
 import { useLiveFlightStatus } from "@/hooks/useLiveFlightStatus";
 import { guessAirline } from "@/utils/airlines";
 
-function getHoursUntilDeparture(dateStr, timeStr) {
-  if (!dateStr) return null;
-  const time = timeStr || "00:00";
-  const dep = new Date(`${dateStr}T${time}:00`);
-  return (dep - new Date()) / (1000 * 60 * 60);
-}
-
-function FlightStatusIndicator({ status, loading, inTrackingWindow }) {
+function FlightStatusIndicator({ status, loading, inWindow }) {
   if (loading) {
     return <span className="text-[10px] text-muted-foreground">Loading…</span>;
   }
   
-  if (!inTrackingWindow && !status) {
-    return <span className="text-[10px] text-muted-foreground">Scheduled</span>;
+  if (!inWindow) {
+    return <span className="text-[10px] text-muted-foreground">Tracking available 24h before departure</span>;
   }
   
   const map = {
     on_time: { label: "On Time", color: "#22c55e" },
     delayed: { label: "Delayed", color: "#f59e0b" },
     landed: { label: "Landed", color: "#6366f1" },
-    unknown: { label: "Unable to retrieve", color: "#9ca3af" },
+    unknown: { label: "Unable to retrieve flight status", color: "#9ca3af" },
   };
   
   const cfg = map[status] || map.unknown;
@@ -40,11 +33,8 @@ export default function TravelCard({ arrival, user, onEdit, onDelete, onClick })
   const outboundFlight = arrival.outbound_flight_number || arrival.flight_number;
   const returnFlight = arrival.return_flight_number;
   
-  const outboundHours = getHoursUntilDeparture(arrival.arrival_date, arrival.arrival_time);
-  const inTrackingWindow = outboundHours !== null && outboundHours <= 24 && outboundHours > -6;
-  
-  const { status: liveStatus, loading: liveLoading } = useLiveFlightStatus(
-    (isFlight && inTrackingWindow) ? outboundFlight : null,
+  const { status: liveStatus, loading: liveLoading, inWindow } = useLiveFlightStatus(
+    isFlight ? outboundFlight : null,
     arrival.arrival_date,
     arrival.arrival_time
   );
@@ -111,7 +101,7 @@ export default function TravelCard({ arrival, user, onEdit, onDelete, onClick })
                   </span>
                 </div>
                 {outboundFlight && (
-                  <FlightStatusIndicator status={liveStatus} loading={liveLoading} inTrackingWindow={inTrackingWindow} />
+                  <FlightStatusIndicator status={liveStatus} loading={liveLoading} inWindow={inWindow} />
                 )}
               </div>
             )}

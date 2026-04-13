@@ -60,5 +60,7 @@ export function useLiveFlightStatus(flightNum, dateStr, timeStr) {
     };
   }, [flightNum, dateStr, timeStr]);
 
-  return { status, loading };
+  const hours = hoursUntilDeparture(dateStr, timeStr);
+  const inWindow = hours !== null && hours <= 24 && hours > -6;
+  return { status, loading, inWindow };
 }
