@@ -24,7 +24,7 @@ export default function TripMembersManager({ trip, user, isAdmin, onMembersUpdat
 
   useEffect(() => {
     loadMembers();
-  }, [trip.id]);
+  }, [trip.id, (trip.member_emails || []).join(",")]);
 
   async function loadMembers() {
     try {
@@ -95,8 +95,8 @@ export default function TripMembersManager({ trip, user, isAdmin, onMembersUpdat
         });
         await base44.entities.Notification.create({
           user_email: friend.email,
-          type: "trip_added",
-          message: `${user.full_name} invited you to ${trip.name}`,
+          type: "trip_invite",
+          message: `${user.full_name} invited you to join "${trip.name}"`,
           related_user_email: user.email,
           related_user_name: user.full_name,
           related_trip_id: trip.id,

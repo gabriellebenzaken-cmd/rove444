@@ -102,10 +102,25 @@ export default function Notifications() {
       const trips = await base44.entities.Trip.list("-created_date", 200);
       const trip = trips.find(t => t.id === n.related_trip_id);
       if (!trip) { toast.error("Trip not found"); return; }
+      // Add to member_emails
       const already = trip.member_emails?.includes(user.email);
       if (!already) {
         await base44.entities.Trip.update(trip.id, {
           member_emails: [...new Set([...(trip.member_emails || []), user.email])],
+        });
+      }
+      // Upsert TripMember record
+      const existingMembers = await base44.entities.TripMember.filter({ trip_id: trip.id, user_email: user.email }, "-created_date", 1);
+      if (existingMembers.length > 0) {
+        await base44.entities.TripMember.update(existingMembers[0].id, { status: "active" });
+      } else {
+        await base44.entities.TripMember.create({
+          trip_id: trip.id,
+          user_email: user.email,
+          user_name: user.full_name || user.email,
+          role: "member",
+          status: "active",
+          invited_by_email: n.related_user_email || "",
         });
       }
       await base44.entities.Notification.delete(n.id);
