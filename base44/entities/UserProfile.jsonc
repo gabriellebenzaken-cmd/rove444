@@ -12,7 +12,11 @@
     },
     "username": {
       "type": "string",
-      "description": "Username for search and display"
+      "description": "Username for display (user-chosen capitalization, e.g. Gabbi)"
+    },
+    "username_lower": {
+      "type": "string",
+      "description": "Normalized lowercase username for uniqueness checks and case-insensitive search"
     },
     "full_name": {
       "type": "string",

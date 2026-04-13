@@ -17,6 +17,7 @@ export default function Profile() {
   const [form, setForm] = useState({ display_name: "", username: "", bio: "", profile_photo: "" });
   const [payForm, setPayForm] = useState({ venmo: "", cashapp: "", paypal: "", zelle: "", instagram: "", twitter: "", tiktok: "", snapchat: "" });
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [usernameError, setUsernameError] = useState("");
   const [trips, setTrips] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -59,21 +60,57 @@ export default function Profile() {
   }
 
   async function handleSave() {
-   setUsernameError("");
-   const usernameChanged = form.username.toLowerCase() !== (user.username || "").toLowerCase();
-   if (form.username && usernameChanged) {
-     const allUsers = await base44.entities.User.list("-created_date", 500);
-     const taken = allUsers.find(u => u.username?.toLowerCase() === form.username.toLowerCase() && u.email !== user.email);
-     if (taken) { setUsernameError("Username already taken"); return; }
-   }
-   await base44.auth.updateMe({ username: form.username, profile_photo: form.profile_photo });
-    if (profile) {
-      await base44.entities.UserProfile.update(profile.id, { display_name: form.display_name, username: form.username, bio: form.bio, profile_photo: form.profile_photo });
+    setUsernameError("");
+    const trimmedUsername = form.username.trim();
+    const usernameLower = trimmedUsername.toLowerCase();
+
+    // Check username uniqueness case-insensitively via username_lower
+    if (trimmedUsername && usernameLower !== (profile?.username_lower || "")) {
+      try {
+        const existing = await base44.entities.UserProfile.list("-created_date", 500);
+        const taken = existing.find(
+          (p) => p.username_lower === usernameLower && p.user_id !== user.id
+        );
+        if (taken) {
+          setUsernameError("Username already taken");
+          return;
+        }
+      } catch (err) {
+        toast.error("Could not verify username availability");
+        return;
+      }
     }
-    setUser({ ...user, username: form.username, profile_photo: form.profile_photo });
-    setProfile(prev => prev ? { ...prev, display_name: form.display_name, username: form.username, bio: form.bio, profile_photo: form.profile_photo } : null);
-   setEditing(false);
-   toast.success("Profile updated!");
+
+    setSaving(true);
+    try {
+      // Update built-in User record
+      await base44.auth.updateMe({ username: trimmedUsername, profile_photo: form.profile_photo });
+
+      // Update UserProfile (single source of truth)
+      if (profile) {
+        await base44.entities.UserProfile.update(profile.id, {
+          display_name: form.display_name.trim(),
+          username: trimmedUsername,
+          username_lower: usernameLower,
+          bio: form.bio.trim(),
+          profile_photo: form.profile_photo,
+          full_name: user.full_name || "",
+        });
+      }
+
+      // Refresh local state from DB
+      const updatedProfiles = await base44.entities.UserProfile.filter({ user_id: user.id }, "-created_date", 1);
+      const updatedProfile = updatedProfiles[0] || null;
+      setProfile(updatedProfile);
+      setUser((u) => ({ ...u, username: trimmedUsername, profile_photo: form.profile_photo }));
+      setEditing(false);
+      toast.success("Profile updated!");
+    } catch (err) {
+      console.error("[Profile] Save failed:", err);
+      toast.error("Failed to save profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handlePhotoUpload(e) {
@@ -216,10 +253,10 @@ export default function Profile() {
             />
           </div>
           <div className="flex gap-2">
-            <Button onClick={handleSave} className="flex-1 rounded-full">
-              <Save className="h-4 w-4 mr-1.5" /> Save
+            <Button onClick={handleSave} className="flex-1 rounded-full" disabled={saving}>
+              {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><Save className="h-4 w-4 mr-1.5" /> Save</>}
             </Button>
-            <Button variant="outline" onClick={() => setEditing(false)} className="rounded-full">
+            <Button variant="outline" onClick={() => setEditing(false)} className="rounded-full" disabled={saving}>
               <X className="h-4 w-4" />
             </Button>
           </div>

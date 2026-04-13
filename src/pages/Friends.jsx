@@ -152,28 +152,27 @@ export default function Friends() {
   }
 
   async function handleSearch() {
-    try {
-      const q = searchQuery.trim().toLowerCase();
-      if (!q) return;
+    const q = searchQuery.trim();
+    if (!q) return;
+    const qLower = q.toLowerCase();
 
-      const profiles = await base44.entities.UserProfile.list("-created_date", 200);
+    try {
+      const profiles = await base44.entities.UserProfile.list("-created_date", 500);
 
       const filtered = profiles.filter(
         (p) =>
           p.user_id !== user.id &&
           (
-            p.username?.toLowerCase().includes(q) ||
-            p.user_email?.toLowerCase().includes(q) ||
-            p.full_name?.toLowerCase().includes(q)
+            // Use username_lower for reliable case-insensitive username search
+            (p.username_lower || p.username?.toLowerCase() || "").includes(qLower) ||
+            p.user_email?.toLowerCase().includes(qLower) ||
+            (p.display_name?.toLowerCase() || "").includes(qLower) ||
+            (p.full_name?.toLowerCase() || "").includes(qLower)
           )
       );
 
       setSearchResults(filtered);
       setTab("search");
-
-      if (filtered.length === 0) {
-        toast.info("No users found");
-      }
     } catch (err) {
       console.error("Search failed:", err);
       toast.error("Search failed");

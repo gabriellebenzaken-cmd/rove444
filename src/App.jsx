@@ -68,16 +68,28 @@ const AuthenticatedApp = () => {
   async function ensureUserProfile(me) {
     try {
       const existing = await base44.entities.UserProfile.filter({ user_id: me.id }, "-created_date", 1);
+      const defaultUsername = me.data?.username || me.email.split("@")[0];
+      const defaultUsernameLower = defaultUsername.toLowerCase();
       if (existing.length === 0) {
         await base44.entities.UserProfile.create({
           user_id: me.id,
           user_email: me.email,
-          username: me.data?.username || me.email.split("@")[0],
+          username: defaultUsername,
+          username_lower: defaultUsernameLower,
           full_name: me.full_name || "",
+          display_name: me.full_name || "",
         });
         console.log("[App] UserProfile created for:", me.email);
       } else {
-        console.log("[App] UserProfile already exists for:", me.email);
+        // Backfill username_lower if missing
+        const p = existing[0];
+        if (p.username && !p.username_lower) {
+          await base44.entities.UserProfile.update(p.id, {
+            username_lower: p.username.toLowerCase(),
+            full_name: p.full_name || me.full_name || "",
+          });
+          console.log("[App] Backfilled username_lower for:", me.email);
+        }
       }
     } catch (err) {
       console.error("[App] UserProfile ensure failed:", err);

@@ -3,7 +3,6 @@ import { base44 } from "@/api/base44Client";
 import { Send, BarChart2, X, Plus, Menu, ExternalLink, MessageCircle, Zap } from "lucide-react";
 import CreateDecisionPromptSheet from "./CreateDecisionPromptSheet";
 import DecisionPromptCard from "./DecisionPromptCard";
-import { format } from "date-fns";
 
 const URL_REGEX = /https?:\/\/[^\s]+/gi;
 
@@ -174,14 +173,7 @@ function HubPanel({ messages, user, prompts, onVote, onClose, onStartVote }) {
 }
 
 export default function TripChat({ trip, user }) {
-  if (!trip || !user) {
-    return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}>
-        <div style={{ width: 24, height: 24, border: "2px solid rgba(200,162,124,0.3)", borderTopColor: "#C8A27C", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-        <style>{"@keyframes spin { to { transform: rotate(360deg); } }"}</style>
-      </div>
-    );
-  }
+  // All hooks must be at the top — before any conditional returns
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -195,6 +187,7 @@ export default function TripChat({ trip, user }) {
   const bottomRef = useRef(null);
 
   useEffect(() => {
+    if (!trip?.id) return;
     setLoading(true);
     Promise.all([
       base44.entities.TripMessage.filter({ trip_id: trip.id }, "created_date", 200),
@@ -228,11 +221,30 @@ export default function TripChat({ trip, user }) {
     });
 
     return () => { unsub1?.(); unsub2?.(); };
-  }, [trip.id]);
+  }, [trip?.id]);
 
   useEffect(() => {
     if (!loading) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
+
+  // Early returns after all hooks
+  if (!trip || !user) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}>
+        <div style={{ width: 24, height: 24, border: "2px solid rgba(200,162,124,0.3)", borderTopColor: "#C8A27C", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+        <style>{"@keyframes spin { to { transform: rotate(360deg); } }"}</style>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}>
+        <div style={{ width: 24, height: 24, border: "2px solid rgba(200,162,124,0.3)", borderTopColor: "#C8A27C", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+        <style>{"@keyframes spin { to { transform: rotate(360deg); } }"}</style>
+      </div>
+    );
+  }
 
   async function sendMessage(e) {
     e?.preventDefault();
@@ -286,22 +298,17 @@ export default function TripChat({ trip, user }) {
 
   async function handleVote(msg, optionIndex) {
     const votes = {};
-    // Deep copy vote arrays
     Object.keys(msg.poll_votes || {}).forEach(k => { votes[k] = [...(msg.poll_votes[k] || [])]; });
-    // Remove user's previous vote from all options
     Object.keys(votes).forEach(k => { votes[k] = votes[k].filter(e => e !== user.email); });
-    // Toggle: if clicking the already-voted option, just remove vote; else add
     const alreadyVoted = String(Object.keys(msg.poll_votes || {}).find(k => (msg.poll_votes[k] || []).includes(user.email))) === String(optionIndex);
     if (!alreadyVoted) {
       if (!votes[optionIndex]) votes[optionIndex] = [];
       votes[optionIndex].push(user.email);
     }
-    // Optimistic update
     setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, poll_votes: votes } : m));
     await base44.entities.TripMessage.update(msg.id, { poll_votes: votes });
   }
 
-  // Group messages by date (local timezone)
   const grouped = [];
   let lastDate = null;
   messages.forEach(msg => {
@@ -310,18 +317,8 @@ export default function TripChat({ trip, user }) {
     grouped.push({ type: "msg", msg });
   });
 
-  if (loading) {
-    return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}>
-        <div style={{ width: 24, height: 24, border: "2px solid rgba(200,162,124,0.3)", borderTopColor: "#C8A27C", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-        <style>{"@keyframes spin { to { transform: rotate(360deg); } }"}</style>
-      </div>
-    );
-  }
-
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 340px)", minHeight: 400 }}>
-      {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#C8A27C" }}>Group Chat</p>
         <div style={{ display: "flex", gap: 8 }}>
@@ -334,7 +331,6 @@ export default function TripChat({ trip, user }) {
         </div>
       </div>
 
-      {/* Messages */}
       <div style={{ flex: 1, overflowY: "auto", paddingRight: 2 }}>
         {messages.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", textAlign: "center", paddingBottom: 40 }}>
@@ -410,7 +406,6 @@ export default function TripChat({ trip, user }) {
         )}
       </div>
 
-      {/* Poll composer */}
       {mode === "poll" && (
         <div style={{ background: "rgba(255,255,255,0.88)", border: "1px solid rgba(200,162,124,0.2)", borderRadius: 16, padding: 14, marginTop: 10 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
@@ -443,7 +438,6 @@ export default function TripChat({ trip, user }) {
         </div>
       )}
 
-      {/* Input bar */}
       {mode === "text" && (
         <form onSubmit={sendMessage} style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(200,162,124,0.1)" }}>
           <button type="button" onClick={() => setMode("poll")} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(200,162,124,0.1)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
