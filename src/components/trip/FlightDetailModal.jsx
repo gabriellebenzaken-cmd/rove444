@@ -1,6 +1,8 @@
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plane, Car, Train, HelpCircle, Clock, ArrowRight } from "lucide-react";
+import { Plane, Car, Train, HelpCircle, Clock, ArrowRight, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { base44 } from "@/api/base44Client";
 
 function formatDate(date, time) {
   if (!date) return null;
@@ -12,21 +14,19 @@ function formatDate(date, time) {
   }
 }
 
-function isWithin24Hours(dateStr, timeStr) {
-  if (!dateStr) return false;
+function hoursUntilDeparture(dateStr, timeStr) {
+  if (!dateStr) return null;
   const time = timeStr || "00:00";
   const dep = new Date(`${dateStr}T${time}:00`);
-  const now = new Date();
-  const diffHours = (dep - now) / (1000 * 60 * 60);
-  return diffHours >= 0 && diffHours <= 24;
+  return (dep - new Date()) / (1000 * 60 * 60);
 }
 
 function FlightStatusBadge({ status }) {
   const map = {
-    on_time: { label: "On Time",       color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
-    delayed: { label: "Delayed",       color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
-    landed:  { label: "Landed",        color: "#6366f1", bg: "rgba(99,102,241,0.1)" },
-    unknown: { label: "Status Unknown",color: "#9ca3af", bg: "rgba(156,163,175,0.1)" },
+    on_time: { label: "On Time",        color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
+    delayed: { label: "Delayed",        color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+    landed:  { label: "Landed",         color: "#6366f1", bg: "rgba(99,102,241,0.1)" },
+    unknown: { label: "Status Unknown", color: "#9ca3af", bg: "rgba(156,163,175,0.1)" },
   };
   const cfg = map[status] || map.unknown;
   return (
@@ -48,7 +48,7 @@ function LegBlock({ label, flightNum, from, to, depDate, depTime, arrDate, arrTi
         )}
       </div>
 
-      {(from || to) && (
+      {(from || to) ? (
         <div className="flex items-center gap-2">
           <div className="text-center">
             <p className="text-lg font-bold tracking-tight">{from || "—"}</p>
@@ -62,9 +62,7 @@ function LegBlock({ label, flightNum, from, to, depDate, depTime, arrDate, arrTi
             {arrTime && <p className="text-xs font-medium">{arrTime}</p>}
           </div>
         </div>
-      )}
-
-      {!from && !to && (
+      ) : (
         <p className="text-xs text-muted-foreground">Route not specified</p>
       )}
     </div>
@@ -90,7 +88,6 @@ function NonFlightDetail({ arrival }) {
           )}
         </div>
       </div>
-
       {arrival.arrival_date && (
         <div className="flex items-center gap-3 px-1">
           <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -100,7 +97,6 @@ function NonFlightDetail({ arrival }) {
           </div>
         </div>
       )}
-
       {arrival.departure_date && (
         <div className="flex items-center gap-3 px-1">
           <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -114,13 +110,76 @@ function NonFlightDetail({ arrival }) {
   );
 }
 
+// Live tracking hook — only polls within 24h of departure, stops after landing
+function useLiveStatus(flightNum, dateStr, timeStr) {
+  const [status, setStatus] = useState(null); // null | 'on_time' | 'delayed' | 'landed' | 'unknown'
+  const [loading, setLoading] = useState(false);
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    if (!flightNum || !dateStr) return;
+
+    async function fetchStatus() {
+      const hours = hoursUntilDeparture(dateStr, timeStr);
+      if (hours === null || hours > 24 || hours < -6) return; // not in window
+
+      setLoading(true);
+      try {
+        const res = await base44.functions.invoke("lookupFlight", {
+          flight_number: flightNum,
+          date: dateStr,
+        });
+        const data = res.data;
+        if (data?.found) {
+          setStatus(data.live_status || "unknown");
+        } else {
+          setStatus("unknown");
+        }
+      } catch {
+        setStatus("unknown");
+      }
+      setLoading(false);
+    }
+
+    const hours = hoursUntilDeparture(dateStr, timeStr);
+    if (hours !== null && hours <= 24 && hours > -6) {
+      fetchStatus();
+      // Poll every 3 min while in window, stop after landed
+      intervalRef.current = setInterval(() => {
+        setStatus((prev) => {
+          if (prev === "landed") {
+            clearInterval(intervalRef.current);
+            return prev;
+          }
+          return prev;
+        });
+        fetchStatus();
+      }, 3 * 60 * 1000);
+    }
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [flightNum, dateStr, timeStr]);
+
+  return { status, loading };
+}
+
 export default function FlightDetailModal({ arrival, open, onClose }) {
+  const isFlight = arrival?.travel_type === "Flight";
+  const outboundFlight = arrival?.outbound_flight_number || arrival?.flight_number;
+  const outboundHours = hoursUntilDeparture(arrival?.arrival_date, arrival?.arrival_time);
+  const inTrackingWindow = outboundHours !== null && outboundHours <= 24 && outboundHours > -6;
+
+  const { status: liveStatus, loading: liveLoading } = useLiveStatus(
+    (arrival && inTrackingWindow) ? outboundFlight : null,
+    arrival?.arrival_date,
+    arrival?.arrival_time
+  );
+
   if (!arrival) return null;
 
-  const isFlight = arrival.travel_type === "Flight";
-  const outboundFlight = arrival.outbound_flight_number || arrival.flight_number;
   const returnFlight = arrival.return_flight_number;
-  const liveAvailable = isWithin24Hours(arrival.arrival_date, arrival.arrival_time);
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -134,7 +193,7 @@ export default function FlightDetailModal({ arrival, open, onClose }) {
 
         {isFlight ? (
           <div className="space-y-3 mt-1">
-            {/* Airline + status */}
+            {/* Airline + live status */}
             <div className="flex items-center justify-between">
               <div>
                 {arrival.airline
@@ -142,10 +201,15 @@ export default function FlightDetailModal({ arrival, open, onClose }) {
                   : <p className="text-sm text-muted-foreground">Airline not specified</p>
                 }
               </div>
-              {liveAvailable
-                ? <FlightStatusBadge status="unknown" />
-                : <span className="text-[11px] text-muted-foreground">Tracking available 24h before departure</span>
-              }
+              {outboundFlight && (
+                inTrackingWindow ? (
+                  liveLoading
+                    ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    : <FlightStatusBadge status={liveStatus || "unknown"} />
+                ) : (
+                  <span className="text-[11px] text-muted-foreground">Tracking 24h before departure</span>
+                )
+              )}
             </div>
 
             {/* Outbound leg */}
@@ -177,8 +241,8 @@ export default function FlightDetailModal({ arrival, open, onClose }) {
             {!outboundFlight && !arrival.airline && (
               <p className="text-[11px] text-muted-foreground text-center pt-1">No flight details recorded</p>
             )}
-            {(outboundFlight || arrival.airline) && !liveAvailable && (
-              <p className="text-[11px] text-muted-foreground text-center pt-1">Scheduled</p>
+            {outboundFlight && !inTrackingWindow && (
+              <p className="text-[11px] text-muted-foreground text-center pt-1">Scheduled — live tracking begins 24h before departure</p>
             )}
           </div>
         ) : (

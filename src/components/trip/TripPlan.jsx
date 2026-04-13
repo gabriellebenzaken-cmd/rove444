@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plane, Clock, MapPin, Plus, Trash2, Car, Train, HelpCircle, Loader2 } from "lucide-react";
+import { Plane, Clock, MapPin, Plus, Trash2, Car, Train, HelpCircle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
@@ -53,29 +53,9 @@ export default function TripPlan({ trip, user, onUpdate }) {
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [detailArrival, setDetailArrival] = useState(null);
-  const [lookingUp, setLookingUp] = useState(false);
-  const [lookupStatus, setLookupStatus] = useState(null);
-  const [returnLookingUp, setReturnLookingUp] = useState(false);
-  const [returnLookupStatus, setReturnLookupStatus] = useState(null);
-  const lookupTimer = useRef(null);
-  const returnLookupTimer = useRef(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
   useEffect(() => { loadData(); }, [trip.id]);
-
-  // Re-run outbound lookup when arrival_date changes and flight number exists
-  useEffect(() => {
-    if (form.travel_type === "Flight" && form.outbound_flight_number?.length >= 4 && form.arrival_date) {
-      doFlightLookup(form.outbound_flight_number, false, form.arrival_date);
-    }
-  }, [form.arrival_date]);
-
-  // Re-run return lookup when departure_date changes and return flight number exists
-  useEffect(() => {
-    if (form.travel_type === "Flight" && form.is_round_trip && form.return_flight_number?.length >= 4 && form.departure_date) {
-      doFlightLookup(form.return_flight_number, true, form.departure_date);
-    }
-  }, [form.departure_date]);
 
   async function loadData() {
     const allArrivals = await base44.entities.Arrival.filter({ trip_id: trip.id }, "-created_date", 50);
@@ -91,72 +71,9 @@ export default function TripPlan({ trip, user, onUpdate }) {
   function handleFlightNumberChange(field, value) {
     const upper = normalizeFlightNum(value);
     setForm((prev) => ({ ...prev, [field]: upper }));
-
-    const isReturn = field === "return_flight_number";
-
-    if (isReturn) {
-      setReturnLookupStatus(null);
-      if (returnLookupTimer.current) clearTimeout(returnLookupTimer.current);
-      if (upper.length >= 4) {
-        returnLookupTimer.current = setTimeout(() => doFlightLookup(upper, true, form.departure_date || null), 800);
-      } else if (upper.length > 0) {
-        const guessed = guessAirline(upper);
-        if (guessed) setForm((prev) => ({ ...prev, airline: prev.airline || guessed }));
-      }
-    } else {
-      setLookupStatus(null);
-      if (lookupTimer.current) clearTimeout(lookupTimer.current);
-      if (upper.length >= 4) {
-        lookupTimer.current = setTimeout(() => doFlightLookup(upper, false, form.arrival_date || null), 800);
-      } else if (upper.length > 0) {
-        const guessed = guessAirline(upper);
-        if (guessed) setForm((prev) => ({ ...prev, airline: prev.airline || guessed }));
-      }
-    }
   }
 
-  async function doFlightLookup(flightNum, isReturn = false, date = null) {
-    if (isReturn) setReturnLookingUp(true);
-    else setLookingUp(true);
 
-    try {
-      const res = await base44.functions.invoke('lookupFlight', { flight_number: flightNum, date: date || null });
-      const data = res.data;
-
-      if (data?.found) {
-        if (isReturn) {
-          setForm((prev) => ({
-            ...prev,
-            airline: prev.airline || data.airline || prev.airline,
-            departure_time: data.scheduled_departure_time || prev.departure_time,
-          }));
-          setReturnLookupStatus(data.ambiguous ? 'ambiguous' : 'found');
-        } else {
-          const routeConfident = data.confidence === 'high' && !data.ambiguous;
-          setForm((prev) => ({
-            ...prev,
-            airline: data.airline || prev.airline,
-            arrival_location: routeConfident ? (data.departure_airport || prev.arrival_location) : prev.arrival_location,
-            destination: routeConfident ? (data.arrival_airport || prev.destination) : prev.destination,
-            arrival_time: routeConfident ? (data.scheduled_arrival_time || prev.arrival_time) : prev.arrival_time,
-          }));
-          setLookupStatus(routeConfident ? 'found' : 'ambiguous');
-        }
-      } else if (data?.ambiguous) {
-        if (isReturn) setReturnLookupStatus('ambiguous');
-        else setLookupStatus('ambiguous');
-      } else {
-        if (isReturn) setReturnLookupStatus('not_found');
-        else setLookupStatus('not_found');
-      }
-    } catch {
-      if (isReturn) setReturnLookupStatus('not_found');
-      else setLookupStatus('not_found');
-    }
-
-    if (isReturn) setReturnLookingUp(false);
-    else setLookingUp(false);
-  }
 
   async function addArrival(e) {
     e.preventDefault();
@@ -230,12 +147,6 @@ export default function TripPlan({ trip, user, onUpdate }) {
     setEditingId(null);
     setForm({ ...EMPTY_FORM });
     setShowAdd(false);
-    setLookupStatus(null);
-    setLookingUp(false);
-    setReturnLookupStatus(null);
-    setReturnLookingUp(false);
-    if (lookupTimer.current) clearTimeout(lookupTimer.current);
-    if (returnLookupTimer.current) clearTimeout(returnLookupTimer.current);
   }
 
   return (
@@ -388,28 +299,13 @@ export default function TripPlan({ trip, user, onUpdate }) {
                   <Label className="text-xs font-medium mb-1 block">
                     Outbound Flight # <span className="text-muted-foreground font-normal">(e.g. DL1823 or DL 1823)</span>
                   </Label>
-                  <div className="relative">
-                    <Input
-                      value={form.outbound_flight_number}
-                      onChange={(e) => handleFlightNumberChange("outbound_flight_number", e.target.value)}
-                      placeholder="e.g. UA123"
-                      className="h-9 text-sm font-mono pr-8"
-                    />
-                    {lookingUp && (
-                      <Loader2 className="absolute right-2 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
-                    )}
-                  </div>
-                  {lookupStatus === 'found' && (
-                    <p className="text-[11px] mt-1 font-medium" style={{ color: "#3A7A5A" }}>
-                      ✓ Route auto-filled{form.arrival_location && form.destination ? `: ${form.arrival_location} → ${form.destination}` : ""}
-                    </p>
-                  )}
-                  {lookupStatus === 'ambiguous' && (
-                    <p className="text-[11px] mt-1 font-medium" style={{ color: "#C87C2A" }}>Multiple flights found — add date for accuracy</p>
-                  )}
-                  {lookupStatus === 'not_found' && (
-                    <p className="text-[11px] text-destructive mt-1">Flight not found — enter details manually</p>
-                  )}
+                  <Input
+                    value={form.outbound_flight_number}
+                    onChange={(e) => handleFlightNumberChange("outbound_flight_number", e.target.value)}
+                    placeholder="e.g. UA123"
+                    className="h-9 text-sm font-mono"
+                  />
+                  <p className="text-[11px] mt-1 text-muted-foreground">Used for live tracking only — does not auto-fill route</p>
                 </div>
 
                 {form.is_round_trip && (
@@ -417,26 +313,13 @@ export default function TripPlan({ trip, user, onUpdate }) {
                     <Label className="text-xs font-medium mb-1 block">
                       Return Flight # <span className="text-muted-foreground font-normal">(e.g. UA456)</span>
                     </Label>
-                    <div className="relative">
-                      <Input
-                        value={form.return_flight_number}
-                        onChange={(e) => handleFlightNumberChange("return_flight_number", e.target.value)}
-                        placeholder="e.g. UA456"
-                        className="h-9 text-sm font-mono pr-8"
-                      />
-                      {returnLookingUp && (
-                        <Loader2 className="absolute right-2 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
-                      )}
-                    </div>
-                    {returnLookupStatus === 'found' && (
-                      <p className="text-[11px] mt-1 font-medium" style={{ color: "#3A7A5A" }}>✓ Return flight details auto-filled</p>
-                    )}
-                    {returnLookupStatus === 'ambiguous' && (
-                      <p className="text-[11px] mt-1 font-medium" style={{ color: "#C87C2A" }}>Multiple flights found — add date for accuracy</p>
-                    )}
-                    {returnLookupStatus === 'not_found' && (
-                      <p className="text-[11px] text-destructive mt-1">Flight not found — enter details manually</p>
-                    )}
+                    <Input
+                      value={form.return_flight_number}
+                      onChange={(e) => handleFlightNumberChange("return_flight_number", e.target.value)}
+                      placeholder="e.g. UA456"
+                      className="h-9 text-sm font-mono"
+                    />
+                    <p className="text-[11px] mt-1 text-muted-foreground">Used for live tracking only</p>
                   </div>
                 )}
 
