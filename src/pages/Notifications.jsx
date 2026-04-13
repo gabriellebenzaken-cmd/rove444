@@ -345,8 +345,8 @@ export default function Notifications() {
           <div className="w-16 h-16 rounded-[22px] flex items-center justify-center mb-5" style={{ background: "rgba(200,162,124,0.1)" }}>
             <Bell className="h-7 w-7" style={{ color: "#C8A27C" }} />
           </div>
-          <h3 className="font-semibold text-lg mb-1.5" style={{ color: "#1A1A1A" }}>All caught up</h3>
-          <p className="text-sm" style={{ color: "#9A8A7A" }}>No notifications yet</p>
+          <h3 className="font-semibold text-lg mb-1.5" style={{ color: "#1A1A1A" }}>You're all caught up</h3>
+          <p className="text-sm" style={{ color: "#9A8A7A" }}>Nothing new right now</p>
         </div>
       ) : (
         <div className="space-y-2">

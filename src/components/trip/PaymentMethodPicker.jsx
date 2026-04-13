@@ -46,7 +46,7 @@ export default function PaymentMethodPicker({ receiverProfile, receiverName, amo
   return (
     <div className="space-y-2.5">
       <p className="text-xs font-medium" style={{ color: "#3A3028" }}>
-        Pay ${amount?.toFixed(2)} to {receiverName}
+        You owe {receiverName} ${amount?.toFixed(2)}
       </p>
 
       {linkedMethods.length > 0 ? (

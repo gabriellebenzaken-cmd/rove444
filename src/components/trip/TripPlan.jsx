@@ -198,7 +198,7 @@ export default function TripPlan({ trip, user, onUpdate }) {
         </Button>
 
         {arrivals.length === 0 ? (
-          <p className="text-xs text-muted-foreground py-4 text-center">No travel info added yet</p>
+          <p className="text-xs text-muted-foreground py-4 text-center">Add your flight or travel details</p>
         ) : (
           <div className="space-y-3">
             {arrivals.map((a) => {

@@ -146,7 +146,7 @@ export default function TripMembersManager({ trip, user, isAdmin, onMembersUpdat
 
       <div className="space-y-2">
        {members.length === 0 ? (
-         <p className="text-xs text-muted-foreground py-4 text-center">No members yet</p>
+         <p className="text-xs text-muted-foreground py-4 text-center">Invite friends to plan together</p>
        ) : (
          members.map((m) => (
            <div key={m.id} className="flex items-center gap-2 p-3 bg-white rounded-lg border border-border cursor-pointer active:scale-95 transition-all" onClick={() => setViewingMember(m)}>

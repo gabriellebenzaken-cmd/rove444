@@ -374,7 +374,7 @@ export default function TripCosts({ trip, user }) {
             <Receipt className="h-5 w-5" style={{ color: "#C8A27C" }} />
           </div>
           <p className="text-sm font-medium" style={{ color: "#3A3028" }}>No expenses yet</p>
-          <p className="text-xs mt-1" style={{ color: "#B0A090" }}>Tap Add to log a shared cost</p>
+          <p className="text-xs mt-1" style={{ color: "#B0A090" }}>Add a shared cost to start splitting</p>
         </div>
       ) : (
         <div className="space-y-4">
