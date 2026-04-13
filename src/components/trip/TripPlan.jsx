@@ -191,7 +191,7 @@ export default function TripPlan({ trip, user, onUpdate }) {
       {isAdmin && <TripPendingRequests trip={trip} isAdmin={isAdmin} onUpdate={onUpdate} />}
       <div className="mb-6">
         <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-          <Plane className="h-4 w-4" /> Arrivals & Departures
+          <span style={{fontSize:'0.85em', opacity:0.75}}>✦</span> arrivals & departures
         </h3>
         <Button variant="outline" size="sm" className="rounded-full mb-3" onClick={() => setShowAdd(true)}>
           <Plus className="h-3.5 w-3.5 mr-1" /> Add Your Travel
