@@ -1,0 +1,22 @@
+{
+  "name": "Rove",
+  "short_name": "Rove",
+  "description": "Plan and share trips with friends",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#1a1a1a",
+  "icons": [
+    {
+      "src": "https://media.base44.com/images/public/69d87cbb57171725f5686a39/d17f79155_generated_image.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://media.base44.com/images/public/69d87cbb57171725f5686a39/d17f79155_generated_image.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
