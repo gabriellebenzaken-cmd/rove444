@@ -19,6 +19,8 @@ import Profile from './pages/Profile';
 import TripDetail from './pages/TripDetail';
 import GroupDetail from './pages/GroupDetail';
 import JoinInvite from './pages/JoinInvite';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 import Notifications from './pages/Notifications';
 import OnboardingModal from './components/OnboardingModal';
 import RoveSplash from './components/RoveSplash';
@@ -148,6 +150,8 @@ const AuthenticatedApp = () => {
       </Route>
       <Route path="/notifications" element={<MotionPage><Notifications /></MotionPage>} />
       <Route path="/join/:type/:code" element={<MotionPage><JoinInvite /></MotionPage>} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
       <Route path="*" element={<PageNotFound />} />
       </Routes>
       )}

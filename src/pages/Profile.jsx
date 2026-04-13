@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import MobileSelect from "@/components/MobileSelect";
-import { LogOut, Edit3, Save, X, Settings, Trash2, Shield, ChevronRight, Camera, Upload, Monitor, Sun, Moon } from "lucide-react";
+import { Link } from "react-router-dom";
+import { LogOut, Edit3, Save, X, Settings, Trash2, Shield, ChevronRight, Camera, Upload, Monitor, Sun, Moon, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { getThemePreference, setThemePreference } from "@/lib/theme";
 
@@ -311,18 +312,7 @@ export default function Profile() {
             <DialogTitle>Settings</DialogTitle>
           </DialogHeader>
           <div className="space-y-1 mt-1">
-            <a
-              href="https://www.privacypolicies.com/generic/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-muted transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <Shield className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Privacy Policy</span>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </a>
+
 
             <div className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-muted transition-colors">
               <div className="flex items-center gap-3">
@@ -356,6 +346,32 @@ export default function Profile() {
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
+
+            <div className="border-t border-border my-2" />
+
+            <p className="px-4 pt-1 pb-0.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Legal</p>
+            <Link
+              to="/privacy"
+              onClick={() => setShowSettings(false)}
+              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-muted transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Shield className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Privacy Policy</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+            <Link
+              to="/terms"
+              onClick={() => setShowSettings(false)}
+              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-muted transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Terms of Service</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
 
             <div className="border-t border-border my-2" />
 
