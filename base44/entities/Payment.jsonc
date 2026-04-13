@@ -61,5 +61,19 @@
     "receiver_email",
     "amount",
     "status"
-  ]
+  ],
+  "permissions": {
+    "create": {
+      "if": "user.is_authenticated"
+    },
+    "read": {
+      "if": "user.is_authenticated"
+    },
+    "update": {
+      "if": "user.is_authenticated"
+    },
+    "delete": {
+      "if": "user.is_authenticated"
+    }
+  }
 }

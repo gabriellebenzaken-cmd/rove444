@@ -50,15 +50,20 @@ export default function TripCosts({ trip, user }) {
   useEffect(() => { loadData(); }, [trip.id]);
 
   async function loadData() {
-    const [allExpenses, allPayments, allUsers, allProfiles] = await Promise.all([
+    const [allExpenses, allPayments, tripMembers, allProfiles] = await Promise.all([
       base44.entities.Expense.filter({ trip_id: trip.id }, "-created_date", 200),
       base44.entities.Payment.filter({ trip_id: trip.id }, "-created_date", 200),
-      base44.entities.User.list("-created_date", 200),
-      base44.entities.UserProfile.list("-created_date", 200),
+      base44.entities.TripMember.filter({ trip_id: trip.id, status: "active" }, "-created_date", 200),
+      base44.entities.UserProfile.filter(
+        { user_email: { $in: trip.member_emails || [] } },
+        "-created_date",
+        200
+      ),
     ]);
     setExpenses(allExpenses);
     setPayments(allPayments);
-    setMembers(allUsers.filter((u) => trip.member_emails?.includes(u.email)));
+    // Build member-like objects from TripMember records for name display
+    setMembers(tripMembers.map((tm) => ({ email: tm.user_email, full_name: tm.user_name || tm.user_email.split("@")[0] })));
     const profileMap = {};
     allProfiles.forEach((p) => { profileMap[p.user_email] = p; });
     setPayerProfiles(profileMap);
