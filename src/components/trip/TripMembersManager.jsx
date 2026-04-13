@@ -30,12 +30,27 @@ export default function TripMembersManager({ trip, user, isAdmin, onMembersUpdat
 
   async function loadMembers() {
     try {
-      const tripMembers = await base44.entities.TripMember.filter(
-        { trip_id: trip.id, status: "active" },
-        "-created_date",
-        200
-      );
-      // Shape into objects compatible with the rest of the UI
+      const [tripMembers, adminProfile] = await Promise.all([
+        base44.entities.TripMember.filter(
+          { trip_id: trip.id, status: "active" },
+          "-created_date",
+          200
+        ),
+        base44.entities.UserProfile.filter({ user_email: trip.admin_email }, "-created_date", 1),
+      ]);
+
+      const seenEmails = new Set(tripMembers.map(tm => tm.user_email));
+
+      // Ensure admin is always included
+      if (!seenEmails.has(trip.admin_email)) {
+        const ap = adminProfile[0];
+        tripMembers.unshift({
+          id: `admin-${trip.admin_email}`,
+          user_email: trip.admin_email,
+          user_name: ap?.display_name || ap?.full_name || ap?.username || trip.admin_email.split("@")[0],
+        });
+      }
+
       const activeMembers = tripMembers.map(tm => ({
         id: tm.id,
         email: tm.user_email,
