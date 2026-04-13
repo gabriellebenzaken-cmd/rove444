@@ -132,14 +132,15 @@ export default function TripPlan({ trip, user, onUpdate }) {
           }));
           setReturnLookupStatus(data.ambiguous ? 'ambiguous' : 'found');
         } else {
+          const routeConfident = data.confidence === 'high' && !data.ambiguous;
           setForm((prev) => ({
             ...prev,
             airline: data.airline || prev.airline,
-            arrival_location: data.departure_airport || prev.arrival_location,
-            destination: data.arrival_airport || prev.destination,
-            arrival_time: data.scheduled_arrival_time || prev.arrival_time,
+            arrival_location: routeConfident ? (data.departure_airport || prev.arrival_location) : prev.arrival_location,
+            destination: routeConfident ? (data.arrival_airport || prev.destination) : prev.destination,
+            arrival_time: routeConfident ? (data.scheduled_arrival_time || prev.arrival_time) : prev.arrival_time,
           }));
-          setLookupStatus(data.ambiguous ? 'ambiguous' : 'found');
+          setLookupStatus(routeConfident ? 'found' : 'ambiguous');
         }
       } else if (data?.ambiguous) {
         if (isReturn) setReturnLookupStatus('ambiguous');

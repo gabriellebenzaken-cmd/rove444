@@ -11,7 +11,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Flight number too short' }, { status: 400 });
     }
 
-    const dateContext = date ? `\nThe flight date is ${date}. Use this to return the specific route flown on that date.` : `\nNo date provided — return the most common/default scheduled route for this flight number. If the flight operates multiple routes or the route cannot be confidently determined, set ambiguous:true.`;
+    const dateContext = date
+      ? `\nThe flight date is ${date}. Use this to return the specific route flown on that date. Set confidence:"high" only if you are certain of the route for this specific date.`
+      : `\nNo date provided — return the most common/default scheduled route for this flight number. Set confidence:"high" only if this flight number has one single consistent route. If it operates multiple routes or you are not certain, set confidence:"low" and set ambiguous:true.`;
 
     const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
       prompt: `Look up the scheduled flight details for flight ${flight_number.trim().toUpperCase()}.${dateContext}
@@ -27,7 +29,8 @@ Return ONLY a JSON object with these fields (use null for unknown):
   "scheduled_arrival_time": "HH:MM in 24h local time or null",
   "duration_minutes": number or null,
   "found": true or false,
-  "ambiguous": true if multiple routes exist and no date was given to disambiguate, otherwise false
+  "ambiguous": true if multiple routes exist and route cannot be confidently determined, otherwise false,
+  "confidence": "high" if route is certain, "low" if uncertain or multiple routes possible
 }
 Only return facts you are highly confident about. Return found:false if the flight number is not recognized.`,
       add_context_from_internet: true,
@@ -44,7 +47,8 @@ Only return facts you are highly confident about. Return found:false if the flig
           scheduled_arrival_time: { type: ["string", "null"] },
           duration_minutes: { type: ["number", "null"] },
           found: { type: "boolean" },
-          ambiguous: { type: "boolean" }
+          ambiguous: { type: "boolean" },
+          confidence: { type: ["string", "null"] }
         }
       }
     });

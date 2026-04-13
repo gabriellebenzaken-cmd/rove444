@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plane, Car, Train, HelpCircle, MapPin, Clock, ArrowRight, RotateCcw } from "lucide-react";
+import { Plane, Car, Train, HelpCircle, Clock, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 
 function formatDate(date, time) {
@@ -12,12 +12,21 @@ function formatDate(date, time) {
   }
 }
 
+function isWithin24Hours(dateStr, timeStr) {
+  if (!dateStr) return false;
+  const time = timeStr || "00:00";
+  const dep = new Date(`${dateStr}T${time}:00`);
+  const now = new Date();
+  const diffHours = (dep - now) / (1000 * 60 * 60);
+  return diffHours >= 0 && diffHours <= 24;
+}
+
 function FlightStatusBadge({ status }) {
   const map = {
-    on_time:  { label: "On Time",  color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
-    delayed:  { label: "Delayed",  color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
-    landed:   { label: "Landed",   color: "#6366f1", bg: "rgba(99,102,241,0.1)" },
-    unknown:  { label: "Status Unknown", color: "#9ca3af", bg: "rgba(156,163,175,0.1)" },
+    on_time: { label: "On Time",       color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
+    delayed: { label: "Delayed",       color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+    landed:  { label: "Landed",        color: "#6366f1", bg: "rgba(99,102,241,0.1)" },
+    unknown: { label: "Status Unknown",color: "#9ca3af", bg: "rgba(156,163,175,0.1)" },
   };
   const cfg = map[status] || map.unknown;
   return (
@@ -111,6 +120,7 @@ export default function FlightDetailModal({ arrival, open, onClose }) {
   const isFlight = arrival.travel_type === "Flight";
   const outboundFlight = arrival.outbound_flight_number || arrival.flight_number;
   const returnFlight = arrival.return_flight_number;
+  const liveAvailable = isWithin24Hours(arrival.arrival_date, arrival.arrival_time);
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -132,7 +142,10 @@ export default function FlightDetailModal({ arrival, open, onClose }) {
                   : <p className="text-sm text-muted-foreground">Airline not specified</p>
                 }
               </div>
-              <FlightStatusBadge status="unknown" />
+              {liveAvailable
+                ? <FlightStatusBadge status="unknown" />
+                : <span className="text-[11px] text-muted-foreground">Tracking available 24h before departure</span>
+              }
             </div>
 
             {/* Outbound leg */}
@@ -164,8 +177,8 @@ export default function FlightDetailModal({ arrival, open, onClose }) {
             {!outboundFlight && !arrival.airline && (
               <p className="text-[11px] text-muted-foreground text-center pt-1">No flight details recorded</p>
             )}
-            {(outboundFlight || arrival.airline) && (
-              <p className="text-[11px] text-muted-foreground text-center pt-1">Live status not available</p>
+            {(outboundFlight || arrival.airline) && !liveAvailable && (
+              <p className="text-[11px] text-muted-foreground text-center pt-1">Scheduled</p>
             )}
           </div>
         ) : (
