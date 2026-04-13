@@ -21,6 +21,7 @@ import GroupDetail from './pages/GroupDetail';
 import JoinInvite from './pages/JoinInvite';
 import Notifications from './pages/Notifications';
 import OnboardingModal from './components/OnboardingModal';
+import RoveSplash from './components/RoveSplash';
 import { motion } from 'framer-motion';
 
 const MotionPage = ({ children }) => (
@@ -40,6 +41,7 @@ const AuthenticatedApp = () => {
   const [checkingOnboard, setCheckingOnboard] = useState(true);
   const [onboardingError, setOnboardingError] = useState(false);
   const [isProfileReady, setIsProfileReady] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
   // Initialize theme from preference or system on app load
   useEffect(() => {
@@ -103,6 +105,10 @@ const AuthenticatedApp = () => {
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
       </div>
     );
+  }
+
+  if (showSplash) {
+    return <RoveSplash onFinish={() => setShowSplash(false)} />;
   }
 
   // Handle authentication errors
