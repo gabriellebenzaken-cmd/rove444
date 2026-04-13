@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { DollarSign, ArrowRight, Receipt } from "lucide-react";
+import { DollarSign } from "lucide-react";
 import { format } from "date-fns";
 import PullToRefresh from "../components/PullToRefresh";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function Costs() {
   const [user, setUser] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [payments, setPayments] = useState([]);
   const [trips, setTrips] = useState([]);
-  const [profiles, setProfiles] = useState({}); // email -> UserProfile
+  const [profiles, setProfiles] = useState({});
   const [loading, setLoading] = useState(true);
   const [detailModal, setDetailModal] = useState(null); // 'all' | 'owe' | 'received'
 
@@ -66,7 +67,6 @@ export default function Costs() {
     ].filter(Boolean);
   }
 
-  // Totals
   const totalSpent = expenses.reduce((s, e) => s + (e.amount || 0), 0);
 
   const iOwe = expenses
@@ -74,7 +74,7 @@ export default function Costs() {
     .reduce((s, e) => {
       const pay = getPayment(e.id, user.email);
       if (pay?.status === "confirmed") return s;
-      if (pay?.status === "pending") return s; // pending counts as in-flight, not still owed
+      if (pay?.status === "pending") return s;
       return s + getShareAmount(e, user.email);
     }, 0);
 
@@ -130,126 +130,124 @@ export default function Costs() {
   }
 
   return (
-    <PullToRefresh onRefresh={loadData}>
-    <div className="px-5 pt-14 pb-24">
-      <div className="mb-7">
-        <p className="text-xs font-medium tracking-widest uppercase" style={{ color: "#C8A27C", letterSpacing: "0.12em" }}>Overview</p>
-        <h1 className="text-[28px] font-semibold tracking-tight leading-tight mt-0.5 text-[#1A1A1A] dark:text-[#F0EAE0]" style={{ letterSpacing: "-0.025em" }}>Costs</h1>
-      </div>
-
-      {expenses.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-14 h-14 rounded-[22px] flex items-center justify-center mb-4" style={{ background: "rgba(200,162,124,0.12)" }}>
-            <DollarSign className="h-6 w-6" style={{ color: "#C8A27C" }} />
+    <>
+      <PullToRefresh onRefresh={loadData}>
+        <div className="px-5 pt-14 pb-24">
+          <div className="mb-7">
+            <p className="text-xs font-medium tracking-widest uppercase" style={{ color: "#C8A27C", letterSpacing: "0.12em" }}>Overview</p>
+            <h1 className="text-[28px] font-semibold tracking-tight leading-tight mt-0.5 text-[#1A1A1A] dark:text-[#F0EAE0]" style={{ letterSpacing: "-0.025em" }}>Costs</h1>
           </div>
-          <h3 className="font-semibold text-base mb-1" style={{ color: "#1A1A1A" }}>No expenses yet</h3>
-          <p className="text-sm" style={{ color: "#9A8A7A" }}>Expenses from your trips will appear here</p>
-        </div>
-      ) : (
-        <>
-          {/* Summary cards */}
-          <div className="grid grid-cols-3 gap-2 mb-5">
-            {[
-              { key: "all",      label: "total spent",  value: `$${totalSpent.toFixed(2)}`, color: "#2A2018" },
-              { key: "owe",      label: "you owe",      value: `$${iOwe.toFixed(2)}`,       color: iOwe > 0 ? "#B04040" : "#2A2018" },
-              { key: "received", label: "you're owed",  value: `$${iAmOwed.toFixed(2)}`,    color: iAmOwed > 0 ? "#3A7A5A" : "#2A2018" },
-            ].map(({ key, label, value, color }) => (
-              <div
-                key={key}
-                className="rounded-2xl p-3 text-center cursor-pointer active:scale-95 transition-transform"
-                style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.15)" }}
-                onClick={() => setDetailModal(key)}
-              >
-                <p className="text-[10px] mb-1" style={{ color: "#B0A090" }}>{label}</p>
-                <p className="text-sm font-semibold" style={{ color }}>{value}</p>
+
+          {expenses.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div className="w-14 h-14 rounded-[22px] flex items-center justify-center mb-4" style={{ background: "rgba(200,162,124,0.12)" }}>
+                <DollarSign className="h-6 w-6" style={{ color: "#C8A27C" }} />
               </div>
-            ))}
-          </div>
+              <h3 className="font-semibold text-base mb-1" style={{ color: "#1A1A1A" }}>No expenses yet</h3>
+              <p className="text-sm" style={{ color: "#9A8A7A" }}>Expenses from your trips will appear here</p>
+            </div>
+          ) : (
+            <>
+              {/* Summary cards */}
+              <div className="grid grid-cols-3 gap-2 mb-5">
+                {[
+                  { key: "all",      label: "total spent",  value: `$${totalSpent.toFixed(2)}`, color: "#2A2018" },
+                  { key: "owe",      label: "you owe",      value: `$${iOwe.toFixed(2)}`,       color: iOwe > 0 ? "#B04040" : "#2A2018" },
+                  { key: "received", label: "you're owed",  value: `$${iAmOwed.toFixed(2)}`,    color: iAmOwed > 0 ? "#3A7A5A" : "#2A2018" },
+                ].map(({ key, label, value, color }) => (
+                  <div
+                    key={key}
+                    className="rounded-2xl p-3 text-center cursor-pointer active:scale-95 transition-transform"
+                    style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.15)" }}
+                    onClick={() => setDetailModal(key)}
+                  >
+                    <p className="text-[10px] mb-1" style={{ color: "#B0A090" }}>{label}</p>
+                    <p className="text-sm font-semibold" style={{ color }}>{value}</p>
+                  </div>
+                ))}
+              </div>
 
-          {/* Who Owes Who */}
-          {balanceRows.length > 0 && (
-            <div className="mb-5">
-              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#C8A27C" }}>Settle Up</p>
-              <div className="space-y-2">
-                {balanceRows.map((b, i) => {
-                  const settleLinks = getSettleLinks(b.to);
-                  const isMe = b.from === user.email;
-                  return (
-                    <div key={i} className="rounded-2xl p-3" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.15)" }}>
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs" style={{ color: "#3A3028" }}>
-                          <span className="font-semibold">{isMe ? "You" : resolveName(b.from)}</span>
-                          <span style={{ color: "#B0A090" }}> → </span>
-                          <span className="font-semibold">{b.to === user.email ? "You" : resolveName(b.to)}</span>
-                        </p>
-                        <span className="text-sm font-semibold" style={{ color: isMe ? "#B04040" : "#3A7A5A" }}>${b.amount.toFixed(2)}</span>
-                      </div>
-                      {b.tripName && (
-                        <p className="text-[10px] mb-1.5" style={{ color: "#B0A090" }}>via {b.tripName}</p>
-                      )}
-                      {settleLinks.length > 0 && (
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[10px]" style={{ color: "#B0A090" }}>settle via</span>
-                          {settleLinks.map(l => l.href ? (
-                            <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer"
-                              className="px-2 py-0.5 rounded-full text-[10px] font-semibold active:opacity-70"
-                              style={{ background: "rgba(200,162,124,0.15)", color: "#7A5A3A" }}>
-                              {l.label} ↗
-                            </a>
-                          ) : (
-                            <span key={l.label} className="px-2 py-0.5 rounded-full text-[10px]" style={{ background: "rgba(200,162,124,0.08)", color: "#9A8A7A" }}>
-                              Zelle: {l.info}
-                            </span>
-                          ))}
+              {/* Settle Up */}
+              {balanceRows.length > 0 && (
+                <div className="mb-5">
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#C8A27C" }}>Settle Up</p>
+                  <div className="space-y-2">
+                    {balanceRows.map((b, i) => {
+                      const settleLinks = getSettleLinks(b.to);
+                      const isMe = b.from === user.email;
+                      return (
+                        <div key={i} className="rounded-2xl p-3" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.15)" }}>
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-xs" style={{ color: "#3A3028" }}>
+                              <span className="font-semibold">{isMe ? "You" : resolveName(b.from)}</span>
+                              <span style={{ color: "#B0A090" }}> → </span>
+                              <span className="font-semibold">{b.to === user.email ? "You" : resolveName(b.to)}</span>
+                            </p>
+                            <span className="text-sm font-semibold" style={{ color: isMe ? "#B04040" : "#3A7A5A" }}>${b.amount.toFixed(2)}</span>
+                          </div>
+                          {b.tripName && (
+                            <p className="text-[10px] mb-1.5" style={{ color: "#B0A090" }}>via {b.tripName}</p>
+                          )}
+                          {settleLinks.length > 0 && (
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[10px]" style={{ color: "#B0A090" }}>settle via</span>
+                              {settleLinks.map(l => l.href ? (
+                                <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer"
+                                  className="px-2 py-0.5 rounded-full text-[10px] font-semibold active:opacity-70"
+                                  style={{ background: "rgba(200,162,124,0.15)", color: "#7A5A3A" }}>
+                                  {l.label} ↗
+                                </a>
+                              ) : (
+                                <span key={l.label} className="px-2 py-0.5 rounded-full text-[10px]" style={{ background: "rgba(200,162,124,0.08)", color: "#9A8A7A" }}>
+                                  Zelle: {l.info}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      )}
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Recent expenses */}
+              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#C8A27C" }}>Recent Expenses</p>
+              <div className="space-y-2">
+                {expenses.slice(0, 30).map((exp) => {
+                  const trip = trips.find((t) => t.id === exp.trip_id);
+                  const settled = exp.is_settled;
+                  return (
+                    <div key={exp.id} className="rounded-2xl p-3" style={{ background: settled ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.12)", opacity: settled ? 0.7 : 1 }}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0 pr-3">
+                          <p className={`text-sm font-medium truncate ${settled ? "line-through" : ""}`} style={{ color: settled ? "#B0A090" : "#2A2018" }}>{exp.description}</p>
+                          <p className="text-[11px] mt-0.5" style={{ color: "#B0A090" }}>
+                            {trip?.name} · {resolveName(exp.paid_by)} paid
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className={`text-sm font-semibold ${settled ? "line-through" : ""}`} style={{ color: settled ? "#B0A090" : "#2A2018" }}>${exp.amount?.toFixed(2)}</p>
+                          {settled && <span className="text-[9px]" style={{ color: "#5A9E7A" }}>Settled</span>}
+                        </div>
+                      </div>
                     </div>
                   );
                 })}
               </div>
-            </div>
+            </>
           )}
+        </div>
+      </PullToRefresh>
 
-          {/* Recent expenses */}
-          <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#C8A27C" }}>Recent Expenses</p>
-          <div className="space-y-2">
-            {expenses.slice(0, 30).map((exp) => {
-              const trip = trips.find((t) => t.id === exp.trip_id);
-              const settled = exp.is_settled;
-              return (
-                <div key={exp.id} className="rounded-2xl p-3" style={{ background: settled ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.12)", opacity: settled ? 0.7 : 1 }}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0 pr-3">
-                      <p className={`text-sm font-medium truncate ${settled ? "line-through" : ""}`} style={{ color: settled ? "#B0A090" : "#2A2018" }}>{exp.description}</p>
-                      <p className="text-[11px] mt-0.5" style={{ color: "#B0A090" }}>
-                        {trip?.name} · {resolveName(exp.paid_by)} paid
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className={`text-sm font-semibold ${settled ? "line-through" : ""}`} style={{ color: settled ? "#B0A090" : "#2A2018" }}>${exp.amount?.toFixed(2)}</p>
-                      {settled && <span className="text-[9px]" style={{ color: "#5A9E7A" }}>Settled</span>}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
-
-      {/* Detail modal */}
-      {detailModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.45)" }} onClick={() => setDetailModal(null)}>
-          <div className="w-full max-w-md rounded-3xl flex flex-col" style={{ background: "#FAF7F4", maxHeight: "calc(100vh - 120px)" }} onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
-              <h3 className="text-base font-semibold" style={{ color: "#2A2018" }}>
-                {detailModal === "all" ? "All Expenses" : detailModal === "owe" ? "What You Owe" : "Owed to You"}
-              </h3>
-              <button onClick={() => setDetailModal(null)} className="w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgba(200,162,124,0.15)" }}>
-                <span style={{ fontSize: 16, color: "#9A8A7A", lineHeight: 1 }}>✕</span>
-              </button>
-            </div>
-            <div className="overflow-y-auto px-5 pb-6">
+      <Dialog open={!!detailModal} onOpenChange={(open) => { if (!open) setDetailModal(null); }}>
+        <DialogContent className="max-w-md w-[calc(100%-2rem)] rounded-3xl p-0 gap-0 overflow-hidden" style={{ background: "#FAF7F4", maxHeight: "calc(100vh - 120px)", display: "flex", flexDirection: "column" }}>
+          <DialogHeader className="px-5 pt-5 pb-3 shrink-0">
+            <DialogTitle style={{ color: "#2A2018" }}>
+              {detailModal === "all" ? "All Expenses" : detailModal === "owe" ? "What You Owe" : "Owed to You"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto px-5 pb-6">
             <div className="space-y-2">
               {(() => {
                 const list = detailModal === "all" ? expenses
@@ -296,11 +294,9 @@ export default function Costs() {
                 });
               })()}
             </div>
-            </div>
           </div>
-        </div>
-      )}
-    </div>
-    </PullToRefresh>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

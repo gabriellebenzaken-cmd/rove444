@@ -10,6 +10,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import MobileSelect from "../MobileSelect";
 import { toast } from "sonner";
@@ -546,19 +547,14 @@ export default function TripCosts({ trip, user }) {
         </div>
       )}
 
-      {/* Detail modal */}
-      {detailModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.45)" }} onClick={() => setDetailModal(null)}>
-          <div className="w-full max-w-md rounded-3xl flex flex-col" style={{ background: "#FAF7F4", maxHeight: "calc(100vh - 120px)" }} onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
-              <h3 className="text-base font-semibold" style={{ color: "#2A2018" }}>
-                {detailModal === "all" ? "All Expenses" : detailModal === "owe" ? "What You Owe" : "Owed to You"}
-              </h3>
-              <button onClick={() => setDetailModal(null)} className="w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgba(200,162,124,0.15)" }}>
-                <span style={{ fontSize: 16, color: "#9A8A7A", lineHeight: 1 }}>✕</span>
-              </button>
-            </div>
-            <div className="overflow-y-auto px-5 pb-6">
+      <Dialog open={!!detailModal} onOpenChange={(open) => { if (!open) setDetailModal(null); }}>
+        <DialogContent className="max-w-md w-[calc(100%-2rem)] rounded-3xl p-0 gap-0 overflow-hidden" style={{ background: "#FAF7F4", maxHeight: "calc(100vh - 120px)", display: "flex", flexDirection: "column" }}>
+          <DialogHeader className="px-5 pt-5 pb-3 shrink-0">
+            <DialogTitle style={{ color: "#2A2018" }}>
+              {detailModal === "all" ? "All Expenses" : detailModal === "owe" ? "What You Owe" : "Owed to You"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto px-5 pb-6">
             <div className="space-y-2">
               {(() => {
                 const list = detailModal === "all" ? expenses
@@ -587,9 +583,7 @@ export default function TripCosts({ trip, user }) {
                             Paid by {resolveName(exp.paid_by)}
                             {exp.created_date ? ` · ${format(new Date(exp.created_date), "MMM d")}` : ""}
                           </p>
-                          <p className="text-[11px] mt-0.5" style={{ color: "#B0A090" }}>
-                            Split {exp.split_among?.length || 0} ways
-                          </p>
+                          <p className="text-[11px] mt-0.5" style={{ color: "#B0A090" }}>Split {exp.split_among?.length || 0} ways</p>
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-sm font-semibold" style={{ color: detailModal === "owe" ? "#B04040" : detailModal === "received" ? "#3A7A5A" : "#2A2018" }}>${myShare.toFixed(2)}</p>
@@ -607,10 +601,9 @@ export default function TripCosts({ trip, user }) {
                 });
               })()}
             </div>
-            </div>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       {showAdd && (
         <div
