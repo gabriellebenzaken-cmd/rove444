@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+
 import { base44 } from "@/api/base44Client";
 import { DollarSign, X } from "lucide-react";
 import { format } from "date-fns";
@@ -220,8 +220,8 @@ export default function Costs() {
                   <div key={trip.id} className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(200,162,124,0.15)", opacity: isSettled && isPast ? 0.65 : 1 }}>
                     {/* Trip header — split into title (navigate) and amount (open modal) */}
                     <div className="flex items-center px-4 py-3">
-                      {/* Title area → navigate to trip */}
-                      <Link to={`/trip/${trip.id}`} className="flex-1 min-w-0 pr-3 active:opacity-70 transition-opacity">
+                      {/* Title area → open cost detail modal */}
+                      <button onClick={() => setTripModal(trip)} className="flex-1 min-w-0 pr-3 text-left active:opacity-70 transition-opacity">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <p className="text-sm font-semibold truncate" style={{ color: "#2A2018" }}>{trip.name}</p>
                           {isPast && (
@@ -232,7 +232,7 @@ export default function Costs() {
                           {trip.destination}
                           {trip.start_date ? ` · ${format(new Date(trip.start_date + "T00:00:00"), "MMM d")}` : ""}
                         </p>
-                      </Link>
+                      </button>
 
                       {/* Amount → open trip balance modal */}
                       <button
