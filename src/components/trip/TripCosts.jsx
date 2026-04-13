@@ -548,12 +548,17 @@ export default function TripCosts({ trip, user }) {
 
       {/* Detail modal */}
       {detailModal && (
-        <div className="fixed inset-0 z-50 flex items-end" onClick={() => setDetailModal(null)}>
-          <div className="w-full rounded-t-3xl p-5 pb-10 max-h-[80vh] overflow-y-auto" style={{ background: "#FAF7F4" }} onClick={e => e.stopPropagation()}>
-            <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: "rgba(200,162,124,0.3)" }} />
-            <h3 className="text-base font-semibold mb-4" style={{ color: "#2A2018" }}>
-              {detailModal === "all" ? "All Expenses" : detailModal === "owe" ? "What You Owe" : "Owed to You"}
-            </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.45)" }} onClick={() => setDetailModal(null)}>
+          <div className="w-full max-w-md rounded-3xl flex flex-col" style={{ background: "#FAF7F4", maxHeight: "calc(100vh - 120px)" }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
+              <h3 className="text-base font-semibold" style={{ color: "#2A2018" }}>
+                {detailModal === "all" ? "All Expenses" : detailModal === "owe" ? "What You Owe" : "Owed to You"}
+              </h3>
+              <button onClick={() => setDetailModal(null)} className="w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgba(200,162,124,0.15)" }}>
+                <span style={{ fontSize: 16, color: "#9A8A7A", lineHeight: 1 }}>✕</span>
+              </button>
+            </div>
+            <div className="overflow-y-auto px-5 pb-6">
             <div className="space-y-2">
               {(() => {
                 const list = detailModal === "all" ? expenses
@@ -601,6 +606,7 @@ export default function TripCosts({ trip, user }) {
                   );
                 });
               })()}
+            </div>
             </div>
           </div>
         </div>
