@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import MobileSelect from "../MobileSelect";
+import PaymentMethodPicker from "./PaymentMethodPicker";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -41,7 +41,6 @@ export default function TripCosts({ trip, user }) {
   const [payerProfiles, setPayerProfiles] = useState({}); // email -> UserProfile
   const [showAdd, setShowAdd] = useState(false);
   const [expandedExpense, setExpandedExpense] = useState(null);
-  const [selectedMethod, setSelectedMethod] = useState({});
   const [detailModal, setDetailModal] = useState(null); // 'owe' | 'received' | null
   const [form, setForm] = useState({ description: "", amount: "", category: "other", split_among: trip.member_emails || [], day_number: null, trip_wide: true });
   const [splitMode, setSplitMode] = useState("equal");
@@ -482,53 +481,19 @@ export default function TripCosts({ trip, user }) {
                     </div>
 
                     {iOweThis && !settled && (
-                      <div className="rounded-xl p-3" style={{ background: "rgba(200,162,124,0.06)" }}>
-                        {!myPayment || myPayment.status === "rejected" ? (
-                          <div>
-                            {myPayment?.status === "rejected" && (
-                              <p className="text-xs mb-2" style={{ color: "#B04040" }}>⚠ Payment rejected — try again</p>
-                            )}
-                            <p className="text-xs font-medium mb-2" style={{ color: "#3A3028" }}>
-                              You owe ${myShare.toFixed(2)} to {exp.paid_by_name || exp.paid_by?.split("@")[0]}
-                            </p>
-                            {/* External settle buttons */}
-                            {(() => {
-                              const pp = payerProfiles[exp.paid_by];
-                              if (!pp) return null;
-                              const payLinks = [
-                                pp.venmo && { label: "Venmo", href: `https://venmo.com/${pp.venmo.replace(/^@/, "")}` },
-                                pp.cashapp && { label: "Cash App", href: `https://cash.app/${pp.cashapp.replace(/^\$/, "$")}` },
-                                pp.paypal && { label: "PayPal", href: `https://paypal.me/${pp.paypal.replace(/^[@\/]/, "")}` },
-                                pp.zelle && { label: "Zelle", href: null, info: pp.zelle },
-                              ].filter(Boolean);
-                              if (payLinks.length === 0) return null;
-                              return (
-                                <div className="flex flex-wrap gap-1.5 mb-2">
-                                  {payLinks.map((pl) =>
-                                    pl.href ? (
-                                      <a key={pl.label} href={pl.href} target="_blank" rel="noopener noreferrer"
-                                        className="px-2.5 py-1 rounded-full text-[10px] font-semibold"
-                                        style={{ background: "rgba(200,162,124,0.15)", color: "#7A6A5A" }}>
-                                        Settle via {pl.label} ↗
-                                      </a>
-                                    ) : (
-                                      <span key={pl.label}
-                                        className="px-2.5 py-1 rounded-full text-[10px] font-medium"
-                                        style={{ background: "rgba(200,162,124,0.1)", color: "#9A8A7A" }}>
-                                        Zelle: {pl.info}
-                                      </span>
-                                    )
-                                  )}
-                                </div>
-                              );
-                            })()}
-                            <div className="flex gap-2">
-                               <MobileSelect value={selectedMethod[exp.id] || "other"} onChange={(v) => setSelectedMethod({ ...selectedMethod, [exp.id]: v })} options={paymentMethods} placeholder="Method" />
-                              <Button size="sm" className="rounded-full shrink-0 h-8 text-xs px-3" style={{ background: "#C8A27C", color: "white" }} onClick={() => markPaymentSent(exp, selectedMethod[exp.id])}>
-                                <Send className="h-3 w-3 mr-1" /> Sent
-                              </Button>
-                            </div>
-                          </div>
+                    <div className="rounded-xl p-3" style={{ background: "rgba(200,162,124,0.06)" }}>
+                    {!myPayment || myPayment.status === "rejected" ? (
+                      <div>
+                        {myPayment?.status === "rejected" && (
+                          <p className="text-xs mb-2" style={{ color: "#B04040" }}>⚠ Payment rejected — try again</p>
+                        )}
+                        <PaymentMethodPicker
+                          receiverProfile={payerProfiles[exp.paid_by]}
+                          receiverName={resolveName(exp.paid_by)}
+                          amount={myShare}
+                          onSent={(method) => markPaymentSent(exp, method)}
+                        />
+                      </div>
                         ) : myPayment.status === "pending" ? (
                           <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4 shrink-0" style={{ color: "#9A7840" }} />
