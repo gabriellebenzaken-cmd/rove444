@@ -135,12 +135,12 @@ export default function FlightDetailModal({ arrival, open, onClose }) {
                 <p className="font-semibold text-sm">{arrival.airline || guessAirline(outboundFlight) || "Flight"}</p>
               </div>
               {outboundFlight && (
-               inWindow ? (
-                  liveLoading
-                    ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                    : <FlightStatusBadge status={liveStatus || "unknown"} />
-                ) : (
+                !inWindow ? (
                   <span className="text-[11px] text-muted-foreground">Tracking available 24h before departure</span>
+                ) : liveLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                ) : (
+                  <FlightStatusBadge status={liveStatus || "unknown"} />
                 )
               )}
             </div>
