@@ -1,13 +1,28 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
-export default function RoveSplash({ onFinish, duration = 1800 }) {
+function useDarkMode() {
+  const [dark, setDark] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e) => setDark(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return dark;
+}
+
+export default function RoveSplash({ onFinish, duration = 1300 }) {
+  const dark = useDarkMode();
   useEffect(() => {
     const timer = setTimeout(() => onFinish?.(), duration);
     return () => clearTimeout(timer);
   }, [duration, onFinish]);
 
+  const bg    = dark ? "#000" : "#fff";
+  const color = dark ? "#fff" : "#000";
+
   return (
-    <div style={styles.container}>
+    <div style={{ ...styles.container, backgroundColor: bg }}>
       <style>{`
         @keyframes roveFadeIn {
           from { opacity: 0; }
@@ -18,7 +33,7 @@ export default function RoveSplash({ onFinish, duration = 1800 }) {
           50%       { opacity: 1;    transform: scale(1.12); }
         }
         .rove-logo-wrap {
-          animation: roveFadeIn 450ms ease-out forwards;
+          animation: roveFadeIn 400ms ease-out forwards;
         }
         .rove-star {
           animation: roveTwinkle 1100ms ease-in-out infinite;
@@ -26,8 +41,8 @@ export default function RoveSplash({ onFinish, duration = 1800 }) {
       `}</style>
       <div className="rove-logo-wrap" style={styles.logoWrap}>
         <div style={styles.wordmarkRow}>
-          <span style={styles.logo}>rove</span>
-          <span className="rove-star" style={styles.star}>✦</span>
+          <span style={{ ...styles.logo, color }}>rove</span>
+          <span className="rove-star" style={{ ...styles.star, color }}>✦</span>
         </div>
       </div>
     </div>

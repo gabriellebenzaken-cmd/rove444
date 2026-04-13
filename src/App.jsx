@@ -41,7 +41,8 @@ const AuthenticatedApp = () => {
   const [checkingOnboard, setCheckingOnboard] = useState(true);
   const [onboardingError, setOnboardingError] = useState(false);
   const [isProfileReady, setIsProfileReady] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
+  // showSplash = post-login splash; only shown if startup splash didn't already run
+  const [showSplash, setShowSplash] = useState(false);
 
   // Initialize theme from preference or system on app load
   useEffect(() => {
@@ -56,6 +57,11 @@ const AuthenticatedApp = () => {
         await ensureUserProfile(me);
         setIsProfileReady(true);
         setCheckingOnboard(false);
+        // Only show post-login splash if startup splash already finished
+        if (!window.__roveSplashShown) {
+          setShowSplash(true);
+          window.__roveSplashShown = true;
+        }
       }).catch(() => {
         setCheckingOnboard(false);
         setIsProfileReady(true);
@@ -160,6 +166,20 @@ const AuthenticatedApp = () => {
 
 
 function App() {
+  const [showStartupSplash, setShowStartupSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowStartupSplash(false);
+      window.__roveSplashShown = true;
+    }, 1300);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (showStartupSplash) {
+    return <RoveSplash onFinish={() => setShowStartupSplash(false)} duration={1300} />;
+  }
+
   return (
     <ErrorBoundary>
       <AuthProvider>
