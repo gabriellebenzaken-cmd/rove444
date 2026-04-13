@@ -211,8 +211,19 @@ export default function TripCosts({ trip, user }) {
 
   function resolveName(email) {
     const profile = payerProfiles[email];
+    if (profile?.display_name) return profile.display_name;
+    if (profile?.username) return profile.username;
     if (profile?.full_name) return profile.full_name;
-    if (profile?.username) return `@${profile.username}`;
+    const member = members.find(m => m.email === email);
+    if (member?.full_name) return member.full_name;
+    return email.split("@")[0];
+  }
+
+  function getMemberDisplayName(email) {
+    const profile = payerProfiles[email];
+    if (profile?.display_name) return profile.display_name;
+    if (profile?.username) return profile.username;
+    if (profile?.full_name) return profile.full_name;
     const member = members.find(m => m.email === email);
     if (member?.full_name) return member.full_name;
     return email.split("@")[0];
@@ -675,7 +686,7 @@ export default function TripCosts({ trip, user }) {
                       <div className="w-4 h-4 rounded-full border flex items-center justify-center shrink-0" style={{ borderColor: isSelected ? "#C8A27C" : "#C0B0A0", background: isSelected ? "#C8A27C" : "transparent" }}>
                         {isSelected && <span style={{ color: "white", fontSize: 9 }}>✓</span>}
                       </div>
-                      <span style={{ color: isSelected ? "#3A3028" : "#9A8A7A" }}>{m.full_name}{m.email === user.email ? " (You)" : ""}</span>
+                      <span style={{ color: isSelected ? "#3A3028" : "#9A8A7A" }}>{getMemberDisplayName(m.email)}{m.email === user.email ? " (You)" : ""}</span>
                     </button>
                   );
                 })}
@@ -703,7 +714,7 @@ export default function TripCosts({ trip, user }) {
                   const m = members.find(m => m.email === email);
                   return (
                     <div key={email} className="flex items-center gap-2">
-                      <span className="text-xs flex-1" style={{ color: "#3A3028" }}>{m?.full_name || email.split("@")[0]}{email === user.email ? " (You)" : ""}</span>
+                      <span className="text-xs flex-1" style={{ color: "#3A3028" }}>{getMemberDisplayName(email)}{email === user.email ? " (You)" : ""}</span>
                       <Input
                         type="number"
                         step="0.01"
