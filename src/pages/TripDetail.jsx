@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Link2, MapPin, Calendar, Users, ImageIcon, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Link2, MapPin, Calendar, Users, ImageIcon, MoreHorizontal, Pencil, Trash2, LogOut } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import TripPlan from "../components/trip/TripPlan";
@@ -34,6 +34,7 @@ export default function TripDetail() {
   const [showEdit, setShowEdit] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -53,6 +54,17 @@ export default function TripDetail() {
   async function deleteTrip() {
     await base44.entities.Trip.delete(trip.id);
     toast.success("Trip deleted");
+    navigate("/");
+  }
+
+  async function leaveTrip() {
+    const newEmails = (trip.member_emails || []).filter(e => e !== user.email);
+    await base44.entities.Trip.update(trip.id, { member_emails: newEmails });
+    const tms = await base44.entities.TripMember.filter({ trip_id: trip.id, user_email: user.email }, "-created_date", 1);
+    if (tms.length > 0) {
+      await base44.entities.TripMember.update(tms[0].id, { status: "left" });
+    }
+    toast.success("You've left the trip");
     navigate("/");
   }
 
@@ -192,6 +204,12 @@ export default function TripDetail() {
                 <span className="text-sm font-medium text-destructive">Delete Trip</span>
               </button>
             )}
+            {isMember && !isAdmin && (
+              <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-destructive/10 transition-colors text-left" onClick={() => { setShowMenu(false); setShowLeaveConfirm(true); }}>
+                <LogOut className="h-4 w-4 text-destructive" />
+                <span className="text-sm font-medium text-destructive">Leave Trip</span>
+              </button>
+            )}
           </DialogContent>
         </Dialog>
 
@@ -224,6 +242,19 @@ export default function TripDetail() {
             <div className="flex gap-2 mt-2">
               <Button variant="outline" className="flex-1 rounded-full" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
               <Button variant="destructive" className="flex-1 rounded-full" onClick={deleteTrip}>Delete</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Leave confirm */}
+        <Dialog open={showLeaveConfirm} onOpenChange={setShowLeaveConfirm}>
+          <DialogContent className="mx-4 rounded-2xl max-w-sm">
+            <DialogHeader><DialogTitle>Leave Trip?</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground">You'll lose access to "{trip.name}". Your expense and payment history will remain visible to other members.</p>
+            <p className="text-xs mt-1" style={{ color: "#9A7840" }}>⚠ Any unsettled balances will still be visible in the Costs view.</p>
+            <div className="flex gap-2 mt-3">
+              <Button variant="outline" className="flex-1 rounded-full" onClick={() => setShowLeaveConfirm(false)}>Cancel</Button>
+              <Button variant="destructive" className="flex-1 rounded-full" onClick={leaveTrip}>Leave Trip</Button>
             </div>
           </DialogContent>
         </Dialog>

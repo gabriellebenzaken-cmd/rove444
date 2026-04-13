@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { UserPlus, Copy, Loader2, X } from "lucide-react";
+import { UserPlus, Copy, Loader2, X, UserMinus } from "lucide-react";
 import { toast } from "sonner";
 import FriendProfileModal from "../FriendProfileModal";
 
@@ -17,6 +17,8 @@ export default function TripMembersManager({ trip, user, isAdmin, onMembersUpdat
   const [inviting, setInviting] = useState(false);
   const [inviteLink, setInviteLink] = useState("");
   const [viewingMember, setViewingMember] = useState(null);
+  const [removingMember, setRemovingMember] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (showInviteModal) loadFriends();
@@ -32,11 +34,9 @@ export default function TripMembersManager({ trip, user, isAdmin, onMembersUpdat
       const activeMembers = m.filter((u) => trip.member_emails?.includes(u.email));
       setMembers(activeMembers);
     } catch (err) {
-      console.error('Failed to load members:', err);
+      console.error("Failed to load members:", err);
     }
   }
-
-  const [searchQuery, setSearchQuery] = useState("");
 
   async function loadFriends() {
     try {
@@ -62,7 +62,6 @@ export default function TripMembersManager({ trip, user, isAdmin, onMembersUpdat
         });
       } catch {}
 
-      // Exclude already-members and pending invitees
       let pendingEmails = new Set();
       try {
         const pending = await base44.entities.TripMember.filter({ trip_id: trip.id, status: "invited" }, "-created_date", 200);
@@ -73,15 +72,15 @@ export default function TripMembersManager({ trip, user, isAdmin, onMembersUpdat
       setFriends(friendList.filter((f) => !memberEmails.has(f.email) && !pendingEmails.has(f.email)));
       setSelectedFriends([]);
     } catch (err) {
-      console.error('Failed to load friends:', err);
-      toast.error('Failed to load friends');
+      console.error("Failed to load friends:", err);
+      toast.error("Failed to load friends");
     } finally {
       setLoading(false);
     }
   }
 
   async function inviteSelectedFriends() {
-    if (selectedFriends.length === 0) { toast.error('Select at least one friend'); return; }
+    if (selectedFriends.length === 0) { toast.error("Select at least one friend"); return; }
     try {
       setInviting(true);
       for (const friend of selectedFriends) {
@@ -103,13 +102,13 @@ export default function TripMembersManager({ trip, user, isAdmin, onMembersUpdat
           is_read: false,
         });
       }
-      toast.success(`Invited ${selectedFriends.length} friend${selectedFriends.length !== 1 ? 's' : ''}`);
+      toast.success(`Invited ${selectedFriends.length} friend${selectedFriends.length !== 1 ? "s" : ""}`);
       setSelectedFriends([]);
       setShowInviteModal(false);
       onMembersUpdate?.();
     } catch (err) {
-      console.error('Failed to invite friends:', err);
-      toast.error('Failed to invite friends');
+      console.error("Failed to invite friends:", err);
+      toast.error("Failed to invite friends");
     } finally {
       setInviting(false);
     }
@@ -120,12 +119,25 @@ export default function TripMembersManager({ trip, user, isAdmin, onMembersUpdat
       const link = `${window.location.origin}/trip/${trip.id}`;
       await navigator.clipboard.writeText(link);
       setInviteLink(link);
-      toast.success('Invite link copied!');
+      toast.success("Invite link copied!");
       setTimeout(() => setInviteLink(""), 2000);
     } catch (err) {
-      console.error('Failed to copy link:', err);
-      toast.error('Failed to copy link');
+      console.error("Failed to copy link:", err);
+      toast.error("Failed to copy link");
     }
+  }
+
+  async function removeMember(member) {
+    const newEmails = (trip.member_emails || []).filter(e => e !== member.email);
+    await base44.entities.Trip.update(trip.id, { member_emails: newEmails });
+    const tms = await base44.entities.TripMember.filter({ trip_id: trip.id, user_email: member.email }, "-created_date", 1);
+    if (tms.length > 0) {
+      await base44.entities.TripMember.update(tms[0].id, { status: "removed" });
+    }
+    toast.success(`${member.full_name || "Member"} removed`);
+    setRemovingMember(null);
+    loadMembers();
+    onMembersUpdate?.();
   }
 
   return (
@@ -145,32 +157,58 @@ export default function TripMembersManager({ trip, user, isAdmin, onMembersUpdat
       </div>
 
       <div className="space-y-2">
-       {members.length === 0 ? (
-         <p className="text-xs text-muted-foreground py-4 text-center">Invite friends to plan together</p>
-       ) : (
-         members.map((m) => (
-           <div key={m.id} className="flex items-center gap-2 p-3 bg-white rounded-lg border border-border cursor-pointer active:scale-95 transition-all" onClick={() => setViewingMember(m)}>
-             <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-xs font-semibold shrink-0 overflow-hidden">
-               {m.data?.profile_photo ? (
-                 <img src={m.data.profile_photo} alt="" className="w-9 h-9 rounded-full object-cover" />
-               ) : (
-                 m.full_name?.[0] || "?"
-               )}
-             </div>
-             <div className="flex-1 min-w-0">
-               <p className="text-xs font-medium truncate">{m.full_name}</p>
-               {m.data?.username && <p className="text-[10px] text-muted-foreground truncate">@{m.data.username}</p>}
-             </div>
-             {trip.admin_email === m.email && (
-               <span className="text-[10px] px-2 py-1 bg-primary/10 text-primary rounded-full shrink-0 shrink-0">Admin</span>
-             )}
-           </div>
-         ))
-       )}
+        {members.length === 0 ? (
+          <p className="text-xs text-muted-foreground py-4 text-center">Invite friends to plan together</p>
+        ) : (
+          members.map((m) => (
+            <div key={m.id} className="flex items-center gap-2 p-3 bg-white rounded-lg border border-border transition-all">
+              <div className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer active:scale-95" onClick={() => setViewingMember(m)}>
+                <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-xs font-semibold shrink-0 overflow-hidden">
+                  {m.data?.profile_photo ? (
+                    <img src={m.data.profile_photo} alt="" className="w-9 h-9 rounded-full object-cover" />
+                  ) : (
+                    m.full_name?.[0] || "?"
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate">{m.full_name}</p>
+                  {m.data?.username && <p className="text-[10px] text-muted-foreground truncate">@{m.data.username}</p>}
+                </div>
+                {trip.admin_email === m.email && (
+                  <span className="text-[10px] px-2 py-1 bg-primary/10 text-primary rounded-full shrink-0">Admin</span>
+                )}
+              </div>
+              {isAdmin && m.email !== trip.admin_email && (
+                <button
+                  onClick={() => setRemovingMember(m)}
+                  className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-colors hover:bg-destructive/10"
+                >
+                  <UserMinus className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              )}
+            </div>
+          ))
+        )}
       </div>
 
       <FriendProfileModal friend={viewingMember} onClose={() => setViewingMember(null)} />
 
+      {/* Remove member confirm */}
+      <Dialog open={!!removingMember} onOpenChange={(v) => { if (!v) setRemovingMember(null); }}>
+        <DialogContent className="mx-4 rounded-2xl max-w-sm">
+          <DialogHeader><DialogTitle>Remove Member?</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Remove <strong>{removingMember?.full_name}</strong> from this trip? They'll lose access, but their expense and payment history will remain.
+          </p>
+          <p className="text-xs mt-1" style={{ color: "#9A7840" }}>⚠ Any unsettled balances involving them will still be visible.</p>
+          <div className="flex gap-2 mt-3">
+            <Button variant="outline" className="flex-1 rounded-full" onClick={() => setRemovingMember(null)}>Cancel</Button>
+            <Button variant="destructive" className="flex-1 rounded-full" onClick={() => removeMember(removingMember)}>Remove</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Invite friends modal */}
       <Dialog open={showInviteModal} onOpenChange={(v) => { if (!v) { setShowInviteModal(false); setSearchQuery(""); } }}>
         <DialogContent className="mx-4 rounded-2xl max-w-sm p-6 max-h-[90vh] flex flex-col">
           <DialogHeader>
