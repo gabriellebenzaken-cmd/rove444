@@ -4,8 +4,15 @@ import { base44 } from "@/api/base44Client";
 function hoursUntilDeparture(dateStr, timeStr) {
   if (!dateStr) return null;
   const time = timeStr || "00:00";
-  const dep = new Date(`${dateStr}T${time}:00`);
-  return (dep - new Date()) / (1000 * 60 * 60);
+  const departureTimestamp = new Date(`${dateStr}T${time}`).getTime();
+  if (isNaN(departureTimestamp)) {
+    console.warn("useLiveFlightStatus: Invalid departure timestamp", { dateStr, timeStr });
+    return null;
+  }
+  const now = Date.now();
+  const hoursUntilDeparture = (departureTimestamp - now) / (1000 * 60 * 60);
+  console.log({ now, departureTimestamp, hoursUntilDeparture, inWindow: hoursUntilDeparture <= 24 && hoursUntilDeparture >= -6 });
+  return hoursUntilDeparture;
 }
 
 // Live tracking hook — only polls within 24h of departure, stops after landing
