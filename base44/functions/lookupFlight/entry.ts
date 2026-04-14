@@ -132,8 +132,8 @@ Deno.serve(async (req) => {
       airline_code: bestMatch.airline?.iata_code || null,
       departure_airport: bestMatch.departure?.airport || null,
       arrival_airport: bestMatch.arrival?.airport || null,
-      scheduled_departure_time: bestMatch.departure?.scheduled ? new Date(bestMatch.departure.scheduled).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : null,
-      scheduled_arrival_time: bestMatch.arrival?.scheduled ? new Date(bestMatch.arrival.scheduled).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : null,
+      scheduled_departure_time: bestMatch.departure?.scheduled ? new Date(bestMatch.departure.scheduled).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : null,
+      scheduled_arrival_time: bestMatch.arrival?.scheduled ? new Date(bestMatch.arrival.scheduled).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : null,
       terminal: bestMatch.departure?.terminal || null,
       gate: bestMatch.departure?.gate || null,
     });

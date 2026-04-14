@@ -4,11 +4,21 @@ import { format } from "date-fns";
 import { useLiveFlightStatus } from "@/hooks/useLiveFlightStatus";
 import { guessAirline } from "@/utils/airlines";
 
+function formatTime(timeStr) {
+  if (!timeStr) return null;
+  const [hStr, mStr] = timeStr.split(":");
+  const h = parseInt(hStr, 10);
+  const m = mStr || "00";
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return `${h12}:${m} ${ampm}`;
+}
+
 function formatDate(date, time) {
   if (!date) return null;
   try {
     const d = format(new Date(date + "T00:00:00"), "EEE, MMM d");
-    return time ? `${d} at ${time}` : d;
+    return time ? `${d} at ${formatTime(time)}` : d;
   } catch {
     return date;
   }
@@ -154,7 +164,7 @@ export default function FlightDetailModal({ arrival, open, onClose }) {
               depDate={null}
               depTime={null}
               arrDate={arrival.arrival_date ? format(new Date(arrival.arrival_date + "T00:00:00"), "EEE, MMM d") : null}
-              arrTime={arrival.arrival_time}
+              arrTime={formatTime(arrival.arrival_time)}
             />
 
             {/* Return leg */}
@@ -165,7 +175,7 @@ export default function FlightDetailModal({ arrival, open, onClose }) {
                 from={arrival.destination}
                 to={arrival.arrival_location}
                 depDate={arrival.departure_date ? format(new Date(arrival.departure_date + "T00:00:00"), "EEE, MMM d") : null}
-                depTime={arrival.departure_time}
+                depTime={formatTime(arrival.departure_time)}
                 arrDate={null}
                 arrTime={null}
               />
