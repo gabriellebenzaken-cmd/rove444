@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, Loader2, ChevronDown, ChevronUp } from "lucide-react";
-import { format } from "date-fns";
+import { getLocationGreeting, getTimeContext, getLocationTime } from "@/lib/locationTime";
 
 const MOODS = [
   { label: "🍽 Food", value: "food spots and restaurants" },
@@ -12,15 +12,6 @@ const MOODS = [
   { label: "🎉 Nightlife", value: "nightlife, clubs, events" },
   { label: "📸 Explore", value: "photo spots, sightseeing, local gems" },
 ];
-
-function getTimeGreeting(destination) {
-  const h = new Date().getHours();
-  const time = format(new Date(), "h:mm a");
-  if (h < 12) return `Good morning — it's ${time}. What are you in the mood for?`;
-  if (h < 17) return `It's ${time} — what do you feel like doing?`;
-  if (h < 21) return `Evening in ${destination || "your trip"} — what's the vibe tonight?`;
-  return `It's ${time} — night owl energy. What's the plan?`;
-}
 
 function SuggestionCard({ suggestion, index }) {
   const [expanded, setExpanded] = useState(false);
@@ -60,7 +51,7 @@ export default function TripAira({ trip }) {
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const chatBottomRef = useRef(null);
-  const greeting = getTimeGreeting(trip?.destination);
+  const greeting = getLocationGreeting(trip);
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -71,13 +62,12 @@ export default function TripAira({ trip }) {
     setPhase("loading");
     setSuggestions([]);
 
-    const now = new Date();
-    const timeCtx = format(now, "EEEE, MMMM d 'at' h:mm a");
+    const timeCtx = getTimeContext(trip);
     const groupSize = trip?.member_emails?.length || 1;
 
     const result = await base44.integrations.Core.InvokeLLM({
       prompt: `You are Aira, a spontaneous trip discovery assistant. 
-The user is in ${trip?.destination || "their destination"} right now (${timeCtx}) with a group of ${groupSize}.
+The user is in ${trip?.destination || "their destination"} right now (${timeCtx}, local destination time) with a group of ${groupSize}.
 They want: ${mood.value}.
 
 Give 5 specific, real, actionable suggestions for RIGHT NOW. Each should feel immediate and discoverable — like a local friend's tip.
@@ -113,12 +103,11 @@ Be specific to ${trip?.destination || "the destination"}. No generic advice.`,
     setChatMessages((prev) => [...prev, { role: "user", content: msg }]);
     setChatLoading(true);
 
-    const now = new Date();
-    const timeCtx = format(now, "h:mm a");
+    const { time: timeCtx } = getLocationTime(trip);
     const history = chatMessages.slice(-6).map((m) => `${m.role === "user" ? "User" : "Aira"}: ${m.content}`).join("\n");
 
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are Aira, a spontaneous trip assistant for ${trip?.destination || "this destination"}. It's ${timeCtx}.
+      prompt: `You are Aira, a spontaneous trip assistant for ${trip?.destination || "this destination"}. It's ${timeCtx} local time in ${trip?.destination || "this destination"}.
 ${activeMood ? `Context: user is looking for ${activeMood.value}.` : ""}
 ${history ? `Conversation so far:\n${history}\n` : ""}
 User: ${msg}

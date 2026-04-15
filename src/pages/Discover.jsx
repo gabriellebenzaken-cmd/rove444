@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
+import { getLocationGreeting, getTimeContext, getLocationTime } from "@/lib/locationTime";
 
 const MOODS = [
   { label: "🍽 Food", value: "food spots and restaurants" },
@@ -12,15 +13,6 @@ const MOODS = [
   { label: "🎉 Nightlife", value: "nightlife, clubs, events" },
   { label: "📸 Explore", value: "photo spots, sightseeing, local gems" },
 ];
-
-function getTimeGreeting() {
-  const h = new Date().getHours();
-  const time = format(new Date(), "h:mm a");
-  if (h < 12) return `Good morning — it's ${time}. What are you in the mood for?`;
-  if (h < 17) return `It's ${time} — what do you feel like doing?`;
-  if (h < 21) return `Evening vibes — what's the plan tonight?`;
-  return `It's ${time} — what are you feeling?`;
-}
 
 function SuggestionCard({ suggestion, index }) {
   const [expanded, setExpanded] = useState(false);
@@ -89,8 +81,7 @@ export default function Discover() {
     setPhase("loading");
     setSuggestions([]);
 
-    const now = new Date();
-    const timeCtx = format(now, "EEEE, MMMM d 'at' h:mm a");
+    const timeCtx = getTimeContext(activeTrip);
     const dest = location || "the current destination";
     const groupSize = activeTrip?.member_emails?.length || 1;
 
@@ -131,7 +122,7 @@ Give 5 specific, real, actionable suggestions for RIGHT NOW. Each should feel im
     setChatMessages((prev) => [...prev, { role: "user", content: msg }]);
     setChatLoading(true);
 
-    const timeCtx = format(new Date(), "h:mm a");
+    const { time: timeCtx } = getLocationTime(activeTrip);
     const dest = location || "their destination";
     const history = chatMessages.slice(-6).map((m) => `${m.role === "user" ? "User" : "Aira"}: ${m.content}`).join("\n");
 
@@ -149,7 +140,7 @@ Be helpful, concise, and local-knowledge-first. 2-3 sentences max.`,
     setChatLoading(false);
   }
 
-  const greeting = getTimeGreeting();
+  const greeting = getLocationGreeting(activeTrip);
 
   return (
     <div className="px-5 pb-28 pt-14 max-w-lg mx-auto space-y-5">
