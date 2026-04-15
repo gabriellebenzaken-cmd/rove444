@@ -80,6 +80,7 @@ export default function TripItinerary({ trip, user }) {
       <ItineraryPlanner
         trip={trip}
         isEmpty={items.length === 0}
+        existingDates={new Set(items.map(i => i.date).filter(Boolean))}
         onActivityAdded={loadData}
       />
 
