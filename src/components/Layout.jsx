@@ -3,11 +3,17 @@ import { useState, useEffect } from "react";
 import { Map, Users, UserPlus, Wallet, User, Bell } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
+const StarIcon = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className={className} strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+);
+
 const NAV_ITEMS = [
   { path: "/", icon: Map, label: "Trips" },
   { path: "/groups", icon: Users, label: "Groups" },
+  { path: "/discover", icon: StarIcon, label: "☆", isStar: true },
   { path: "/friends", icon: UserPlus, label: "Friends" },
-  { path: "/costs", icon: Wallet, label: "Costs" },
   { path: "/profile", icon: User, label: "Me" },
 ];
 
@@ -17,8 +23,8 @@ export default function Layout() {
   const [tabStacks, setTabStacks] = useState({
     "/": ["/"],
     "/groups": ["/groups"],
+    "/discover": ["/discover"],
     "/friends": ["/friends"],
-    "/costs": ["/costs"],
     "/profile": ["/profile"],
   });
 
@@ -94,8 +100,14 @@ export default function Layout() {
                  className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-2xl transition-all duration-200"
                  style={{ color: isActive ? "#C8A27C" : "#B5A898", WebkitTapHighlightColor: "transparent" }}
               >
-                <item.icon className={`h-[19px] w-[19px] ${isActive ? "stroke-[2.2px]" : "stroke-[1.6px]"}`} />
-                <span className={`text-[9px] tracking-wide ${isActive ? "font-semibold" : "font-medium"}`}>{item.label}</span>
+                {item.isStar ? (
+                  <StarIcon className={`h-[19px] w-[19px] ${isActive ? "stroke-[2.2px]" : "stroke-[1.6px]"}`} />
+                ) : (
+                  <item.icon className={`h-[19px] w-[19px] ${isActive ? "stroke-[2.2px]" : "stroke-[1.6px]"}`} />
+                )}
+                <span className={`text-[9px] tracking-wide ${isActive ? "font-semibold" : "font-medium"}`}>
+                  {item.isStar ? "Discover" : item.label}
+                </span>
               </Link>
             );
           })}

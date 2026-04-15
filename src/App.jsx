@@ -23,6 +23,7 @@ import Privacy from './pages/Privacy';
 import LegalConsentBanner from './components/LegalConsentBanner';
 import Terms from './pages/Terms';
 import Notifications from './pages/Notifications';
+import Discover from './pages/Discover';
 import OnboardingModal from './components/OnboardingModal';
 import RoveSplash from './components/RoveSplash';
 import { motion } from 'framer-motion';
@@ -146,6 +147,7 @@ const AuthenticatedApp = () => {
         <Route path="/groups" element={<MotionPage><Groups /></MotionPage>} />
         <Route path="/friends" element={<MotionPage><Friends /></MotionPage>} />
         <Route path="/costs" element={<MotionPage><Costs /></MotionPage>} />
+        <Route path="/discover" element={<MotionPage><Discover /></MotionPage>} />
         <Route path="/profile" element={<MotionPage><Profile /></MotionPage>} />
         <Route path="/trip/:id" element={<MotionPage><TripDetail /></MotionPage>} />
         <Route path="/group/:id" element={<MotionPage><GroupDetail /></MotionPage>} />

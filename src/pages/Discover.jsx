@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Send, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 
 const MOODS = [
@@ -13,13 +13,13 @@ const MOODS = [
   { label: "📸 Explore", value: "photo spots, sightseeing, local gems" },
 ];
 
-function getTimeGreeting(destination) {
+function getTimeGreeting() {
   const h = new Date().getHours();
   const time = format(new Date(), "h:mm a");
   if (h < 12) return `Good morning — it's ${time}. What are you in the mood for?`;
   if (h < 17) return `It's ${time} — what do you feel like doing?`;
-  if (h < 21) return `Evening in ${destination || "your trip"} — what's the vibe tonight?`;
-  return `It's ${time} — night owl energy. What's the plan?`;
+  if (h < 21) return `Evening vibes — what's the plan tonight?`;
+  return `It's ${time} — what are you feeling?`;
 }
 
 function SuggestionCard({ suggestion, index }) {
@@ -28,7 +28,6 @@ function SuggestionCard({ suggestion, index }) {
     <div
       className="bg-card border border-border rounded-2xl p-4 cursor-pointer active:scale-[0.98] transition-all"
       onClick={() => setExpanded((v) => !v)}
-      style={{ animationDelay: `${index * 60}ms` }}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1">
@@ -52,15 +51,34 @@ function SuggestionCard({ suggestion, index }) {
   );
 }
 
-export default function TripAira({ trip }) {
-  const [phase, setPhase] = useState("home"); // home | loading | results | chat
+export default function Discover() {
+  const [phase, setPhase] = useState("home");
   const [activeMood, setActiveMood] = useState(null);
+  const [location, setLocation] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [activeTrip, setActiveTrip] = useState(null);
   const chatBottomRef = useRef(null);
-  const greeting = getTimeGreeting(trip?.destination);
+
+  useEffect(() => {
+    // Check for active trip today
+    base44.auth.me().then(me => {
+      if (!me) return;
+      const today = format(new Date(), "yyyy-MM-dd");
+      base44.entities.Trip.list("-start_date", 50).then(trips => {
+        const active = trips.find(t =>
+          t.member_emails?.includes(me.email) &&
+          t.start_date <= today && t.end_date >= today
+        );
+        if (active) {
+          setActiveTrip(active);
+          setLocation(active.destination);
+        }
+      }).catch(() => {});
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -73,15 +91,15 @@ export default function TripAira({ trip }) {
 
     const now = new Date();
     const timeCtx = format(now, "EEEE, MMMM d 'at' h:mm a");
-    const groupSize = trip?.member_emails?.length || 1;
+    const dest = location || "the current destination";
+    const groupSize = activeTrip?.member_emails?.length || 1;
 
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are Aira, a spontaneous trip discovery assistant. 
-The user is in ${trip?.destination || "their destination"} right now (${timeCtx}) with a group of ${groupSize}.
+      prompt: `You are Aira, a spontaneous trip discovery assistant.
+The user is currently in ${dest} (${timeCtx}) with a group of ${groupSize}.
 They want: ${mood.value}.
 
-Give 5 specific, real, actionable suggestions for RIGHT NOW. Each should feel immediate and discoverable — like a local friend's tip.
-Be specific to ${trip?.destination || "the destination"}. No generic advice.`,
+Give 5 specific, real, actionable suggestions for RIGHT NOW. Each should feel immediate — like a local friend's tip. Be specific to ${dest}. No generic advice.`,
       add_context_from_internet: true,
       response_json_schema: {
         type: "object",
@@ -113,14 +131,14 @@ Be specific to ${trip?.destination || "the destination"}. No generic advice.`,
     setChatMessages((prev) => [...prev, { role: "user", content: msg }]);
     setChatLoading(true);
 
-    const now = new Date();
-    const timeCtx = format(now, "h:mm a");
+    const timeCtx = format(new Date(), "h:mm a");
+    const dest = location || "their destination";
     const history = chatMessages.slice(-6).map((m) => `${m.role === "user" ? "User" : "Aira"}: ${m.content}`).join("\n");
 
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are Aira, a spontaneous trip assistant for ${trip?.destination || "this destination"}. It's ${timeCtx}.
+      prompt: `You are Aira, a spontaneous trip assistant. It's ${timeCtx} in ${dest}.
 ${activeMood ? `Context: user is looking for ${activeMood.value}.` : ""}
-${history ? `Conversation so far:\n${history}\n` : ""}
+${history ? `Conversation:\n${history}\n` : ""}
 User: ${msg}
 
 Be helpful, concise, and local-knowledge-first. 2-3 sentences max.`,
@@ -131,19 +149,30 @@ Be helpful, concise, and local-knowledge-first. 2-3 sentences max.`,
     setChatLoading(false);
   }
 
+  const greeting = getTimeGreeting();
+
   return (
-    <div className="pb-28 space-y-5">
-      {/* Header greeting */}
-      <div className="pt-1">
+    <div className="px-5 pb-28 pt-14 max-w-lg mx-auto space-y-5">
+      {/* Header */}
+      <div>
         <p className="text-base font-semibold leading-snug" style={{ letterSpacing: "-0.02em" }}>
           {greeting}
         </p>
-        {trip?.destination && (
-          <p className="text-xs text-muted-foreground mt-0.5">in {trip.destination}</p>
+        {activeTrip ? (
+          <p className="text-xs text-muted-foreground mt-0.5">currently in {activeTrip.destination}</p>
+        ) : (
+          <div className="flex items-center gap-2 mt-2">
+            <Input
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Where are you? (e.g. Tulum)"
+              className="rounded-full text-sm h-8 flex-1"
+            />
+          </div>
         )}
       </div>
 
-      {/* Mood quick actions */}
+      {/* Mood pills */}
       <div>
         <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium mb-2">I'm feeling...</p>
         <div className="flex flex-wrap gap-2">
@@ -165,7 +194,7 @@ Be helpful, concise, and local-knowledge-first. 2-3 sentences max.`,
         </div>
       </div>
 
-      {/* Loading state */}
+      {/* Loading */}
       {phase === "loading" && (
         <div className="flex flex-col items-center py-10 gap-3">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -173,15 +202,15 @@ Be helpful, concise, and local-knowledge-first. 2-3 sentences max.`,
         </div>
       )}
 
-      {/* Suggestion cards */}
+      {/* Results */}
       {phase === "results" && suggestions.length > 0 && (
         <div className="space-y-2.5">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Right now near you</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Right now</p>
           {suggestions.map((s, i) => (
             <SuggestionCard key={i} suggestion={s} index={i} />
           ))}
           <button
-            className="text-xs text-muted-foreground underline underline-offset-2 mt-1 pl-1"
+            className="text-xs text-muted-foreground underline underline-offset-2 pl-1"
             onClick={() => handleMood(activeMood)}
           >
             refresh suggestions
@@ -189,7 +218,7 @@ Be helpful, concise, and local-knowledge-first. 2-3 sentences max.`,
         </div>
       )}
 
-      {/* Chat — secondary, always available after a mood pick or on demand */}
+      {/* Chat */}
       {(phase === "results" || phase === "chat") && (
         <div className="space-y-2.5">
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Ask anything</p>
@@ -226,7 +255,7 @@ Be helpful, concise, and local-knowledge-first. 2-3 sentences max.`,
             <Input
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              placeholder={`Ask about ${trip?.destination || "your destination"}…`}
+              placeholder="Ask about where you are…"
               className="rounded-full flex-1 text-sm"
               disabled={chatLoading}
             />
@@ -237,33 +266,15 @@ Be helpful, concise, and local-knowledge-first. 2-3 sentences max.`,
         </div>
       )}
 
-      {/* Show chat option even at home phase */}
       {phase === "home" && (
-        <div>
-          <button
-            className="text-xs text-muted-foreground underline underline-offset-2"
-            onClick={() => setPhase("chat")}
-          >
-            or just ask me anything →
-          </button>
-          {phase === "chat" && (
-            <form onSubmit={sendChat} className="flex gap-2 mt-2">
-              <Input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder={`Ask about ${trip?.destination || "your destination"}…`}
-                className="rounded-full flex-1 text-sm"
-                disabled={chatLoading}
-              />
-              <Button type="submit" size="icon" className="rounded-full shrink-0" disabled={chatLoading || !chatInput.trim()}>
-                <Send className="h-4 w-4" />
-              </Button>
-            </form>
-          )}
-        </div>
+        <button
+          className="text-xs text-muted-foreground underline underline-offset-2"
+          onClick={() => setPhase("chat")}
+        >
+          or just ask me anything →
+        </button>
       )}
 
-      {/* Disclaimer */}
       <p className="text-[10px] text-muted-foreground leading-relaxed pt-2">
         ☆ AI-powered suggestions. Always verify locally.
       </p>
