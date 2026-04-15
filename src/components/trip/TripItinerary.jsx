@@ -9,6 +9,7 @@ import { CalendarDays, Plus, Trash2, Clock, MapPin } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { format, eachDayOfInterval, parseISO } from "date-fns";
 import BottomSheet from "../BottomSheet";
+import ItineraryPlanner from "./ItineraryPlanner";
 
 export default function TripItinerary({ trip, user }) {
   const [items, setItems] = useState([]);
@@ -75,6 +76,12 @@ export default function TripItinerary({ trip, user }) {
           <Plus className="h-3.5 w-3.5 mr-1" /> Add
         </Button>
       </div>
+
+      <ItineraryPlanner
+        trip={trip}
+        isEmpty={items.length === 0}
+        onActivityAdded={loadData}
+      />
 
       {displayDays.length === 0 && items.length === 0 ? (
         <p className="text-xs text-muted-foreground py-8 text-center">✦ no activities planned yet</p>
