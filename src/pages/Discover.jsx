@@ -67,22 +67,22 @@ export default function Discover() {
 The user is currently in ${dest} (${timeCtx}) with a group of ${groupSize}.
 They want: ${mood.value}.
 
-Give 5 specific, real, actionable recommendations. Each should feel like a local friend's tip — immediate and discoverable.
-Be specific to ${dest}. No generic advice. No raw URLs in descriptions.`,
+Give 5 specific, real, local recommendations. Each should feel like a tip from a local friend — immediate, discoverable, no fluff.
+Be specific to ${dest}. No generic advice. No raw URLs.`,
       add_context_from_internet: true,
       response_json_schema: {
         type: "object",
         properties: {
-          suggestions: {
+          title: { type: "string", description: "Short feed title e.g. 'Best matcha in Tampa'" },
+          results: {
             type: "array",
             items: {
               type: "object",
               properties: {
-                title: { type: "string", description: "Place or activity name" },
-                tagline: { type: "string", description: "One punchy sentence — why go now" },
-                description: { type: "string", description: "2-3 sentence detail, no URLs" },
-                neighborhood: { type: "string", description: "Neighborhood or area" },
-                vibes: { type: "array", items: { type: "string" }, description: "2-4 short vibe tags e.g. cozy, rooftop, group-friendly" },
+                name: { type: "string", description: "Place or activity name" },
+                description: { type: "string", description: "2-3 sentences, no URLs" },
+                location: { type: "string", description: "Neighborhood or city" },
+                tags: { type: "array", items: { type: "string" }, description: "2-4 tags" },
               },
             },
           },
@@ -90,7 +90,7 @@ Be specific to ${dest}. No generic advice. No raw URLs in descriptions.`,
       },
     });
 
-    setSuggestions(result?.suggestions || []);
+    setSuggestions(result?.results || []);
     setPhase("results");
   }
 
@@ -112,11 +112,31 @@ ${activeMood ? `Context: user is looking for ${activeMood.value}.` : ""}
 ${history ? `Conversation:\n${history}\n` : ""}
 User: ${msg}
 
-Be helpful, concise, and local-knowledge-first. 2-3 sentences max. No raw URLs.`,
+If the user is asking for place recommendations, return a JSON object with "title" (string) and "results" (array of {name, description, location, tags[]}).
+If it's a general question, return a JSON object with just "content" (a short plain text answer, 2-3 sentences, no URLs).`,
       add_context_from_internet: true,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          content: { type: "string" },
+          results: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+                description: { type: "string" },
+                location: { type: "string" },
+                tags: { type: "array", items: { type: "string" } },
+              },
+            },
+          },
+        },
+      },
     });
 
-    setChatMessages((prev) => [...prev, { role: "aira", content: result }]);
+    setChatMessages((prev) => [...prev, { role: "aira", ...result }]);
     setChatLoading(false);
   }
 
@@ -178,7 +198,7 @@ Be helpful, concise, and local-knowledge-first. 2-3 sentences max. No raw URLs.`
         <div className="space-y-2.5">
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Right now</p>
           {suggestions.map((s, i) => (
-            <RecommendationCard key={i} suggestion={s} index={i} />
+            <RecommendationCard key={i} item={s} index={i} />
           ))}
 
           {/* Follow-up chips */}

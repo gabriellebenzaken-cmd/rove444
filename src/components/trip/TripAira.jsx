@@ -38,26 +38,26 @@ export default function TripAira({ trip }) {
     const groupSize = trip?.member_emails?.length || 1;
 
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are Aira, a spontaneous trip discovery assistant. 
-The user is in ${trip?.destination || "their destination"} right now (${timeCtx}, local destination time) with a group of ${groupSize}.
+      prompt: `You are Aira, a spontaneous trip discovery assistant.
+The user is in ${trip?.destination || "their destination"} right now (${timeCtx}) with a group of ${groupSize}.
 They want: ${mood.value}.
 
-Give 5 specific, real, actionable recommendations. Each should feel like a local friend's tip — immediate and discoverable.
-Be specific to ${trip?.destination || "the destination"}. No generic advice. No raw URLs in descriptions.`,
+Give 5 specific, real, local recommendations. Each should feel like a tip from a local friend — immediate, discoverable, no fluff.
+Be specific to ${trip?.destination || "the destination"}. No generic advice. No raw URLs.`,
       add_context_from_internet: true,
       response_json_schema: {
         type: "object",
         properties: {
-          suggestions: {
+          title: { type: "string", description: "Short feed title e.g. 'Best matcha in Tampa'" },
+          results: {
             type: "array",
             items: {
               type: "object",
               properties: {
-                title: { type: "string", description: "Place or activity name" },
-                tagline: { type: "string", description: "One punchy sentence — why go now" },
-                description: { type: "string", description: "2-3 sentence detail, no URLs" },
-                neighborhood: { type: "string", description: "Neighborhood or area" },
-                vibes: { type: "array", items: { type: "string" }, description: "2-4 short vibe tags e.g. cozy, rooftop, group-friendly" },
+                name: { type: "string", description: "Place or activity name" },
+                description: { type: "string", description: "2-3 sentences, no URLs" },
+                location: { type: "string", description: "Neighborhood or city, e.g. Ybor City, Tampa FL" },
+                tags: { type: "array", items: { type: "string" }, description: "2-4 tags e.g. cozy, rooftop, group-friendly" },
               },
             },
           },
@@ -65,7 +65,7 @@ Be specific to ${trip?.destination || "the destination"}. No generic advice. No 
       },
     });
 
-    setSuggestions(result?.suggestions || []);
+    setSuggestions(result?.results || []);
     setPhase("results");
   }
 
@@ -81,16 +81,36 @@ Be specific to ${trip?.destination || "the destination"}. No generic advice. No 
     const history = chatMessages.slice(-6).map((m) => `${m.role === "user" ? "User" : "Aira"}: ${m.content}`).join("\n");
 
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are Aira, a spontaneous trip assistant for ${trip?.destination || "this destination"}. It's ${timeCtx} local time in ${trip?.destination || "this destination"}.
+      prompt: `You are Aira, a spontaneous trip assistant for ${trip?.destination || "this destination"}. It's ${timeCtx} local time.
 ${activeMood ? `Context: user is looking for ${activeMood.value}.` : ""}
 ${history ? `Conversation so far:\n${history}\n` : ""}
 User: ${msg}
 
-Be helpful, concise, and local-knowledge-first. 2-3 sentences max. No raw URLs.`,
+If the user is asking for place recommendations, return a JSON object with "title" (string) and "results" (array of {name, description, location, tags[]}).
+If it's a general question, return a JSON object with just "content" (a short plain text answer, 2-3 sentences, no URLs).`,
       add_context_from_internet: true,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          content: { type: "string" },
+          results: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+                description: { type: "string" },
+                location: { type: "string" },
+                tags: { type: "array", items: { type: "string" } },
+              },
+            },
+          },
+        },
+      },
     });
 
-    setChatMessages((prev) => [...prev, { role: "aira", content: result }]);
+    setChatMessages((prev) => [...prev, { role: "aira", ...result }]);
     setChatLoading(false);
   }
 
@@ -141,7 +161,7 @@ Be helpful, concise, and local-knowledge-first. 2-3 sentences max. No raw URLs.`
         <div className="space-y-2.5">
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Right now near you</p>
           {suggestions.map((s, i) => (
-            <RecommendationCard key={i} suggestion={s} index={i} />
+            <RecommendationCard key={i} item={s} index={i} />
           ))}
 
           {/* Follow-up chips */}
