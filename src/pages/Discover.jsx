@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Send, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 import { getLocationGreeting, getTimeContext, getLocationTime } from "@/lib/locationTime";
+import RecommendationCard from "@/components/aira/RecommendationCard";
+import AiraChat from "@/components/aira/AiraChat";
 
 const MOODS = [
   { label: "🍽 Food", value: "food spots and restaurants" },
@@ -14,34 +14,13 @@ const MOODS = [
   { label: "📸 Explore", value: "photo spots, sightseeing, local gems" },
 ];
 
-function SuggestionCard({ suggestion, index }) {
-  const [expanded, setExpanded] = useState(false);
-  return (
-    <div
-      className="bg-card border border-border rounded-2xl p-4 cursor-pointer active:scale-[0.98] transition-all"
-      onClick={() => setExpanded((v) => !v)}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1">
-          <p className="text-sm font-semibold leading-snug">{suggestion.title}</p>
-          {suggestion.category && (
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5 block">
-              {suggestion.category}
-            </span>
-          )}
-        </div>
-        <button className="text-muted-foreground mt-0.5 shrink-0">
-          {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-        </button>
-      </div>
-      {expanded && (
-        <p className="text-xs text-muted-foreground leading-relaxed mt-2 pt-2 border-t border-border">
-          {suggestion.description}
-        </p>
-      )}
-    </div>
-  );
-}
+const FOLLOW_UPS = [
+  "Open now",
+  "Best aesthetic spots",
+  "Budget-friendly",
+  "Group-friendly",
+  "More like this",
+];
 
 export default function Discover() {
   const [phase, setPhase] = useState("home");
@@ -52,7 +31,7 @@ export default function Discover() {
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [activeTrip, setActiveTrip] = useState(null);
-  const chatBottomRef = useRef(null);
+
 
   useEffect(() => {
     // Check for active trip today
@@ -72,9 +51,7 @@ export default function Discover() {
     }).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
+
 
   async function handleMood(mood) {
     setActiveMood(mood);
@@ -90,7 +67,8 @@ export default function Discover() {
 The user is currently in ${dest} (${timeCtx}) with a group of ${groupSize}.
 They want: ${mood.value}.
 
-Give 5 specific, real, actionable suggestions for RIGHT NOW. Each should feel immediate — like a local friend's tip. Be specific to ${dest}. No generic advice.`,
+Give 5 specific, real, actionable recommendations. Each should feel like a local friend's tip — immediate and discoverable.
+Be specific to ${dest}. No generic advice. No raw URLs in descriptions.`,
       add_context_from_internet: true,
       response_json_schema: {
         type: "object",
@@ -100,9 +78,11 @@ Give 5 specific, real, actionable suggestions for RIGHT NOW. Each should feel im
             items: {
               type: "object",
               properties: {
-                title: { type: "string" },
-                description: { type: "string" },
-                category: { type: "string" },
+                title: { type: "string", description: "Place or activity name" },
+                tagline: { type: "string", description: "One punchy sentence — why go now" },
+                description: { type: "string", description: "2-3 sentence detail, no URLs" },
+                neighborhood: { type: "string", description: "Neighborhood or area" },
+                vibes: { type: "array", items: { type: "string" }, description: "2-4 short vibe tags e.g. cozy, rooftop, group-friendly" },
               },
             },
           },
@@ -114,12 +94,12 @@ Give 5 specific, real, actionable suggestions for RIGHT NOW. Each should feel im
     setPhase("results");
   }
 
-  async function sendChat(e) {
+  async function sendChat(e, overrideMsg) {
     e.preventDefault();
-    if (!chatInput.trim()) return;
-    const msg = chatInput.trim();
+    const msg = overrideMsg || chatInput.trim();
+    if (!msg) return;
     setChatInput("");
-    setChatMessages((prev) => [...prev, { role: "user", content: msg }]);
+    if (!overrideMsg) setChatMessages((prev) => [...prev, { role: "user", content: msg }]);
     setChatLoading(true);
 
     const { time: timeCtx } = getLocationTime(activeTrip);
@@ -132,7 +112,7 @@ ${activeMood ? `Context: user is looking for ${activeMood.value}.` : ""}
 ${history ? `Conversation:\n${history}\n` : ""}
 User: ${msg}
 
-Be helpful, concise, and local-knowledge-first. 2-3 sentences max.`,
+Be helpful, concise, and local-knowledge-first. 2-3 sentences max. No raw URLs.`,
       add_context_from_internet: true,
     });
 
@@ -198,63 +178,47 @@ Be helpful, concise, and local-knowledge-first. 2-3 sentences max.`,
         <div className="space-y-2.5">
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Right now</p>
           {suggestions.map((s, i) => (
-            <SuggestionCard key={i} suggestion={s} index={i} />
+            <RecommendationCard key={i} suggestion={s} index={i} />
           ))}
-          <button
-            className="text-xs text-muted-foreground underline underline-offset-2 pl-1"
-            onClick={() => handleMood(activeMood)}
-          >
-            refresh suggestions
-          </button>
+
+          {/* Follow-up chips */}
+          <div className="pt-1 space-y-2">
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Refine</p>
+            <div className="flex flex-wrap gap-2">
+              {FOLLOW_UPS.map((chip) => (
+                <button
+                  key={chip}
+                  onClick={() => {
+                    setChatMessages((prev) => [...prev, { role: "user", content: chip }]);
+                    setPhase("chat");
+                    sendChat({ preventDefault: () => {} }, chip);
+                  }}
+                  className="text-xs px-3 py-1.5 rounded-full border border-border bg-card hover:bg-muted/40 transition-colors"
+                >
+                  {chip}
+                </button>
+              ))}
+              <button
+                className="text-xs px-3 py-1.5 rounded-full border border-border bg-card hover:bg-muted/40 transition-colors"
+                onClick={() => handleMood(activeMood)}
+              >
+                ↻ Refresh
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Chat */}
+      {/* Chat — secondary */}
       {(phase === "results" || phase === "chat") && (
-        <div className="space-y-2.5">
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Ask anything</p>
-          {chatMessages.length > 0 && (
-            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-              {chatMessages.map((msg, i) => (
-                <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-                      msg.role === "user"
-                        ? "bg-primary text-primary-foreground rounded-br-sm"
-                        : "bg-card border border-border rounded-bl-sm"
-                    }`}
-                  >
-                    {msg.content}
-                  </div>
-                </div>
-              ))}
-              {chatLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-3 py-2.5">
-                    <div className="flex gap-1">
-                      {[0, 150, 300].map((d) => (
-                        <span key={d} className="w-1.5 h-1.5 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div ref={chatBottomRef} />
-            </div>
-          )}
-          <form onSubmit={sendChat} className="flex gap-2">
-            <Input
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Ask about where you are…"
-              className="rounded-full flex-1 text-sm"
-              disabled={chatLoading}
-            />
-            <Button type="submit" size="icon" className="rounded-full shrink-0" disabled={chatLoading || !chatInput.trim()}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
-        </div>
+        <AiraChat
+          messages={chatMessages}
+          input={chatInput}
+          onInputChange={setChatInput}
+          onSubmit={sendChat}
+          loading={chatLoading}
+          placeholder="Ask about where you are…"
+        />
       )}
 
       {phase === "home" && (
