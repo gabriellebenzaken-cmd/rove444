@@ -179,8 +179,8 @@ export default function CreateTripDialog({ open, onOpenChange, user, onCreated, 
                   value={form.start_date}
                   onChange={(e) => {
                     const newStart = e.target.value;
-                    // If end date is now before new start date, clear it
-                    const newEnd = form.end_date && form.end_date < newStart ? "" : form.end_date;
+                    // Auto-clear end date if it's before the new start date
+                    const newEnd = form.end_date && form.end_date < newStart ? newStart : form.end_date;
                     setForm({ ...form, start_date: newStart, end_date: newEnd });
                   }}
                   style={{ width: "100%", minWidth: 0, boxSizing: "border-box", background: "transparent", border: "none", outline: "none", fontSize: "14px", color: "hsl(var(--foreground))" }}
@@ -194,11 +194,18 @@ export default function CreateTripDialog({ open, onOpenChange, user, onCreated, 
                   type="date"
                   value={form.end_date}
                   min={form.start_date || undefined}
-                  defaultValue={form.start_date || undefined}
-                  onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+                  onChange={(e) => {
+                    const newEnd = e.target.value;
+                    // Enforce: end date cannot be before start date
+                    if (form.start_date && newEnd < form.start_date) return;
+                    setForm({ ...form, end_date: newEnd });
+                  }}
                   style={{ width: "100%", minWidth: 0, boxSizing: "border-box", background: "transparent", border: "none", outline: "none", fontSize: "14px", color: "hsl(var(--foreground))" }}
                 />
               </div>
+              {form.end_date && form.start_date && form.end_date < form.start_date && (
+                <p className="text-xs mt-1" style={{ color: "#C0504A" }}>End date must be after start date.</p>
+              )}
             </div>
           </div>
           {groups.length > 0 && (
@@ -227,9 +234,9 @@ export default function CreateTripDialog({ open, onOpenChange, user, onCreated, 
           </div>
           <button
             type="submit"
-            disabled={saving || !form.name || !form.destination}
+            disabled={saving || !form.name || !form.destination || (form.end_date && form.start_date && form.end_date < form.start_date)}
             className="w-full h-10 rounded-full text-sm font-semibold transition-all active:scale-[0.98] mt-1"
-            style={{ background: "#C8A27C", color: "white", opacity: (saving || !form.name || !form.destination) ? 0.5 : 1 }}
+            style={{ background: "#C8A27C", color: "white", opacity: (saving || !form.name || !form.destination || (form.end_date && form.start_date && form.end_date < form.start_date)) ? 0.5 : 1 }}
           >
             {saving ? "Creating…" : "Next: Invite People →"}
           </button>
