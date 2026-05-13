@@ -178,38 +178,33 @@ export default function DestinationAutocomplete({ value, onChange, placeholder, 
 
     const GAP = 6;
     const DROPDOWN_MAX_H = 220;
-    const KEYBOARD_THRESHOLD = 120; // px below input needed before we consider keyboard coverage
 
-    const vv = window.visualViewport;
-    const visibleBottom = (vv && vv.height > 100) ? (vv.offsetTop + vv.height) : window.innerHeight;
-
-    // Always start anchored directly below the input
+    // Step 1: anchor directly under the input — this is always the primary position
     const top = rect.bottom + GAP;
-    const spaceBelow = visibleBottom - top;
+    const left = rect.left;
+    const width = rect.width;
 
-    // Only flip above if the keyboard is literally covering the dropdown area
-    // (less than KEYBOARD_THRESHOLD px available below)
-    if (spaceBelow < KEYBOARD_THRESHOLD) {
-      const spaceAbove = rect.top - GAP;
-      const maxH = Math.max(80, Math.min(DROPDOWN_MAX_H, spaceAbove));
-      return {
-        position: "fixed",
-        top: rect.top - maxH - GAP,
-        left: rect.left,
-        width: rect.width,
-        maxHeight: maxH,
-        zIndex: 99999,
-        overflowY: "auto",
-      };
-    }
+    // Step 2: how much space exists from below the input to the bottom of the screen
+    const screenBottom = window.innerHeight;
 
-    // Default: drop directly below the input, clamp height to available space
+    // Step 3: only shrink maxHeight if iOS keyboard eats into the space
+    const vv = window.visualViewport;
+    const visibleBottom = (vv && vv.height > 50 && vv.height < screenBottom)
+      ? vv.offsetTop + vv.height
+      : screenBottom;
+
+    const availableBelow = visibleBottom - top - GAP;
+    const maxHeight = Math.max(80, Math.min(DROPDOWN_MAX_H, availableBelow));
+
+    console.log("[Autocomplete pos] rect.top:", rect.top, "rect.bottom:", rect.bottom,
+      "calculated top:", top, "visibleBottom:", visibleBottom, "maxHeight:", maxHeight);
+
     return {
       position: "fixed",
       top,
-      left: rect.left,
-      width: rect.width,
-      maxHeight: Math.min(DROPDOWN_MAX_H, spaceBelow - GAP),
+      left,
+      width,
+      maxHeight,
       zIndex: 99999,
       overflowY: "auto",
     };
