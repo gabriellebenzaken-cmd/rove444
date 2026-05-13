@@ -8,6 +8,7 @@ import { generateInviteCode } from "../../lib/utils/generateCode";
 import BottomSheet from "../BottomSheet";
 import { ChevronDown, ChevronUp, Users, UserPlus, Check } from "lucide-react";
 import { toast } from "sonner";
+import DestinationAutocomplete from "../DestinationAutocomplete";
 
 export default function CreateTripDialog({ open, onOpenChange, user, onCreated, defaultGroupId }) {
   const [step, setStep] = useState(1);
@@ -163,7 +164,11 @@ export default function CreateTripDialog({ open, onOpenChange, user, onCreated, 
           </div>
           <div>
             <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Destination</Label>
-            <Input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} placeholder="City, country" className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
+            <DestinationAutocomplete
+              value={form.destination}
+              onChange={(val) => setForm({ ...form, destination: val })}
+              placeholder="City, country"
+            />
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div>

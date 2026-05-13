@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import DestinationAutocomplete from "../DestinationAutocomplete";
 import { Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
@@ -181,11 +182,19 @@ export default function TripPlan({ trip, user, onUpdate }) {
           {/* Route — stacked vertically */}
           <div>
             <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>From</Label>
-            <Input value={form.arrival_location} onChange={(e) => setForm({ ...form, arrival_location: e.target.value })} placeholder="City or airport" className="h-9 text-sm w-full" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
+            <DestinationAutocomplete
+              value={form.arrival_location}
+              onChange={(val) => setForm({ ...form, arrival_location: val })}
+              placeholder="City or airport"
+            />
           </div>
           <div>
             <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>To</Label>
-            <Input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} placeholder="Destination" className="h-9 text-sm w-full" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
+            <DestinationAutocomplete
+              value={form.destination}
+              onChange={(val) => setForm({ ...form, destination: val })}
+              placeholder="Destination"
+            />
           </div>
 
           {/* Flight details */}
