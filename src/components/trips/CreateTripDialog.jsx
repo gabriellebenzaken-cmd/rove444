@@ -165,14 +165,14 @@ export default function CreateTripDialog({ open, onOpenChange, user, onCreated, 
             <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Destination</Label>
             <Input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} placeholder="City, country" className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
           </div>
-          <div className="grid grid-cols-2 gap-2.5">
-            <div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Start date</Label>
-              <Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
+              <Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} className="h-10 text-sm w-full" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
             </div>
-            <div>
+            <div className="flex-1">
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>End date</Label>
-              <Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
+              <Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className="h-10 text-sm w-full" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
             </div>
           </div>
           {groups.length > 0 && (
