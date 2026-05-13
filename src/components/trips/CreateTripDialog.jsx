@@ -166,13 +166,17 @@ export default function CreateTripDialog({ open, onOpenChange, user, onCreated, 
             <Input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} placeholder="City, country" className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div className="flex-1">
+            <div>
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Start date</Label>
-              <input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", display: "flex", alignItems: "center" }} />
+              <div style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", borderRadius: "0.375rem", height: "36px", display: "flex", alignItems: "center", paddingLeft: "12px", paddingRight: "12px", overflow: "hidden" }}>
+                <input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", background: "transparent", border: "none", outline: "none", fontSize: "14px", color: "hsl(var(--foreground))" }} />
+              </div>
             </div>
-            <div className="flex-1">
+            <div>
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>End date</Label>
-              <input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", display: "flex", alignItems: "center" }} />
+              <div style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", borderRadius: "0.375rem", height: "36px", display: "flex", alignItems: "center", paddingLeft: "12px", paddingRight: "12px", overflow: "hidden" }}>
+                <input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", background: "transparent", border: "none", outline: "none", fontSize: "14px", color: "hsl(var(--foreground))" }} />
+              </div>
             </div>
           </div>
           {groups.length > 0 && (
