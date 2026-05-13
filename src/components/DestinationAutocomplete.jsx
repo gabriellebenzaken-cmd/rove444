@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { base44 } from "@/api/base44Client";
-import { MapPin, Loader2 } from "lucide-react";
+import { MapPin, Loader2, ArrowLeft, Search } from "lucide-react";
 
-// ─── Local seed list for instant results ────────────────────────────────────
+// ─── Local seed list ─────────────────────────────────────────────────────────
 const SEED_DESTINATIONS = [
   "Amsterdam, Netherlands", "Athens, Greece", "Austin, TX, USA",
   "Bali, Indonesia", "Bangkok, Thailand", "Barcelona, Spain",
@@ -36,12 +36,9 @@ const SEED_DESTINATIONS = [
 function localMatch(query) {
   const q = query.toLowerCase().trim();
   if (!q) return [];
-  return SEED_DESTINATIONS.filter((d) =>
-    d.toLowerCase().includes(q)
-  ).slice(0, 5);
+  return SEED_DESTINATIONS.filter((d) => d.toLowerCase().includes(q)).slice(0, 8);
 }
 
-// ─── Debounce hook ───────────────────────────────────────────────────────────
 function useDebounced(value, delay) {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
@@ -51,201 +48,264 @@ function useDebounced(value, delay) {
   return debounced;
 }
 
-// ─── Main component ──────────────────────────────────────────────────────────
-export default function DestinationAutocomplete({ value, onChange, placeholder, inputStyle }) {
-  const [suggestions, setSuggestions] = useState([]);
-  const [open, setOpen] = useState(false);
-  const [llmLoading, setLlmLoading] = useState(false);
-  const [rect, setRect] = useState(null); // input bounding rect for portal positioning
-  const inputRef = useRef(null);
-  const dropdownRef = useRef(null);
-  const llmAbort = useRef(null);
-  const debouncedValue = useDebounced(value, 400);
+function isMobile() {
+  return window.innerWidth < 768;
+}
 
-  // ── Update input rect whenever open changes or window resizes ──
-  const updateRect = useCallback(() => {
-    if (inputRef.current) {
-      setRect(inputRef.current.getBoundingClientRect());
-    }
+// ─── Full-screen mobile search sheet ────────────────────────────────────────
+function MobileSearchSheet({ initialQuery, onSelect, onClose }) {
+  const [query, setQuery] = useState(initialQuery || "");
+  const [suggestions, setSuggestions] = useState(() => localMatch(initialQuery || ""));
+  const [llmLoading, setLlmLoading] = useState(false);
+  const inputRef = useRef(null);
+  const llmAbort = useRef(null);
+  const debouncedQuery = useDebounced(query, 400);
+
+  // Auto-focus input when sheet opens
+  useEffect(() => {
+    const t = setTimeout(() => inputRef.current?.focus(), 80);
+    return () => clearTimeout(t);
   }, []);
 
+  // Instant local results on every keystroke
   useEffect(() => {
-    if (!open) return;
-    updateRect();
-    window.addEventListener("resize", updateRect);
-    window.addEventListener("scroll", updateRect, true);
-    const vv = window.visualViewport;
-    if (vv) {
-      vv.addEventListener("resize", updateRect);
-      vv.addEventListener("scroll", updateRect);
-    }
-    return () => {
-      window.removeEventListener("resize", updateRect);
-      window.removeEventListener("scroll", updateRect, true);
-      if (vv) {
-        vv.removeEventListener("resize", updateRect);
-        vv.removeEventListener("scroll", updateRect);
-      }
-    };
-  }, [open, updateRect]);
-
-  // ── Step 1: instant local results ──
-  useEffect(() => {
-    console.log("[Autocomplete] value changed:", value);
-    if (!value || value.length < 2) {
+    if (!query || query.length < 2) {
       setSuggestions([]);
-      setOpen(false);
       return;
     }
-    const local = localMatch(value);
-    console.log("[Autocomplete] local matches:", local);
-    if (local.length > 0) {
-      setSuggestions(local);
-      updateRect();
-      setOpen(true);
-    }
-  }, [value, updateRect]);
+    setSuggestions(localMatch(query));
+  }, [query]);
 
-  // ── Step 2: LLM enhancement after debounce ──
+  // LLM enhancement after debounce
   useEffect(() => {
-    if (!debouncedValue || debouncedValue.length < 2) return;
-
-    // Cancel any in-flight LLM request
+    if (!debouncedQuery || debouncedQuery.length < 2) return;
     if (llmAbort.current) llmAbort.current.cancelled = true;
     const handle = { cancelled: false };
     llmAbort.current = handle;
-
     setLlmLoading(true);
-    console.log("[Autocomplete] firing LLM for:", debouncedValue);
 
     base44.integrations.Core.InvokeLLM({
-      prompt: `List 5 real travel destinations matching "${debouncedValue}". Return only city and country names, one per item, no extra text.`,
+      prompt: `List 5 real travel destinations matching "${debouncedQuery}". Return only city and country names, one per item.`,
       response_json_schema: {
         type: "object",
-        properties: {
-          suggestions: { type: "array", items: { type: "string" } },
-        },
+        properties: { suggestions: { type: "array", items: { type: "string" } } },
         required: ["suggestions"],
       },
     }).then((res) => {
       if (handle.cancelled) return;
-      console.log("[Autocomplete] LLM result:", res);
-      // InvokeLLM returns the parsed object directly
       const list = Array.isArray(res?.suggestions) ? res.suggestions : [];
-      if (list.length > 0) {
-        setSuggestions(list.slice(0, 5));
-        updateRect();
-        setOpen(true);
-      }
-    }).catch((err) => {
-      console.warn("[Autocomplete] LLM error:", err);
-      // keep local results showing — don't clear
+      if (list.length > 0) setSuggestions(list.slice(0, 8));
+    }).catch(() => {
+      // keep local results
     }).finally(() => {
       if (!handle.cancelled) setLlmLoading(false);
     });
 
     return () => { handle.cancelled = true; };
-  }, [debouncedValue, updateRect]);
+  }, [debouncedQuery]);
 
-  // ── Close on outside interaction ──
+  return createPortal(
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 999999,
+        background: "hsl(var(--background))",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* Header */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        padding: "12px 16px",
+        paddingTop: "max(12px, env(safe-area-inset-top))",
+        borderBottom: "1px solid rgba(200,162,124,0.15)",
+        background: "hsl(var(--background))",
+        flexShrink: 0,
+      }}>
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "36px",
+            height: "36px",
+            borderRadius: "50%",
+            border: "none",
+            background: "rgba(200,162,124,0.12)",
+            color: "#C8A27C",
+            cursor: "pointer",
+            flexShrink: 0,
+          }}
+        >
+          <ArrowLeft style={{ width: 18, height: 18 }} />
+        </button>
+
+        {/* Search input */}
+        <div style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          background: "rgba(255,255,255,0.85)",
+          border: "1px solid rgba(200,162,124,0.25)",
+          borderRadius: "12px",
+          paddingLeft: "12px",
+          paddingRight: "12px",
+          height: "40px",
+        }}>
+          <Search style={{ width: 15, height: 15, color: "#C8A27C", flexShrink: 0 }} />
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search destinations…"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
+            style={{
+              flex: 1,
+              border: "none",
+              background: "transparent",
+              outline: "none",
+              fontSize: "16px",
+              color: "hsl(var(--foreground))",
+              fontFamily: "inherit",
+            }}
+          />
+          {llmLoading && (
+            <Loader2 style={{ width: 14, height: 14, color: "#C8A27C", opacity: 0.7, animation: "spin 1s linear infinite", flexShrink: 0 }} />
+          )}
+        </div>
+      </div>
+
+      {/* Results list */}
+      <div style={{
+        flex: 1,
+        overflowY: "auto",
+        WebkitOverflowScrolling: "touch",
+        padding: "8px 16px",
+        paddingBottom: "max(16px, env(safe-area-inset-bottom))",
+      }}>
+        {query.length < 2 && (
+          <p style={{ textAlign: "center", color: "#B0A090", fontSize: "14px", marginTop: "40px" }}>
+            Start typing to search destinations
+          </p>
+        )}
+        {query.length >= 2 && suggestions.length === 0 && !llmLoading && (
+          <p style={{ textAlign: "center", color: "#B0A090", fontSize: "14px", marginTop: "40px" }}>
+            No results for "{query}"
+          </p>
+        )}
+        {suggestions.map((s, i) => (
+          <button
+            key={s + i}
+            type="button"
+            onClick={() => onSelect(s)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              width: "100%",
+              textAlign: "left",
+              padding: "13px 14px",
+              marginBottom: "4px",
+              fontSize: "15px",
+              color: "#2A2018",
+              background: "rgba(255,255,255,0.75)",
+              border: "1px solid rgba(200,162,124,0.12)",
+              borderRadius: "12px",
+              cursor: "pointer",
+              WebkitTapHighlightColor: "transparent",
+            }}
+          >
+            <div style={{
+              width: "32px",
+              height: "32px",
+              borderRadius: "8px",
+              background: "rgba(200,162,124,0.12)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}>
+              <MapPin style={{ width: 15, height: 15, color: "#C8A27C" }} />
+            </div>
+            <span style={{ flex: 1, fontWeight: 450 }}>{s}</span>
+          </button>
+        ))}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// ─── Inline desktop dropdown ─────────────────────────────────────────────────
+function DesktopDropdown({ suggestions, llmLoading, onSelect, inputRef }) {
+  const dropdownRef = useRef(null);
+  const [style, setStyle] = useState({});
+
   useEffect(() => {
-    function onOutside(e) {
-      if (
-        dropdownRef.current?.contains(e.target) ||
-        inputRef.current?.contains(e.target)
-      ) return;
-      setOpen(false);
+    function compute() {
+      if (!inputRef.current) return;
+      const rect = inputRef.current.getBoundingClientRect();
+      setStyle({
+        position: "fixed",
+        top: rect.bottom + 6,
+        left: rect.left,
+        width: rect.width,
+        maxHeight: Math.min(260, window.innerHeight - rect.bottom - 16),
+        zIndex: 99999,
+        overflowY: "auto",
+      });
     }
-    document.addEventListener("mousedown", onOutside);
-    document.addEventListener("touchstart", onOutside);
+    compute();
+    window.addEventListener("resize", compute);
+    window.addEventListener("scroll", compute, true);
     return () => {
-      document.removeEventListener("mousedown", onOutside);
-      document.removeEventListener("touchstart", onOutside);
+      window.removeEventListener("resize", compute);
+      window.removeEventListener("scroll", compute, true);
     };
-  }, []);
+  }, [inputRef]);
 
-  function selectSuggestion(s) {
-    console.log("[Autocomplete] selected:", s);
-    onChange(s);
-    setOpen(false);
-    setSuggestions([]);
-    inputRef.current?.blur();
-  }
-
-  // ── Compute portal dropdown position ──
-  function getPortalStyle() {
-    if (!rect) return { display: "none" };
-
-    const GAP = 6;
-    const DROPDOWN_MAX_H = 220;
-
-    // Step 1: anchor directly under the input — this is always the primary position
-    const top = rect.bottom + GAP;
-    const left = rect.left;
-    const width = rect.width;
-
-    // Step 2: how much space exists from below the input to the bottom of the screen
-    const screenBottom = window.innerHeight;
-
-    // Step 3: only shrink maxHeight if iOS keyboard eats into the space
-    const vv = window.visualViewport;
-    const visibleBottom = (vv && vv.height > 50 && vv.height < screenBottom)
-      ? vv.offsetTop + vv.height
-      : screenBottom;
-
-    const availableBelow = visibleBottom - top - GAP;
-    const maxHeight = Math.max(80, Math.min(DROPDOWN_MAX_H, availableBelow));
-
-    console.log("[Autocomplete pos] rect.top:", rect.top, "rect.bottom:", rect.bottom,
-      "calculated top:", top, "visibleBottom:", visibleBottom, "maxHeight:", maxHeight);
-
-    return {
-      position: "fixed",
-      top,
-      left,
-      width,
-      maxHeight,
-      zIndex: 99999,
-      overflowY: "auto",
-    };
-  }
-
-  const showDropdown = open && suggestions.length > 0;
-
-  const portal = showDropdown ? createPortal(
+  return createPortal(
     <div
       ref={dropdownRef}
       style={{
-        ...getPortalStyle(),
+        ...style,
         borderRadius: "14px",
         background: "rgba(252,248,244,0.99)",
         backdropFilter: "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",
-        boxShadow: "0 8px 40px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.1)",
-        border: "1px solid rgba(200,162,124,0.3)",
-        WebkitOverflowScrolling: "touch",
+        boxShadow: "0 8px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)",
+        border: "1px solid rgba(200,162,124,0.25)",
       }}
     >
       {suggestions.map((s, i) => (
         <button
           key={s + i}
           type="button"
-          onMouseDown={(e) => { e.preventDefault(); selectSuggestion(s); }}
-          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); selectSuggestion(s); }}
+          onMouseDown={(e) => { e.preventDefault(); onSelect(s); }}
           style={{
             display: "flex",
             alignItems: "center",
             gap: "8px",
             width: "100%",
             textAlign: "left",
-            padding: "11px 14px",
+            padding: "10px 14px",
             fontSize: "14px",
             color: "#2A2018",
             background: "transparent",
             border: "none",
-            borderBottom: i < suggestions.length - 1 ? "1px solid rgba(200,162,124,0.12)" : "none",
+            borderBottom: i < suggestions.length - 1 ? "1px solid rgba(200,162,124,0.1)" : "none",
             cursor: "pointer",
-            WebkitTapHighlightColor: "transparent",
           }}
         >
           <MapPin style={{ width: 13, height: 13, color: "#C8A27C", flexShrink: 0 }} />
@@ -257,22 +317,89 @@ export default function DestinationAutocomplete({ value, onChange, placeholder, 
       ))}
     </div>,
     document.body
-  ) : null;
+  );
+}
+
+// ─── Main export ─────────────────────────────────────────────────────────────
+export default function DestinationAutocomplete({ value, onChange, placeholder, inputStyle }) {
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+  const [desktopSuggestions, setDesktopSuggestions] = useState([]);
+  const [desktopOpen, setDesktopOpen] = useState(false);
+  const [llmLoading, setLlmLoading] = useState(false);
+  const inputRef = useRef(null);
+  const llmAbort = useRef(null);
+  const debouncedValue = useDebounced(value, 400);
+
+  // Desktop: instant local results
+  useEffect(() => {
+    if (mobileSheetOpen) return;
+    if (!value || value.length < 2) { setDesktopSuggestions([]); setDesktopOpen(false); return; }
+    const local = localMatch(value);
+    if (local.length > 0) { setDesktopSuggestions(local); setDesktopOpen(true); }
+  }, [value, mobileSheetOpen]);
+
+  // Desktop: LLM enhancement
+  useEffect(() => {
+    if (mobileSheetOpen) return;
+    if (!debouncedValue || debouncedValue.length < 2) return;
+    if (llmAbort.current) llmAbort.current.cancelled = true;
+    const handle = { cancelled: false };
+    llmAbort.current = handle;
+    setLlmLoading(true);
+
+    base44.integrations.Core.InvokeLLM({
+      prompt: `List 5 real travel destinations matching "${debouncedValue}". Return only city and country names, one per item.`,
+      response_json_schema: {
+        type: "object",
+        properties: { suggestions: { type: "array", items: { type: "string" } } },
+        required: ["suggestions"],
+      },
+    }).then((res) => {
+      if (handle.cancelled) return;
+      const list = Array.isArray(res?.suggestions) ? res.suggestions : [];
+      if (list.length > 0) { setDesktopSuggestions(list.slice(0, 5)); setDesktopOpen(true); }
+    }).catch(() => {}).finally(() => {
+      if (!handle.cancelled) setLlmLoading(false);
+    });
+    return () => { handle.cancelled = true; };
+  }, [debouncedValue, mobileSheetOpen]);
+
+  // Desktop: close on outside click
+  useEffect(() => {
+    if (!desktopOpen) return;
+    function onOutside(e) {
+      if (inputRef.current?.contains(e.target)) return;
+      setDesktopOpen(false);
+    }
+    document.addEventListener("mousedown", onOutside);
+    return () => document.removeEventListener("mousedown", onOutside);
+  }, [desktopOpen]);
+
+  function handleSelect(s) {
+    onChange(s);
+    setMobileSheetOpen(false);
+    setDesktopOpen(false);
+    setDesktopSuggestions([]);
+  }
+
+  function handleFocus() {
+    if (isMobile()) {
+      // Open full-screen sheet on mobile instead of typing inline
+      setMobileSheetOpen(true);
+      inputRef.current?.blur(); // prevent keyboard from opening on the background input
+    }
+  }
 
   return (
     <>
+      {/* The visible trigger input */}
       <input
         ref={inputRef}
         type="text"
         value={value}
-        onChange={(e) => {
-          console.log("[Autocomplete] onChange:", e.target.value);
-          onChange(e.target.value);
-        }}
-        onFocus={() => {
-          updateRect();
-          if (suggestions.length > 0) setOpen(true);
-        }}
+        readOnly={isMobile()} // on mobile, editing happens inside the sheet
+        onChange={(e) => { if (!isMobile()) onChange(e.target.value); }}
+        onFocus={handleFocus}
         placeholder={placeholder || "City, country"}
         autoComplete="off"
         autoCorrect="off"
@@ -286,18 +413,37 @@ export default function DestinationAutocomplete({ value, onChange, placeholder, 
           borderRadius: "0.375rem",
           paddingLeft: "12px",
           paddingRight: "12px",
-          fontSize: "16px", // 16px prevents iOS zoom
+          fontSize: "16px",
           border: "1px solid rgba(200,162,124,0.2)",
           background: "rgba(255,255,255,0.8)",
-          color: "hsl(var(--foreground))",
+          color: value ? "hsl(var(--foreground))" : "#A0907F",
           outline: "none",
           fontFamily: "inherit",
+          cursor: "pointer",
           appearance: "none",
           WebkitAppearance: "none",
           ...inputStyle,
         }}
       />
-      {portal}
+
+      {/* Mobile: full-screen sheet */}
+      {mobileSheetOpen && (
+        <MobileSearchSheet
+          initialQuery={value}
+          onSelect={handleSelect}
+          onClose={() => setMobileSheetOpen(false)}
+        />
+      )}
+
+      {/* Desktop: inline dropdown */}
+      {!mobileSheetOpen && desktopOpen && desktopSuggestions.length > 0 && (
+        <DesktopDropdown
+          suggestions={desktopSuggestions}
+          llmLoading={llmLoading}
+          onSelect={handleSelect}
+          inputRef={inputRef}
+        />
+      )}
     </>
   );
 }
