@@ -108,26 +108,44 @@ export default function TripDetail() {
         className="h-56 bg-cover bg-center relative"
         style={{ backgroundImage: `url(${trip.cover_image || coverImages[0]})` }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-        <div className="absolute top-5 left-4">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" style={{ pointerEvents: 'none' }} />
+        <div
+          className="absolute left-4 flex"
+          style={{ top: 'calc(env(safe-area-inset-top) + 12px)', zIndex: 20, pointerEvents: 'auto' }}
+        >
           <button
-            className="rounded-full h-9 w-9 flex items-center justify-center transition-all active:scale-90"
-            style={{background:'rgba(0,0,0,0.28)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)'}}
+            className="rounded-full flex items-center justify-center transition-all active:scale-90"
+            style={{ background:'rgba(0,0,0,0.28)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)', width: 44, height: 44, pointerEvents: 'auto', touchAction: 'manipulation' }}
             onClick={() => navigate("/")}
           >
             <ArrowLeft className="h-5 w-5 text-white" />
           </button>
         </div>
-        <div className="absolute top-5 right-4 flex gap-2">
-          <button className="rounded-full h-9 w-9 flex items-center justify-center" style={{background:'rgba(0,0,0,0.28)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)'}} onClick={() => setShowCoverEditor(true)}>
-            <ImageIcon className="h-4.5 w-4.5 text-white" />
+        <div
+          className="absolute right-4 flex gap-2"
+          style={{ top: 'calc(env(safe-area-inset-top) + 12px)', zIndex: 20, pointerEvents: 'auto' }}
+        >
+          <button
+            className="rounded-full flex items-center justify-center active:scale-90 transition-all"
+            style={{ background:'rgba(0,0,0,0.28)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)', width: 44, height: 44, pointerEvents: 'auto', touchAction: 'manipulation' }}
+            onClick={() => setShowCoverEditor(true)}
+          >
+            <ImageIcon className="h-5 w-5 text-white" />
           </button>
-          <button className="rounded-full h-9 w-9 flex items-center justify-center" style={{background:'rgba(0,0,0,0.28)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)'}} onClick={() => setShowInviteModal(true)}>
-            <Link2 className="h-4.5 w-4.5 text-white" />
+          <button
+            className="rounded-full flex items-center justify-center active:scale-90 transition-all"
+            style={{ background:'rgba(0,0,0,0.28)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)', width: 44, height: 44, pointerEvents: 'auto', touchAction: 'manipulation' }}
+            onClick={() => setShowInviteModal(true)}
+          >
+            <Link2 className="h-5 w-5 text-white" />
           </button>
           {isMember && (
-            <button className="rounded-full h-9 w-9 flex items-center justify-center" style={{background:'rgba(0,0,0,0.28)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)'}} onClick={() => setShowMenu(true)}>
-              <MoreHorizontal className="h-4.5 w-4.5 text-white" />
+            <button
+              className="rounded-full flex items-center justify-center active:scale-90 transition-all"
+              style={{ background:'rgba(0,0,0,0.28)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)', width: 44, height: 44, pointerEvents: 'auto', touchAction: 'manipulation' }}
+              onClick={() => setShowMenu(true)}
+            >
+              <MoreHorizontal className="h-5 w-5 text-white" />
             </button>
           )}
         </div>
