@@ -5,13 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { guessAirline } from "@/utils/airlines";
 import TripMembersManager from "./TripMembersManager";
 import TripPendingRequests from "./TripPendingRequests";
 import FlightDetailModal from "./FlightDetailModal";
 import TravelCard from "./TravelCard";
+import BottomSheet from "../BottomSheet";
 
 const EMPTY_FORM = {
   travel_type: "Flight",
@@ -145,143 +145,133 @@ export default function TripPlan({ trip, user, onUpdate }) {
         onClose={() => setDetailArrival(null)}
       />
 
-      <Dialog open={showAdd} onOpenChange={(open) => { if (!open) closeDialog(); else setShowAdd(true); }}>
-        <DialogContent className="mx-4 rounded-2xl max-w-md p-5 max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-base">{editingId ? "Edit" : "Add"} Travel Info</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={addArrival} className="space-y-3 mt-1">
+      <BottomSheet open={showAdd} onClose={closeDialog} title={`${editingId ? "Edit" : "Add"} Travel Info`}>
+        <form onSubmit={addArrival} className="space-y-3">
 
-            {/* Travel type */}
-            <div>
-              <Label className="text-xs font-medium mb-1 block">Travel Type</Label>
-              <Select value={form.travel_type} onValueChange={(val) => setForm({ ...form, travel_type: val })}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Flight">✈️ Flight</SelectItem>
-                  <SelectItem value="Driving">🚗 Driving</SelectItem>
-                  <SelectItem value="Train">🚂 Train</SelectItem>
-                  <SelectItem value="Other">📋 Other</SelectItem>
-                </SelectContent>
-              </Select>
+          {/* Travel type */}
+          <div>
+            <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Travel Type</Label>
+            <Select value={form.travel_type} onValueChange={(val) => setForm({ ...form, travel_type: val })}>
+              <SelectTrigger className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Flight">✈️ Flight</SelectItem>
+                <SelectItem value="Driving">🚗 Driving</SelectItem>
+                <SelectItem value="Train">🚂 Train</SelectItem>
+                <SelectItem value="Other">📋 Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Round trip toggle (flights only) */}
+          {form.travel_type === "Flight" && (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setForm((prev) => ({ ...prev, is_round_trip: !prev.is_round_trip }))}
+                className={`relative w-10 h-5 rounded-full transition-colors ${form.is_round_trip ? "bg-primary" : "bg-muted"}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${form.is_round_trip ? "translate-x-5" : ""}`} />
+              </button>
+              <Label className="text-xs font-medium cursor-pointer" onClick={() => setForm((prev) => ({ ...prev, is_round_trip: !prev.is_round_trip }))}>
+                Round Trip
+              </Label>
             </div>
+          )}
 
-            {/* Round trip toggle (flights only) */}
-            {form.travel_type === "Flight" && (
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setForm((prev) => ({ ...prev, is_round_trip: !prev.is_round_trip }))}
-                  className={`relative w-10 h-5 rounded-full transition-colors ${form.is_round_trip ? "bg-primary" : "bg-muted"}`}
-                >
-                  <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${form.is_round_trip ? "translate-x-5" : ""}`} />
-                </button>
-                <Label className="text-xs font-medium cursor-pointer" onClick={() => setForm((prev) => ({ ...prev, is_round_trip: !prev.is_round_trip }))}>
-                  Round Trip
+          {/* Route — stacked vertically */}
+          <div>
+            <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>From</Label>
+            <Input value={form.arrival_location} onChange={(e) => setForm({ ...form, arrival_location: e.target.value })} placeholder="City or airport" className="h-9 text-sm w-full" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
+          </div>
+          <div>
+            <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>To</Label>
+            <Input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} placeholder="Destination" className="h-9 text-sm w-full" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
+          </div>
+
+          {/* Flight details */}
+          {form.travel_type === "Flight" && (
+            <div className="bg-muted/40 p-3 rounded-xl space-y-3">
+              <div>
+                <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>
+                  Outbound Flight # <span className="font-normal" style={{ color: "#C0B0A0" }}>(e.g. DL1823)</span>
                 </Label>
+                <Input
+                  value={form.outbound_flight_number}
+                  onChange={(e) => handleFlightNumberChange("outbound_flight_number", e.target.value)}
+                  placeholder="e.g. UA123"
+                  className="h-9 text-sm font-mono w-full"
+                  style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}
+                />
+                <p className="text-[11px] mt-1 text-muted-foreground">Used for live tracking only</p>
               </div>
-            )}
 
-            {/* Route */}
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <Label className="text-xs font-medium mb-1 block">From</Label>
-                <Input value={form.arrival_location} onChange={(e) => setForm({ ...form, arrival_location: e.target.value })} placeholder="City or airport" className="h-9 text-sm" />
-              </div>
-              <div>
-                <Label className="text-xs font-medium mb-1 block">To</Label>
-                <Input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} placeholder="Destination" className="h-9 text-sm" />
-              </div>
-            </div>
-
-            {/* Flight details */}
-            {form.travel_type === "Flight" && (
-              <div className="bg-muted/40 p-3 rounded-lg space-y-2.5">
+              {form.is_round_trip && (
                 <div>
-                  <Label className="text-xs font-medium mb-1 block">
-                    Outbound Flight # <span className="text-muted-foreground font-normal">(e.g. DL1823 or DL 1823)</span>
+                  <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>
+                    Return Flight # <span className="font-normal" style={{ color: "#C0B0A0" }}>(e.g. UA456)</span>
                   </Label>
                   <Input
-                    value={form.outbound_flight_number}
-                    onChange={(e) => handleFlightNumberChange("outbound_flight_number", e.target.value)}
-                    placeholder="e.g. UA123"
-                    className="h-9 text-sm font-mono"
-                  />
-                  <p className="text-[11px] mt-1 text-muted-foreground">Used for live tracking only — does not auto-fill route</p>
-                </div>
-
-                {form.is_round_trip && (
-                  <div>
-                    <Label className="text-xs font-medium mb-1 block">
-                      Return Flight # <span className="text-muted-foreground font-normal">(e.g. UA456)</span>
-                    </Label>
-                    <Input
-                      value={form.return_flight_number}
-                      onChange={(e) => handleFlightNumberChange("return_flight_number", e.target.value)}
-                      placeholder="e.g. UA456"
-                      className="h-9 text-sm font-mono"
-                    />
-                    <p className="text-[11px] mt-1 text-muted-foreground">Used for live tracking only</p>
-                  </div>
-                )}
-
-                <div>
-                  <Label className="text-xs font-medium mb-1 block">Airline</Label>
-                  <Input
-                    value={form.airline}
-                    onChange={(e) => setForm({ ...form, airline: e.target.value })}
-                    placeholder="Auto-filled or enter manually"
-                    className="h-9 text-sm"
+                    value={form.return_flight_number}
+                    onChange={(e) => handleFlightNumberChange("return_flight_number", e.target.value)}
+                    placeholder="e.g. UA456"
+                    className="h-9 text-sm font-mono w-full"
+                    style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}
                   />
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Outbound dates */}
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground mb-1.5">
-                {form.is_round_trip ? "Outbound Arrival" : "Arrival"}
-              </p>
-              <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <Label className="text-xs font-medium mb-1 block">Date</Label>
-                  <Input type="date" value={form.arrival_date} onChange={(e) => setForm({ ...form, arrival_date: e.target.value })} className="h-9 text-sm" />
-                </div>
-                <div>
-                  <Label className="text-xs font-medium mb-1 block">Time</Label>
-                  <Input type="time" value={form.arrival_time} onChange={(e) => setForm({ ...form, arrival_time: e.target.value })} className="h-9 text-sm" />
-                </div>
-              </div>
-            </div>
-
-            {/* Return dates (round trip only) */}
-            {form.is_round_trip && (
               <div>
-                <p className="text-xs font-semibold text-muted-foreground mb-1.5">Return Departure</p>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div>
-                    <Label className="text-xs font-medium mb-1 block">Date</Label>
-                    <Input type="date" value={form.departure_date} onChange={(e) => setForm({ ...form, departure_date: e.target.value })} className="h-9 text-sm" />
-                  </div>
-                  <div>
-                    <Label className="text-xs font-medium mb-1 block">Time</Label>
-                    <Input type="time" value={form.departure_time} onChange={(e) => setForm({ ...form, departure_time: e.target.value })} className="h-9 text-sm" />
-                  </div>
+                <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Airline</Label>
+                <Input
+                  value={form.airline}
+                  onChange={(e) => setForm({ ...form, airline: e.target.value })}
+                  placeholder="Auto-filled or enter manually"
+                  className="h-9 text-sm w-full"
+                  style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Outbound arrival — stacked vertically */}
+          <div>
+            <p className="text-xs font-semibold mb-2" style={{ color: "#9A8A7A" }}>
+              {form.is_round_trip ? "Outbound Arrival" : "Arrival"}
+            </p>
+            <div className="space-y-2">
+              <div>
+                <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Date</Label>
+                <input type="date" value={form.arrival_date} onChange={(e) => setForm({ ...form, arrival_date: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm shadow-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", lineHeight: "36px", boxSizing: "border-box" }} />
+              </div>
+              <div>
+                <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Time</Label>
+                <input type="time" value={form.arrival_time} onChange={(e) => setForm({ ...form, arrival_time: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm shadow-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", lineHeight: "36px", boxSizing: "border-box" }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Return dates — stacked vertically */}
+          {form.is_round_trip && (
+            <div>
+              <p className="text-xs font-semibold mb-2" style={{ color: "#9A8A7A" }}>Return Departure</p>
+              <div className="space-y-2">
+                <div>
+                  <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Date</Label>
+                  <input type="date" value={form.departure_date} onChange={(e) => setForm({ ...form, departure_date: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm shadow-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", lineHeight: "36px", boxSizing: "border-box" }} />
+                </div>
+                <div>
+                  <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Time</Label>
+                  <input type="time" value={form.departure_time} onChange={(e) => setForm({ ...form, departure_time: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm shadow-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", lineHeight: "36px", boxSizing: "border-box" }} />
                 </div>
               </div>
-            )}
-
-            <div className="flex gap-2 pt-1">
-              <Button type="submit" className="flex-1 rounded-full h-9 text-sm" style={{ background: "#C8A27C", color: "white" }}>
-                {editingId ? "Update" : "Save"}
-              </Button>
-              <Button type="button" variant="outline" className="flex-1 rounded-full h-9 text-sm" onClick={closeDialog}>
-                Cancel
-              </Button>
             </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+          )}
+
+          <button type="submit" className="w-full h-10 rounded-full text-sm font-semibold mt-1" style={{ background: "#C8A27C", color: "white" }}>
+            {editingId ? "Update Travel" : "Save Travel"}
+          </button>
+        </form>
+      </BottomSheet>
     </div>
   );
 }
