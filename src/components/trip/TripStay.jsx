@@ -106,15 +106,13 @@ export default function TripStay({ trip, user }) {
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Address <span style={{color:'#C0B0A0',fontWeight:400}}>(optional)</span></Label>
               <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Address" className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
             </div>
-            <div className="form-row">
-              <div className="form-field">
-                <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Check-in</Label>
-                <Input type="date" value={form.check_in} onChange={(e) => setForm({ ...form, check_in: e.target.value })} className="h-9 text-sm w-full" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
-              </div>
-              <div className="form-field">
-                <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Check-out</Label>
-                <Input type="date" value={form.check_out} onChange={(e) => setForm({ ...form, check_out: e.target.value })} className="h-9 text-sm w-full" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
-              </div>
+            <div>
+              <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Check-in</Label>
+              <input type="date" value={form.check_in} onChange={(e) => setForm({ ...form, check_in: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm shadow-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", lineHeight: "36px", boxSizing: "border-box" }} />
+            </div>
+            <div>
+              <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Check-out</Label>
+              <input type="date" value={form.check_out} onChange={(e) => setForm({ ...form, check_out: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm shadow-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", lineHeight: "36px", boxSizing: "border-box" }} />
             </div>
             <div>
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>$/Night <span style={{color:'#C0B0A0',fontWeight:400}}>(optional)</span></Label>
