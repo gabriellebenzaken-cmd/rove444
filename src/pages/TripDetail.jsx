@@ -21,7 +21,6 @@ const tripTabs = [
   { key: "itinerary", label: "Schedule" },
   { key: "map", label: "Map" },
   { key: "costs", label: "Costs" },
-  { key: "aira", label: "☆" },
 ];
 
 export default function TripDetail() {
@@ -137,6 +136,14 @@ export default function TripDetail() {
           >
             <Link2 className="h-5 w-5 text-white" />
           </button>
+          <button
+            className="rounded-full flex items-center justify-center active:scale-90 transition-all"
+            style={{ background: tab === 'aira' ? 'rgba(200,162,124,0.7)' : 'rgba(0,0,0,0.28)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)', width: 44, height: 44, pointerEvents: 'auto', touchAction: 'manipulation' }}
+            onClick={() => setTab(tab === 'aira' ? 'plan' : 'aira')}
+            title="Aira AI"
+          >
+            <span style={{ fontSize: 18, lineHeight: 1 }}>{tab === 'aira' ? '★' : '☆'}</span>
+          </button>
           {isMember && (
             <button
               className="rounded-full flex items-center justify-center active:scale-90 transition-all"
@@ -170,15 +177,15 @@ export default function TripDetail() {
       <div className="px-5">
         <div
           className="mt-4 mb-4 p-1 rounded-full"
-          style={{ background: 'rgba(200,162,124,0.1)', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+          style={{ background: 'rgba(200,162,124,0.1)', display: 'flex', justifyContent: 'center' }}
         >
           {tripTabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
               style={{
-                flexShrink: 0,
-                padding: '6px 14px',
+                flex: 1,
+                padding: '6px 8px',
                 fontSize: 12,
                 fontWeight: 500,
                 borderRadius: 999,
@@ -195,7 +202,6 @@ export default function TripDetail() {
               {t.label}
             </button>
           ))}
-          <div style={{ flexShrink: 0, width: 8 }} />
         </div>
 
         {tab === "plan" && <TripPlan trip={trip} user={user} onUpdate={loadData} />}
@@ -203,6 +209,7 @@ export default function TripDetail() {
         {tab === "itinerary" && <TripItinerary trip={trip} user={user} />}
         {tab === "map" && <TripMap trip={trip} />}
         {tab === "costs" && <TripCosts trip={trip} user={user} />}
+        {tab === "aira" && <TripAira trip={trip} user={user} />}
         {tab === "aira" && <TripAira trip={trip} user={user} />}
 
         <TripCoverEditor open={showCoverEditor} onOpenChange={setShowCoverEditor} trip={trip} onUpdated={loadData} />
