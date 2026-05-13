@@ -13,7 +13,6 @@ import TripCosts from "../components/trip/TripCosts";
 import TripCoverEditor from "../components/trip/TripCoverEditor";
 import EditTripDialog from "../components/trip/EditTripDialog";
 import TripMap from "../components/trip/TripMap";
-import TripAira from "../components/trip/TripAira";
 
 const tripTabs = [
   { key: "plan", label: "Plan" },
@@ -136,14 +135,7 @@ export default function TripDetail() {
           >
             <Link2 className="h-5 w-5 text-white" />
           </button>
-          <button
-            className="rounded-full flex items-center justify-center active:scale-90 transition-all"
-            style={{ background: tab === 'aira' ? 'rgba(200,162,124,0.7)' : 'rgba(0,0,0,0.28)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)', width: 44, height: 44, pointerEvents: 'auto', touchAction: 'manipulation' }}
-            onClick={() => setTab(tab === 'aira' ? 'plan' : 'aira')}
-            title="Aira AI"
-          >
-            <span style={{ fontSize: 18, lineHeight: 1 }}>{tab === 'aira' ? '★' : '☆'}</span>
-          </button>
+
           {isMember && (
             <button
               className="rounded-full flex items-center justify-center active:scale-90 transition-all"
@@ -209,7 +201,7 @@ export default function TripDetail() {
         {tab === "itinerary" && <TripItinerary trip={trip} user={user} />}
         {tab === "map" && <TripMap trip={trip} />}
         {tab === "costs" && <TripCosts trip={trip} user={user} />}
-        {tab === "aira" && <TripAira trip={trip} user={user} />}
+
 
         <TripCoverEditor open={showCoverEditor} onOpenChange={setShowCoverEditor} trip={trip} onUpdated={loadData} />
         <EditTripDialog open={showEdit} onOpenChange={setShowEdit} trip={trip} onUpdated={loadData} />
