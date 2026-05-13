@@ -70,8 +70,8 @@ export default function Layout() {
       {!hideTopBell && (
        <Link
          to="/notifications"
-         className="fixed top-4 right-4 z-50 w-9 h-9 rounded-full flex items-center justify-center"
-         style={{ top: "calc(1rem + env(safe-area-inset-top))", background: "rgba(250,246,241,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(200,162,124,0.2)", boxShadow: "0 2px 10px rgba(0,0,0,0.08)", WebkitTapHighlightColor: "transparent" }}
+         className="fixed z-50 w-9 h-9 rounded-full flex items-center justify-center"
+         style={{ top: "calc(env(safe-area-inset-top) + 56px)", right: "16px", background: "rgba(250,246,241,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(200,162,124,0.2)", boxShadow: "0 2px 10px rgba(0,0,0,0.08)", WebkitTapHighlightColor: "transparent" }}
         >
           <Bell className="h-4 w-4" style={{ color: "#C8A27C" }} />
           {unreadCount > 0 && (
