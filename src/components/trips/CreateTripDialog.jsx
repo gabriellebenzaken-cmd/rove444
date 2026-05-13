@@ -168,11 +168,11 @@ export default function CreateTripDialog({ open, onOpenChange, user, onCreated, 
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div className="flex-1">
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Start date</Label>
-              <input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm shadow-sm transition-colors" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", lineHeight: "36px", boxSizing: "border-box" }} />
+              <input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", display: "flex", alignItems: "center" }} />
             </div>
             <div className="flex-1">
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>End date</Label>
-              <input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm shadow-sm transition-colors" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", lineHeight: "36px", boxSizing: "border-box" }} />
+              <input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", display: "flex", alignItems: "center" }} />
             </div>
           </div>
           {groups.length > 0 && (
