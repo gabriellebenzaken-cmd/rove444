@@ -176,40 +176,43 @@ export default function DestinationAutocomplete({ value, onChange, placeholder, 
   function getPortalStyle() {
     if (!rect) return { display: "none" };
 
+    const GAP = 6;
+    const DROPDOWN_MAX_H = 220;
+    const KEYBOARD_THRESHOLD = 120; // px below input needed before we consider keyboard coverage
+
     const vv = window.visualViewport;
-    // The bottom of the visible viewport (shrinks when keyboard is up on iOS)
     const visibleBottom = (vv && vv.height > 100) ? (vv.offsetTop + vv.height) : window.innerHeight;
 
-    const DROPDOWN_MAX_H = 220;
-    const GAP = 4;
-    const spaceBelow = visibleBottom - rect.bottom - GAP;
-    const spaceAbove = rect.top - GAP;
+    // Always start anchored directly below the input
+    const top = rect.bottom + GAP;
+    const spaceBelow = visibleBottom - top;
 
-    console.log("[Autocomplete] rect:", rect, "visibleBottom:", visibleBottom, "spaceBelow:", spaceBelow, "spaceAbove:", spaceAbove);
-
-    if (spaceBelow >= 80 || spaceBelow >= spaceAbove) {
-      // Prefer below input
+    // Only flip above if the keyboard is literally covering the dropdown area
+    // (less than KEYBOARD_THRESHOLD px available below)
+    if (spaceBelow < KEYBOARD_THRESHOLD) {
+      const spaceAbove = rect.top - GAP;
+      const maxH = Math.max(80, Math.min(DROPDOWN_MAX_H, spaceAbove));
       return {
         position: "fixed",
-        top: rect.bottom + GAP,
+        top: rect.top - maxH - GAP,
         left: rect.left,
         width: rect.width,
-        maxHeight: Math.max(80, Math.min(DROPDOWN_MAX_H, spaceBelow)),
-        zIndex: 99999,
-        overflowY: "auto",
-      };
-    } else {
-      // Above input (keyboard is covering below area)
-      return {
-        position: "fixed",
-        top: Math.max(8, rect.top - Math.min(DROPDOWN_MAX_H, spaceAbove) - GAP),
-        left: rect.left,
-        width: rect.width,
-        maxHeight: Math.max(80, Math.min(DROPDOWN_MAX_H, spaceAbove)),
+        maxHeight: maxH,
         zIndex: 99999,
         overflowY: "auto",
       };
     }
+
+    // Default: drop directly below the input, clamp height to available space
+    return {
+      position: "fixed",
+      top,
+      left: rect.left,
+      width: rect.width,
+      maxHeight: Math.min(DROPDOWN_MAX_H, spaceBelow - GAP),
+      zIndex: 99999,
+      overflowY: "auto",
+    };
   }
 
   const showDropdown = open && suggestions.length > 0;
