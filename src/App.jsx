@@ -147,7 +147,7 @@ const AuthenticatedApp = () => {
         <Route path="/groups" element={<MotionPage><Groups /></MotionPage>} />
         <Route path="/friends" element={<MotionPage><Friends /></MotionPage>} />
         <Route path="/costs" element={<MotionPage><Costs /></MotionPage>} />
-        <Route path="/discover" element={<MotionPage><Discover /></MotionPage>} />
+        {/* Discover hidden for MVP — <Route path="/discover" element={<MotionPage><Discover /></MotionPage>} /> */}
         <Route path="/profile" element={<MotionPage><Profile /></MotionPage>} />
         <Route path="/trip/:id" element={<MotionPage><TripDetail /></MotionPage>} />
         <Route path="/group/:id" element={<MotionPage><GroupDetail /></MotionPage>} />

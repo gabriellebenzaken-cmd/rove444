@@ -12,7 +12,6 @@ const StarIcon = ({ className }) => (
 const NAV_ITEMS = [
   { path: "/", icon: Map, label: "Trips" },
   { path: "/groups", icon: Users, label: "Groups" },
-  { path: "/discover", icon: StarIcon, label: "Discover", isStar: true },
   { path: "/friends", icon: UserPlus, label: "Friends" },
   { path: "/notifications", icon: Bell, label: "Alerts", isBell: true },
   { path: "/profile", icon: User, label: "Me" },
@@ -50,11 +49,7 @@ export default function Layout() {
                 className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl transition-all duration-200 relative"
                 style={{ color: isActive ? "#C8A27C" : "#B5A898", WebkitTapHighlightColor: "transparent" }}
               >
-                {item.isStar ? (
-                  <StarIcon className={`h-[19px] w-[19px] ${isActive ? "stroke-[2.2px]" : "stroke-[1.6px]"}`} />
-                ) : (
-                  <item.icon className={`h-[19px] w-[19px] ${isActive ? "stroke-[2.2px]" : "stroke-[1.6px]"}`} />
-                )}
+                <item.icon className={`h-[19px] w-[19px] ${isActive ? "stroke-[2.2px]" : "stroke-[1.6px]"}`} />
                 {item.isBell && unreadCount > 0 && (
                   <span className="absolute top-0.5 right-1.5 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center text-white" style={{ background: "#C8A27C" }}>
                     {unreadCount > 9 ? "9+" : unreadCount}
