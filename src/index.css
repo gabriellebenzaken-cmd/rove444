@@ -105,6 +105,12 @@
   }
 }
 
+/* iOS input zoom fix */
+input, textarea, select {
+  font-size: 16px !important;
+  -webkit-text-size-adjust: 100%;
+}
+
 @layer utilities {
   .form-row {
     display: flex;
