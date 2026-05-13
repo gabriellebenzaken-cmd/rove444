@@ -87,7 +87,7 @@ function MobileSearchSheet({ initialQuery, onSelect, onClose }) {
     setLlmLoading(true);
 
     base44.integrations.Core.InvokeLLM({
-      prompt: `List 5 real travel destinations matching "${debouncedQuery}". Return only city and country names, one per item.`,
+      prompt: `List 5 real travel destinations matching "${debouncedQuery}". For US cities include the state abbreviation (e.g. "Austin, TX, USA"). For all other cities use "City, Country". Return only the formatted destination strings, one per item.`,
       response_json_schema: {
         type: "object",
         properties: { suggestions: { type: "array", items: { type: "string" } } },
@@ -330,19 +330,24 @@ export default function DestinationAutocomplete({ value, onChange, placeholder, 
   const [llmLoading, setLlmLoading] = useState(false);
   const inputRef = useRef(null);
   const llmAbort = useRef(null);
+  // Tracks whether value just changed due to a selection (not user typing)
+  const justSelected = useRef(false);
   const debouncedValue = useDebounced(value, 400);
 
-  // Desktop: instant local results
+  // Desktop: instant local results — skip if just selected
   useEffect(() => {
-    if (mobileSheetOpen) return;
+    if (mobileSheetOpen || justSelected.current) {
+      justSelected.current = false;
+      return;
+    }
     if (!value || value.length < 2) { setDesktopSuggestions([]); setDesktopOpen(false); return; }
     const local = localMatch(value);
     if (local.length > 0) { setDesktopSuggestions(local); setDesktopOpen(true); }
   }, [value, mobileSheetOpen]);
 
-  // Desktop: LLM enhancement
+  // Desktop: LLM enhancement — skip if on mobile
   useEffect(() => {
-    if (mobileSheetOpen) return;
+    if (mobileSheetOpen || isMobile()) return;
     if (!debouncedValue || debouncedValue.length < 2) return;
     if (llmAbort.current) llmAbort.current.cancelled = true;
     const handle = { cancelled: false };
@@ -350,7 +355,7 @@ export default function DestinationAutocomplete({ value, onChange, placeholder, 
     setLlmLoading(true);
 
     base44.integrations.Core.InvokeLLM({
-      prompt: `List 5 real travel destinations matching "${debouncedValue}". Return only city and country names, one per item.`,
+      prompt: `List 5 real travel destinations matching "${debouncedValue}". For US cities include the state abbreviation (e.g. "Austin, TX, USA"). For all other cities use "City, Country". Return only the formatted destination strings, one per item.`,
       response_json_schema: {
         type: "object",
         properties: { suggestions: { type: "array", items: { type: "string" } } },
@@ -378,17 +383,17 @@ export default function DestinationAutocomplete({ value, onChange, placeholder, 
   }, [desktopOpen]);
 
   function handleSelect(s) {
+    justSelected.current = true;
     onChange(s);
     setMobileSheetOpen(false);
     setDesktopOpen(false);
     setDesktopSuggestions([]);
   }
 
-  function handleFocus() {
+  function handleTrigger() {
     if (isMobile()) {
-      // Open full-screen sheet on mobile instead of typing inline
       setMobileSheetOpen(true);
-      inputRef.current?.blur(); // prevent keyboard from opening on the background input
+      inputRef.current?.blur();
     }
   }
 
@@ -401,8 +406,8 @@ export default function DestinationAutocomplete({ value, onChange, placeholder, 
         value={value}
         readOnly={isMobile()}
         onChange={(e) => { if (!isMobile()) onChange(e.target.value); }}
-        onFocus={handleFocus}
-        onClick={handleFocus}
+        onFocus={handleTrigger}
+        onClick={handleTrigger}
         placeholder={placeholder || "City, country"}
         autoComplete="off"
         autoCorrect="off"
@@ -438,8 +443,8 @@ export default function DestinationAutocomplete({ value, onChange, placeholder, 
         />
       )}
 
-      {/* Desktop: inline dropdown */}
-      {!mobileSheetOpen && desktopOpen && desktopSuggestions.length > 0 && (
+      {/* Desktop: inline dropdown — never shown on mobile */}
+      {!isMobile() && !mobileSheetOpen && desktopOpen && desktopSuggestions.length > 0 && (
         <DesktopDropdown
           suggestions={desktopSuggestions}
           llmLoading={llmLoading}
