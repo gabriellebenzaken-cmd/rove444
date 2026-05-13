@@ -241,11 +241,15 @@ export default function TripPlan({ trip, user, onUpdate }) {
             <div className="space-y-2">
               <div>
                 <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Date</Label>
-                <input type="date" value={form.arrival_date} onChange={(e) => setForm({ ...form, arrival_date: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", display: "flex", alignItems: "center" }} />
+                <div style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", borderRadius: "0.375rem", height: "36px", display: "flex", alignItems: "center", paddingLeft: "12px", paddingRight: "12px", overflow: "hidden" }}>
+                  <input type="date" value={form.arrival_date} onChange={(e) => setForm({ ...form, arrival_date: e.target.value })} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", background: "transparent", border: "none", outline: "none", fontSize: "14px", color: "hsl(var(--foreground))" }} />
+                </div>
               </div>
               <div>
                 <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Time</Label>
-                <input type="time" value={form.arrival_time} onChange={(e) => setForm({ ...form, arrival_time: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", display: "flex", alignItems: "center" }} />
+                <div style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", borderRadius: "0.375rem", height: "36px", display: "flex", alignItems: "center", paddingLeft: "12px", paddingRight: "12px", overflow: "hidden" }}>
+                  <input type="time" value={form.arrival_time} onChange={(e) => setForm({ ...form, arrival_time: e.target.value })} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", background: "transparent", border: "none", outline: "none", fontSize: "14px", color: "hsl(var(--foreground))" }} />
+                </div>
               </div>
             </div>
           </div>
@@ -257,11 +261,15 @@ export default function TripPlan({ trip, user, onUpdate }) {
               <div className="space-y-2">
                 <div>
                   <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Date</Label>
-                  <input type="date" value={form.departure_date} onChange={(e) => setForm({ ...form, departure_date: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", display: "flex", alignItems: "center" }} />
+                  <div style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", borderRadius: "0.375rem", height: "36px", display: "flex", alignItems: "center", paddingLeft: "12px", paddingRight: "12px", overflow: "hidden" }}>
+                    <input type="date" value={form.departure_date} onChange={(e) => setForm({ ...form, departure_date: e.target.value })} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", background: "transparent", border: "none", outline: "none", fontSize: "14px", color: "hsl(var(--foreground))" }} />
+                  </div>
                 </div>
                 <div>
                   <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Time</Label>
-                  <input type="time" value={form.departure_time} onChange={(e) => setForm({ ...form, departure_time: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", display: "flex", alignItems: "center" }} />
+                  <div style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", borderRadius: "0.375rem", height: "36px", display: "flex", alignItems: "center", paddingLeft: "12px", paddingRight: "12px", overflow: "hidden" }}>
+                    <input type="time" value={form.departure_time} onChange={(e) => setForm({ ...form, departure_time: e.target.value })} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", background: "transparent", border: "none", outline: "none", fontSize: "14px", color: "hsl(var(--foreground))" }} />
+                  </div>
                 </div>
               </div>
             </div>
