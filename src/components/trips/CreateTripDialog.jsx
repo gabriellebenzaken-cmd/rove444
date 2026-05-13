@@ -174,13 +174,30 @@ export default function CreateTripDialog({ open, onOpenChange, user, onCreated, 
             <div>
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Start date</Label>
               <div style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", borderRadius: "0.375rem", height: "36px", display: "flex", alignItems: "center", paddingLeft: "12px", paddingRight: "12px", overflow: "hidden" }}>
-                <input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", background: "transparent", border: "none", outline: "none", fontSize: "14px", color: "hsl(var(--foreground))" }} />
+                <input
+                  type="date"
+                  value={form.start_date}
+                  onChange={(e) => {
+                    const newStart = e.target.value;
+                    // If end date is now before new start date, clear it
+                    const newEnd = form.end_date && form.end_date < newStart ? "" : form.end_date;
+                    setForm({ ...form, start_date: newStart, end_date: newEnd });
+                  }}
+                  style={{ width: "100%", minWidth: 0, boxSizing: "border-box", background: "transparent", border: "none", outline: "none", fontSize: "14px", color: "hsl(var(--foreground))" }}
+                />
               </div>
             </div>
             <div>
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>End date</Label>
               <div style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", borderRadius: "0.375rem", height: "36px", display: "flex", alignItems: "center", paddingLeft: "12px", paddingRight: "12px", overflow: "hidden" }}>
-                <input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", background: "transparent", border: "none", outline: "none", fontSize: "14px", color: "hsl(var(--foreground))" }} />
+                <input
+                  type="date"
+                  value={form.end_date}
+                  min={form.start_date || undefined}
+                  defaultValue={form.start_date || undefined}
+                  onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+                  style={{ width: "100%", minWidth: 0, boxSizing: "border-box", background: "transparent", border: "none", outline: "none", fontSize: "14px", color: "hsl(var(--foreground))" }}
+                />
               </div>
             </div>
           </div>
