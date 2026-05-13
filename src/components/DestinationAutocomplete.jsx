@@ -49,6 +49,8 @@ function useDebounced(value, delay) {
 }
 
 function isMobile() {
+  // Use pointer: coarse as the primary signal (covers iOS PWA reliably)
+  if (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) return true;
   return window.innerWidth < 768;
 }
 
@@ -397,9 +399,10 @@ export default function DestinationAutocomplete({ value, onChange, placeholder, 
         ref={inputRef}
         type="text"
         value={value}
-        readOnly={isMobile()} // on mobile, editing happens inside the sheet
+        readOnly={isMobile()}
         onChange={(e) => { if (!isMobile()) onChange(e.target.value); }}
         onFocus={handleFocus}
+        onClick={handleFocus}
         placeholder={placeholder || "City, country"}
         autoComplete="off"
         autoCorrect="off"
