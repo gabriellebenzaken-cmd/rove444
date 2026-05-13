@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
@@ -7,11 +7,11 @@ import RecommendationCard from "@/components/aira/RecommendationCard";
 import AiraChat from "@/components/aira/AiraChat";
 
 const MOODS = [
-  { label: "🍽 Food", value: "food spots and restaurants" },
-  { label: "🍹 Drinks", value: "bars, cocktails, drinks" },
-  { label: "🏖 Chill", value: "relaxing, low-key activities" },
-  { label: "🎉 Nightlife", value: "nightlife, clubs, events" },
-  { label: "📸 Explore", value: "photo spots, sightseeing, local gems" },
+  { label: "🍽 Food", value: "restaurants, food spots, local eats" },
+  { label: "🍹 Drinks", value: "bars, cocktails, drinks, happy hour" },
+  { label: "🏖 Chill", value: "relaxing activities, cafes, parks, low-key spots" },
+  { label: "🎉 Nightlife", value: "nightlife, clubs, live music, events" },
+  { label: "📸 Explore", value: "things to do, sightseeing, photo spots, local gems" },
 ];
 
 const FOLLOW_UPS = [
@@ -26,6 +26,7 @@ export default function Discover() {
   const [phase, setPhase] = useState("home");
   const [activeMood, setActiveMood] = useState(null);
   const [location, setLocation] = useState("");
+  const locationRef = useRef("");
   const [suggestions, setSuggestions] = useState([]);
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
@@ -33,8 +34,10 @@ export default function Discover() {
   const [activeTrip, setActiveTrip] = useState(null);
   const [searchError, setSearchError] = useState(null);
 
+  // Keep ref in sync so handlers always read latest value
+  useEffect(() => { locationRef.current = location; }, [location]);
+
   useEffect(() => {
-    // Check for active trip today
     base44.auth.me().then(me => {
       if (!me) return;
       const today = format(new Date(), "yyyy-MM-dd");
@@ -46,17 +49,19 @@ export default function Discover() {
         if (active) {
           setActiveTrip(active);
           setLocation(active.destination);
+          locationRef.current = active.destination;
         }
       }).catch(() => {});
     }).catch(() => {});
   }, []);
 
-
-
   async function handleSearch(mood) {
-    const dest = location.trim();
-    if (!dest) return;
-    const moodToUse = mood || activeMood || MOODS.find(m => m.label === "📸 Explore");
+    const dest = locationRef.current.trim();
+    if (!dest) {
+      setSearchError("Please enter a city first.");
+      return;
+    }
+    const moodToUse = mood || activeMood || MOODS[4]; // default: Explore
     setActiveMood(moodToUse);
     setPhase("loading");
     setSuggestions([]);
@@ -66,44 +71,40 @@ export default function Discover() {
     const groupSize = activeTrip?.member_emails?.length || 1;
 
     try {
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are Aira, a spontaneous trip discovery assistant.
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are Aira, a spontaneous trip discovery assistant.
 The user is currently in ${dest} (${timeCtx}) with a group of ${groupSize}.
 They want: ${moodToUse.value}.
 
 Give 5 specific, real, local recommendations. Each should feel like a tip from a local friend — immediate, discoverable, no fluff.
 Be specific to ${dest}. No generic advice. No raw URLs.`,
-      add_context_from_internet: true,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          title: { type: "string", description: "Short feed title e.g. 'Best matcha in Tampa'" },
-          results: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                name: { type: "string", description: "Place or activity name" },
-                description: { type: "string", description: "2-3 sentences, no URLs" },
-                location: { type: "string", description: "Neighborhood or city" },
-                tags: { type: "array", items: { type: "string" }, description: "2-4 tags" },
+        add_context_from_internet: true,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            title: { type: "string", description: "Short feed title e.g. 'Best matcha in Tampa'" },
+            results: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string", description: "Place or activity name" },
+                  description: { type: "string", description: "2-3 sentences, no URLs" },
+                  location: { type: "string", description: "Neighborhood or city" },
+                  tags: { type: "array", items: { type: "string" }, description: "2-4 tags" },
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    setSuggestions(result?.results || []);
-    setPhase("results");
+      setSuggestions(result?.results || []);
+      setPhase("results");
     } catch (err) {
       setSearchError("Couldn't load suggestions. Please try again.");
       setPhase("home");
     }
-  }
-
-  async function handleMood(mood) {
-    await handleSearch(mood);
   }
 
   async function sendChat(e, overrideMsg) {
@@ -115,7 +116,7 @@ Be specific to ${dest}. No generic advice. No raw URLs.`,
     setChatLoading(true);
 
     const { time: timeCtx } = getLocationTime(activeTrip);
-    const dest = location || "their destination";
+    const dest = locationRef.current || "their destination";
     const history = chatMessages.slice(-6).map((m) => `${m.role === "user" ? "User" : "Aira"}: ${m.content}`).join("\n");
 
     const result = await base44.integrations.Core.InvokeLLM({
@@ -155,7 +156,7 @@ If it's a general question, return a JSON object with just "content" (a short pl
   const greeting = getLocationGreeting(activeTrip);
 
   return (
-    <div className="px-5 pb-28 max-w-lg mx-auto space-y-5" style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top))" }}>
+    <div className="px-5 pb-28 max-w-lg mx-auto space-y-5" style={{ paddingTop: "calc(env(safe-area-inset-top) + 20px)" }}>
       {/* Header */}
       <div>
         <p className="text-base font-semibold leading-snug" style={{ letterSpacing: "-0.02em" }}>
@@ -167,7 +168,7 @@ If it's a general question, return a JSON object with just "content" (a short pl
           <div className="flex items-center gap-2 mt-2">
             <Input
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={(e) => { setLocation(e.target.value); locationRef.current = e.target.value; }}
               onKeyDown={(e) => { if (e.key === "Enter") handleSearch(null); }}
               placeholder="Where are you? (e.g. Tulum)"
               className="rounded-full text-sm h-8 flex-1"
@@ -186,7 +187,7 @@ If it's a general question, return a JSON object with just "content" (a short pl
           {MOODS.map((mood) => (
             <button
               key={mood.value}
-              onClick={() => handleMood(mood)}
+              onClick={() => handleSearch(mood)}
               disabled={phase === "loading"}
               className="text-sm px-3.5 py-2 rounded-full border border-border transition-all active:scale-95"
               style={
@@ -236,7 +237,7 @@ If it's a general question, return a JSON object with just "content" (a short pl
               ))}
               <button
                 className="text-xs px-3 py-1.5 rounded-full border border-border bg-card hover:bg-muted/40 transition-colors"
-                onClick={() => handleMood(activeMood)}
+                onClick={() => handleSearch(activeMood)}
               >
                 ↻ Refresh
               </button>
@@ -245,7 +246,7 @@ If it's a general question, return a JSON object with just "content" (a short pl
         </div>
       )}
 
-      {/* Chat — secondary */}
+      {/* Chat */}
       {(phase === "results" || phase === "chat") && (
         <AiraChat
           messages={chatMessages}
