@@ -31,7 +31,7 @@ export default function Discover() {
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [activeTrip, setActiveTrip] = useState(null);
-
+  const [searchError, setSearchError] = useState(null);
 
   useEffect(() => {
     // Check for active trip today
@@ -53,19 +53,23 @@ export default function Discover() {
 
 
 
-  async function handleMood(mood) {
-    setActiveMood(mood);
+  async function handleSearch(mood) {
+    const dest = location.trim();
+    if (!dest) return;
+    const moodToUse = mood || activeMood || MOODS.find(m => m.label === "📸 Explore");
+    setActiveMood(moodToUse);
     setPhase("loading");
     setSuggestions([]);
+    setSearchError(null);
 
     const timeCtx = getTimeContext(activeTrip);
-    const dest = location || "the current destination";
     const groupSize = activeTrip?.member_emails?.length || 1;
 
+    try {
     const result = await base44.integrations.Core.InvokeLLM({
       prompt: `You are Aira, a spontaneous trip discovery assistant.
 The user is currently in ${dest} (${timeCtx}) with a group of ${groupSize}.
-They want: ${mood.value}.
+They want: ${moodToUse.value}.
 
 Give 5 specific, real, local recommendations. Each should feel like a tip from a local friend — immediate, discoverable, no fluff.
 Be specific to ${dest}. No generic advice. No raw URLs.`,
@@ -92,6 +96,14 @@ Be specific to ${dest}. No generic advice. No raw URLs.`,
 
     setSuggestions(result?.results || []);
     setPhase("results");
+    } catch (err) {
+      setSearchError("Couldn't load suggestions. Please try again.");
+      setPhase("home");
+    }
+  }
+
+  async function handleMood(mood) {
+    await handleSearch(mood);
   }
 
   async function sendChat(e, overrideMsg) {
@@ -143,7 +155,7 @@ If it's a general question, return a JSON object with just "content" (a short pl
   const greeting = getLocationGreeting(activeTrip);
 
   return (
-    <div className="px-5 pb-28 pt-14 max-w-lg mx-auto space-y-5">
+    <div className="px-5 pb-28 max-w-lg mx-auto space-y-5" style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top))" }}>
       {/* Header */}
       <div>
         <p className="text-base font-semibold leading-snug" style={{ letterSpacing: "-0.02em" }}>
@@ -156,10 +168,14 @@ If it's a general question, return a JSON object with just "content" (a short pl
             <Input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleSearch(null); }}
               placeholder="Where are you? (e.g. Tulum)"
               className="rounded-full text-sm h-8 flex-1"
             />
           </div>
+        )}
+        {searchError && (
+          <p className="text-xs text-destructive mt-1">{searchError}</p>
         )}
       </div>
 
