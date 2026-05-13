@@ -210,7 +210,6 @@ export default function TripDetail() {
         {tab === "map" && <TripMap trip={trip} />}
         {tab === "costs" && <TripCosts trip={trip} user={user} />}
         {tab === "aira" && <TripAira trip={trip} user={user} />}
-        {tab === "aira" && <TripAira trip={trip} user={user} />}
 
         <TripCoverEditor open={showCoverEditor} onOpenChange={setShowCoverEditor} trip={trip} onUpdated={loadData} />
         <EditTripDialog open={showEdit} onOpenChange={setShowEdit} trip={trip} onUpdated={loadData} />
