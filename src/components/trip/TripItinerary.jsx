@@ -101,7 +101,12 @@ export default function TripItinerary({ trip, user }) {
                 <p className="text-xs text-muted-foreground pl-9">Free day</p>
               ) : (
                 <div className="space-y-2 pl-9">
-                  {(groupedItems[day] || []).map((item) => (
+                  {(groupedItems[day] || []).sort((a, b) => {
+                    if (!a.time && !b.time) return 0;
+                    if (!a.time) return 1;
+                    if (!b.time) return -1;
+                    return a.time.localeCompare(b.time);
+                  }).map((item) => (
                     <div key={item.id} className="bg-card rounded-xl border border-border p-3">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">

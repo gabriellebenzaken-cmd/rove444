@@ -261,7 +261,12 @@ export default function TripMap({ trip }) {
                       <p className="text-sm font-semibold">{format(parseISO(day), "EEE, MMM d")}</p>
                     </div>
                     <div className="space-y-2 pl-8">
-                      {dayItems.map(item => (
+                      {dayItems.sort((a, b) => {
+                        if (!a.time && !b.time) return 0;
+                        if (!a.time) return 1;
+                        if (!b.time) return -1;
+                        return a.time.localeCompare(b.time);
+                      }).map(item => (
                         <div
                           key={item.id}
                           className="p-3 rounded-xl border border-border bg-card"
