@@ -209,6 +209,7 @@ async function seedJapan(log, me) {
     { trip_id: trip.id, user_email: em("priyasharma"), user_name: nm("priyasharma"), travel_type: "Flight", is_round_trip: true, arrival_location: "BOS", destination: "NRT", arrival_date: "2026-07-11", arrival_time: "08:00", departure_date: "2026-07-24", departure_time: "21:00", airline: "JAL",    outbound_flight_number: "JL7",   return_flight_number: "JL8" },
     { trip_id: trip.id, user_email: em("alexrivers"),  user_name: nm("alexrivers"),  travel_type: "Flight", is_round_trip: true, arrival_location: "SFO", destination: "NRT", arrival_date: "2026-07-10", arrival_time: "13:45", departure_date: "2026-07-25", departure_time: "11:00", airline: "ANA",    outbound_flight_number: "NH1",   return_flight_number: "NH2" },
   ];
+  // Note: times display as 12-hour AM/PM in UI (13:45 → 1:45 PM, etc.)
   await Promise.all(arrivals.map((r) => base44.entities.Arrival.create(r)));
   log("  ✓ Arrivals created");
 
@@ -245,6 +246,7 @@ async function seedJapan(log, me) {
     { date: "2026-07-22", time: "14:00", title: "Kuromon Market + last grocery haul",  location: "Nipponbashi, Osaka", notes: "fresh wagyu, fruit, snacks for the flight. go big",                                   is_required: false },
     { date: "2026-07-23", time: "19:00", title: "last night dinner – kaiseki 🍱",      location: "Osaka",              notes: "splurge dinner. Alex is making the trip reel, we need a nice end shot",               is_required: true },
   ];
+  // Note: times stored in 24hr format, displayed as 12-hour AM/PM in UI
   for (const r of itinItems) {
     await base44.entities.ItineraryItem.create({ trip_id: trip.id, ...r });
     await delay(80);
@@ -400,6 +402,7 @@ async function seedMiami(log, me) {
     { date: "2026-06-15", time: "17:00", title: "sunset beach picnic 🌅",         location: "South Pointe Park, Miami",notes: "bring wine + snacks. golden hour for the camera roll",                      is_required: false },
     { date: "2026-06-16", time: "10:00", title: "last brunch + check out",        location: "Café La Trova",           notes: "iconic cuban spot. get the croquetas. then cab to airport",                 is_required: true },
   ];
+  // Note: times stored in 24hr format, displayed as 12-hour AM/PM in UI
   for (const r of itinItems) {
     await base44.entities.ItineraryItem.create({ trip_id: trip.id, ...r });
     await delay(80);
@@ -632,6 +635,7 @@ async function seedFest(log, me) {
     { date: "2026-04-20", time: "15:00", title: "day 3 – final day 🙌",             location: "Empire Polo Club, Indio",   notes: "merch table run first. get your stuff before it sells out",                           is_required: true },
     { date: "2026-04-21", time: "10:00", title: "pack up + clean airbnb",           location: "La Quinta, CA",             notes: "talia made a cleaning checklist. just do it. security deposit is $500",                is_required: true },
   ];
+  // Note: times stored in 24hr format, displayed as 12-hour AM/PM in UI
   for (const r of itinItems) {
     await base44.entities.ItineraryItem.create({ trip_id: trip.id, ...r });
     await delay(80);
