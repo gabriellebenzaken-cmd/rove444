@@ -25,25 +25,25 @@ export default function RoveSplash({ onFinish, duration = 1300 }) {
   return (
     <div style={{ ...styles.container, backgroundColor: bg }}>
       <style>{`
-        @keyframes roveFadeIn {
+        @keyframes rovrFadeIn {
           from { opacity: 0; }
           to   { opacity: 1; }
         }
-        @keyframes roveTwinkle {
+        @keyframes rovrTwinkle {
           0%, 100% { opacity: 0.82; transform: scale(1); }
           50%       { opacity: 1;    transform: scale(1.12); }
         }
-        .rove-logo-wrap {
-          animation: roveFadeIn 400ms ease-out forwards;
+        .rovr-logo-wrap {
+          animation: rovrFadeIn 400ms ease-out forwards;
         }
-        .rove-star {
-          animation: roveTwinkle 1100ms ease-in-out infinite;
+        .rovr-star {
+          animation: rovrTwinkle 1100ms ease-in-out infinite;
         }
       `}</style>
-      <div className="rove-logo-wrap" style={styles.logoWrap}>
+      <div className="rovr-logo-wrap" style={styles.logoWrap}>
         <div style={styles.wordmarkRow}>
-          <span style={{ ...styles.logo, color }}>rove</span>
-          <span className="rove-star" style={{ ...styles.star, color }}>✦</span>
+          <span style={{ ...styles.logo, color }}>ROVR</span>
+          <span className="rovr-star" style={{ ...styles.star, color }}>✦</span>
         </div>
       </div>
     </div>
@@ -71,16 +71,16 @@ const styles = {
     justifyContent: "center",
   },
   logo: {
-    fontSize: 56,
+    fontSize: 52,
     lineHeight: "64px",
-    letterSpacing: "-2px",
-    fontWeight: 400,
+    letterSpacing: "6px",
+    fontWeight: 300,
     fontFamily: "system-ui, -apple-system, sans-serif",
   },
   star: {
     position: "absolute",
     top: -10,
-    right: -16,
+    right: -18,
     fontSize: 14,
     lineHeight: "14px",
     fontWeight: 600,

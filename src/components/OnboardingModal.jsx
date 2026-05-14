@@ -78,7 +78,7 @@ export default function OnboardingModal({ user, onComplete }) {
             <div className="w-14 h-14 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl flex items-center justify-center mb-3">
               <Sparkles className="h-7 w-7 text-primary" />
             </div>
-            <DialogTitle className="text-xl">Welcome to Rove!</DialogTitle>
+            <DialogTitle className="text-xl">Welcome to ROVR!</DialogTitle>
             <p className="text-sm text-muted-foreground text-center mt-1">
               Hey {user?.full_name?.split(" ")[0]} 👋 Set up your profile to get started.
             </p>
