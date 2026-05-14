@@ -292,10 +292,15 @@ async function runSeed(log, me) {
   const myEmail = me.email;
   const myName = me.full_name || me.email.split("@")[0];
 
-  // Check for existing demo data
-  const existingProfiles = await base44.entities.UserProfile.filter({}, "-created_date", 200).catch(() => []);
-  if (existingProfiles.some((p) => p.user_id?.startsWith(DEMO_TAG))) {
-    throw new Error("Demo data already exists. Clear it first.");
+  // Check for existing demo data (profiles OR trips) to catch partial runs
+  const [existingProfiles, existingTrips] = await Promise.all([
+    base44.entities.UserProfile.filter({}, "-created_date", 200).catch(() => []),
+    base44.entities.Trip.filter({}, "-created_date", 200).catch(() => []),
+  ]);
+  const hasProfiles = existingProfiles.some((p) => p.user_id?.startsWith(DEMO_TAG));
+  const hasTrips    = existingTrips.some((t) => t.invite_code?.startsWith(DEMO_TAG));
+  if (hasProfiles || hasTrips) {
+    throw new Error("Demo data already exists (possibly partial). Clear it first, then re-seed.");
   }
 
   // ── 1. UserProfiles ──────────────────────────────────────────────────────
@@ -468,7 +473,10 @@ async function runSeed(log, me) {
     { trip_id: tripFest.id, date: "2026-04-20", time: "15:00", title: "day 3 – final day 🙌", location: "Empire Polo Club, Indio", notes: "merch table run first. get your stuff before it sells out", is_required: true },
     { trip_id: tripFest.id, date: "2026-04-21", time: "10:00", title: "pack up + clean airbnb", location: "La Quinta, CA", notes: "talia made a cleaning checklist. just do it. security deposit is $500", is_required: true },
   ];
-  await Promise.all(itinRecordsClean.map((r) => base44.entities.ItineraryItem.create(r)));
+  for (const r of itinRecordsClean) {
+    await base44.entities.ItineraryItem.create(r);
+    await new Promise((res) => setTimeout(res, 80));
+  }
   log(`✓ ${itinRecordsClean.length} ItineraryItems created`);
 
   // ── 7. Expenses ──────────────────────────────────────────────────────────
@@ -514,7 +522,10 @@ async function runSeed(log, me) {
     { trip_id: tripFest.id, description: "Gas – both cars", amount: 148, paid_by: em("jakemor"), paid_by_name: nm("jakemor"), split_among: festMembers, category: "transport", trip_wide: false, day_number: 1, is_settled: false },
     { trip_id: tripFest.id, description: "Sunscreen, Advil, charger cables – CVS", amount: 76, paid_by: em("kelseymoon"), paid_by_name: nm("kelseymoon"), split_among: festMembers, category: "other", trip_wide: false, day_number: 1, is_settled: false },
   ];
-  await Promise.all(expenseRecords.map((r) => base44.entities.Expense.create(r)));
+  for (const r of expenseRecords) {
+    await base44.entities.Expense.create(r);
+    await new Promise((res) => setTimeout(res, 80));
+  }
   log(`✓ ${expenseRecords.length} Expenses created`);
 
   // ── 8. Payments (festival – messy settle-up) ──────────────────────────────
@@ -554,7 +565,11 @@ async function runSeed(log, me) {
     );
   }
   if (paymentRecords.length > 0) {
-    await Promise.all(paymentRecords.map((r) => base44.entities.Payment.create(r)));
+    // Throttle payment creates to avoid rate limits — sequential with small delay
+    for (const r of paymentRecords) {
+      await base44.entities.Payment.create(r);
+      await new Promise((res) => setTimeout(res, 120));
+    }
   }
   log(`✓ ${paymentRecords.length} Payments created`);
 
