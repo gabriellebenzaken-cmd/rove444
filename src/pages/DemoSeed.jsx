@@ -287,60 +287,60 @@ async function seedJapan(log, me) {
 
   const paymentRecords = [];
 
-  // Tokyo hostel: you paid, some owe you
+  // Tokyo hostel: you paid, some owe you (all unpaid for clean owed balance)
   if (tokyoHostelExp) {
     const share = Math.round(1470 / members.length);
     paymentRecords.push(
-      { expense_id: tokyoHostelExp.id, sender_email: em("kaitonishi"),  sender_name: nm("kaitonishi"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo", status: "confirmed" },
-      { expense_id: tokyoHostelExp.id, sender_email: em("zoepark__"),   sender_name: nm("zoepark__"),   receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo", status: "pending" },
+      { expense_id: tokyoHostelExp.id, sender_email: em("kaitonishi"),  sender_name: nm("kaitonishi"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo", status: "unpaid" },
+      { expense_id: tokyoHostelExp.id, sender_email: em("zoepark__"),   sender_name: nm("zoepark__"),   receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo", status: "unpaid" },
       { expense_id: tokyoHostelExp.id, sender_email: em("marcuschen"),  sender_name: nm("marcuschen"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo", status: "unpaid" },
     );
   }
 
-  // Kyoto machiya: Kaito paid, you and others owe back
+  // Kyoto machiya: Kaito paid, you and others owe back (you owe unpaid, others confirmed/pending)
   if (kyotoExp) {
     const share = Math.round(3080 / members.length);
     paymentRecords.push(
-      { expense_id: kyotoExp.id, sender_email: myEmail,         sender_name: myName,         receiver_email: em("kaitonishi"), receiver_name: nm("kaitonishi"), amount: share, payment_method: "venmo", status: "confirmed" },
-      { expense_id: kyotoExp.id, sender_email: em("priyasharma"), sender_name: nm("priyasharma"), receiver_email: em("kaitonishi"), receiver_name: nm("kaitonishi"), amount: share, payment_method: "venmo", status: "pending" },
-      { expense_id: kyotoExp.id, sender_email: em("alexrivers"),  sender_name: nm("alexrivers"),  receiver_email: em("kaitonishi"), receiver_name: nm("kaitonishi"), amount: share, payment_method: "cashapp", status: "unpaid" },
+      { expense_id: kyotoExp.id, sender_email: myEmail,         sender_name: myName,         receiver_email: em("kaitonishi"), receiver_name: nm("kaitonishi"), amount: share, payment_method: "venmo", status: "unpaid" },
+      { expense_id: kyotoExp.id, sender_email: em("priyasharma"), sender_name: nm("priyasharma"), receiver_email: em("kaitonishi"), receiver_name: nm("kaitonishi"), amount: share, payment_method: "venmo", status: "confirmed" },
+      { expense_id: kyotoExp.id, sender_email: em("alexrivers"),  sender_name: nm("alexrivers"),  receiver_email: em("kaitonishi"), receiver_name: nm("kaitonishi"), amount: share, payment_method: "cashapp", status: "pending" },
     );
   }
 
-  // JR Pass: Marcus paid, split payments back
+  // JR Pass: Marcus paid, split payments back (all unpaid to you for clean owed summary)
   if (jrPassExp) {
     const share = Math.round(2338 / members.length);
     paymentRecords.push(
-      { expense_id: jrPassExp.id, sender_email: em("zoepark__"),   sender_name: nm("zoepark__"),   receiver_email: em("marcuschen"), receiver_name: nm("marcuschen"), amount: share, payment_method: "venmo", status: "confirmed" },
-      { expense_id: jrPassExp.id, sender_email: em("kaitonishi"),  sender_name: nm("kaitonishi"),  receiver_email: em("marcuschen"), receiver_name: nm("marcuschen"), amount: share, payment_method: "venmo", status: "pending" },
+      { expense_id: jrPassExp.id, sender_email: em("zoepark__"),   sender_name: nm("zoepark__"),   receiver_email: em("marcuschen"), receiver_name: nm("marcuschen"), amount: share, payment_method: "venmo", status: "unpaid" },
+      { expense_id: jrPassExp.id, sender_email: em("kaitonishi"),  sender_name: nm("kaitonishi"),  receiver_email: em("marcuschen"), receiver_name: nm("marcuschen"), amount: share, payment_method: "venmo", status: "unpaid" },
       { expense_id: jrPassExp.id, sender_email: em("priyasharma"), sender_name: nm("priyasharma"), receiver_email: em("marcuschen"), receiver_name: nm("marcuschen"), amount: share, payment_method: "cashapp", status: "unpaid" },
     );
   }
 
-  // teamLab: Zoe paid, you owe her
+  // teamLab: Zoe paid, you owe her (unpaid to show owed state)
   if (teamLabExp) {
     const share = Math.round(196 / members.length);
     paymentRecords.push(
-      { expense_id: teamLabExp.id, sender_email: myEmail,         sender_name: myName,         receiver_email: em("zoepark__"), receiver_name: nm("zoepark__"), amount: share, payment_method: "venmo", status: "pending" },
-      { expense_id: teamLabExp.id, sender_email: em("miaxtan"),    sender_name: nm("miaxtan"),    receiver_email: em("zoepark__"), receiver_name: nm("zoepark__"), amount: share, payment_method: "venmo", status: "confirmed" },
+      { expense_id: teamLabExp.id, sender_email: myEmail,         sender_name: myName,         receiver_email: em("zoepark__"), receiver_name: nm("zoepark__"), amount: share, payment_method: "venmo", status: "unpaid" },
+      { expense_id: teamLabExp.id, sender_email: em("miaxtan"),    sender_name: nm("miaxtan"),    receiver_email: em("zoepark__"), receiver_name: nm("zoepark__"), amount: share, payment_method: "venmo", status: "unpaid" },
     );
   }
 
-  // Tsukiji: Alex paid, split back
+  // Tsukiji: Alex paid, split back (you owe unpaid)
   if (tsukijiExp) {
     const share = Math.round(343 / members.length);
     paymentRecords.push(
-      { expense_id: tsukijiExp.id, sender_email: myEmail,         sender_name: myName,         receiver_email: em("alexrivers"), receiver_name: nm("alexrivers"), amount: share, payment_method: "venmo", status: "confirmed" },
+      { expense_id: tsukijiExp.id, sender_email: myEmail,         sender_name: myName,         receiver_email: em("alexrivers"), receiver_name: nm("alexrivers"), amount: share, payment_method: "venmo", status: "unpaid" },
       { expense_id: tsukijiExp.id, sender_email: em("marcuschen"),  sender_name: nm("marcuschen"),  receiver_email: em("alexrivers"), receiver_name: nm("alexrivers"), amount: share, payment_method: "venmo", status: "unpaid" },
     );
   }
 
-  // Karaoke: Kaito paid, some owe
+  // Karaoke: Kaito paid, some owe (all unpaid for clean owed state)
   if (karaokeExp) {
     const share = Math.round(112 / members.length);
     paymentRecords.push(
-      { expense_id: karaokeExp.id, sender_email: em("zoepark__"),   sender_name: nm("zoepark__"),   receiver_email: em("kaitonishi"), receiver_name: nm("kaitonishi"), amount: share, payment_method: "venmo", status: "confirmed" },
-      { expense_id: karaokeExp.id, sender_email: em("miaxtan"),     sender_name: nm("miaxtan"),     receiver_email: em("kaitonishi"), receiver_name: nm("kaitonishi"), amount: share, payment_method: "cashapp", status: "pending" },
+      { expense_id: karaokeExp.id, sender_email: em("zoepark__"),   sender_name: nm("zoepark__"),   receiver_email: em("kaitonishi"), receiver_name: nm("kaitonishi"), amount: share, payment_method: "venmo", status: "unpaid" },
+      { expense_id: karaokeExp.id, sender_email: em("miaxtan"),     sender_name: nm("miaxtan"),     receiver_email: em("kaitonishi"), receiver_name: nm("kaitonishi"), amount: share, payment_method: "cashapp", status: "unpaid" },
     );
   }
 
@@ -532,58 +532,58 @@ async function seedMiami(log, me) {
     );
   }
 
-  // Carbone: Jasmine owes you (some confirmed)
+  // Carbone: Jasmine owes you (unpaid for clean owed balance)
   if (carbonExp) {
     const share = Math.round(380 / 6);
     paymentRecords.push(
-      { expense_id: carbonExp.id, sender_email: em("jasminewade"), sender_name: nm("jasminewade"), receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "confirmed" },
+      { expense_id: carbonExp.id, sender_email: em("jasminewade"), sender_name: nm("jasminewade"), receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
     );
   }
 
-  // Zuma: Nina owes you (pending)
+  // Zuma: Nina owes you (unpaid for clean owed balance)
   if (zumaExp) {
     const share = Math.round(425 / 6);
     paymentRecords.push(
-      { expense_id: zumaExp.id, sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "pending" },
-      { expense_id: zumaExp.id, sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "cashapp", status: "confirmed" },
+      { expense_id: zumaExp.id, sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
+      { expense_id: zumaExp.id, sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "cashapp", status: "unpaid" },
     );
   }
 
-  // LIV: you paid, some owe you
+  // LIV: you paid, some owe you (all unpaid for clean owed balance)
   if (livExp) {
     const share = Math.round(600 / 6);
     paymentRecords.push(
-      { expense_id: livExp.id, sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "confirmed" },
-      { expense_id: livExp.id, sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "pending" },
+      { expense_id: livExp.id, sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
+      { expense_id: livExp.id, sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
       { expense_id: livExp.id, sender_email: em("chloekim"),     sender_name: nm("chloekim"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "cashapp", status: "unpaid" },
     );
   }
 
-  // Wynwood: Amara paid, Amara owes you back
+  // Wynwood: Amara owes you back (all unpaid)
   if (wynwoodExp) {
     const share = Math.round(90 / 5);
     paymentRecords.push(
-      { expense_id: wynwoodExp.id, sender_email: em("amaraosei"),   sender_name: nm("amaraosei"),   receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "confirmed" },
-      { expense_id: wynwoodExp.id, sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "pending" },
+      { expense_id: wynwoodExp.id, sender_email: em("amaraosei"),   sender_name: nm("amaraosei"),   receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
+      { expense_id: wynwoodExp.id, sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
     );
   }
 
-  // Cabana: Bri paid, Bri owes you back
+  // Cabana: Bri and others owe you back (all unpaid)
   if (cabanaExp) {
     const share = Math.round(180 / 6);
     paymentRecords.push(
-      { expense_id: cabanaExp.id, sender_email: em("briellesantos"), sender_name: nm("briellesantos"), receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "pending" },
+      { expense_id: cabanaExp.id, sender_email: em("briellesantos"), sender_name: nm("briellesantos"), receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
       { expense_id: cabanaExp.id, sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
       { expense_id: cabanaExp.id, sender_email: em("chloekim"),     sender_name: nm("chloekim"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "cashapp", status: "unpaid" },
     );
   }
 
-  // Yoga: Chloe paid, Chloe owes you
+  // Yoga: Chloe owes you (all unpaid for clean balance)
   if (yogaExp) {
     const share = Math.round(75 / 4);
     paymentRecords.push(
       { expense_id: yogaExp.id, sender_email: em("chloekim"),     sender_name: nm("chloekim"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "cashapp", status: "unpaid" },
-      { expense_id: yogaExp.id, sender_email: em("briellesantos"),sender_name: nm("briellesantos"),receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "confirmed" },
+      { expense_id: yogaExp.id, sender_email: em("briellesantos"),sender_name: nm("briellesantos"),receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
     );
   }
 
@@ -751,39 +751,39 @@ async function seedFest(log, me) {
 
   const paymentRecords = [];
 
-  // Airbnb: Talia paid, some owe you back
+  // Airbnb: Talia paid, some owe you back (all unpaid for clean owed balance)
   if (airbnbExp) {
     const share = Math.round(2600 / members.length);
     paymentRecords.push(
-      { expense_id: airbnbExp.id, sender_email: em("domwalker"),  sender_name: nm("domwalker"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "confirmed" },
-      { expense_id: airbnbExp.id, sender_email: em("ryanchang"),  sender_name: nm("ryanchang"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "cashapp", status: "pending" },
+      { expense_id: airbnbExp.id, sender_email: em("domwalker"),  sender_name: nm("domwalker"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
+      { expense_id: airbnbExp.id, sender_email: em("ryanchang"),  sender_name: nm("ryanchang"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "cashapp", status: "unpaid" },
       { expense_id: airbnbExp.id, sender_email: em("omarali"),    sender_name: nm("omarali"),    receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
       { expense_id: airbnbExp.id, sender_email: em("theovas"),    sender_name: nm("theovas"),    receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "cashapp", status: "unpaid" },
-      { expense_id: airbnbExp.id, sender_email: em("lexihayes"),  sender_name: nm("lexihayes"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "confirmed" },
-      // Plus Talia is owed back half the split
-      { expense_id: airbnbExp.id, sender_email: myEmail,         sender_name: myName,         receiver_email: em("taliaburns"), receiver_name: nm("taliaburns"), amount: share, payment_method: "venmo", status: "confirmed" },
+      { expense_id: airbnbExp.id, sender_email: em("lexihayes"),  sender_name: nm("lexihayes"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
+      // You owe Talia back (unpaid)
+      { expense_id: airbnbExp.id, sender_email: myEmail,         sender_name: myName,         receiver_email: em("taliaburns"), receiver_name: nm("taliaburns"), amount: share, payment_method: "venmo", status: "unpaid" },
     );
   }
 
-  // Festival passes: Jake paid, you and others owe
+  // Festival passes: Jake paid, all owe (all unpaid for clean owed state)
   if (passExp) {
     const share = Math.round(4750 / members.length);
     paymentRecords.push(
-      { expense_id: passExp.id, sender_email: myEmail,         sender_name: myName,         receiver_email: em("jakemor"), receiver_name: nm("jakemor"), amount: share, payment_method: "venmo",   status: "confirmed" },
-      { expense_id: passExp.id, sender_email: em("simoneduval"), sender_name: nm("simoneduval"), receiver_email: em("jakemor"), receiver_name: nm("jakemor"), amount: share, payment_method: "venmo",   status: "confirmed" },
-      { expense_id: passExp.id, sender_email: em("kelseymoon"),  sender_name: nm("kelseymoon"),  receiver_email: em("jakemor"), receiver_name: nm("jakemor"), amount: share, payment_method: "venmo",   status: "pending" },
+      { expense_id: passExp.id, sender_email: myEmail,         sender_name: myName,         receiver_email: em("jakemor"), receiver_name: nm("jakemor"), amount: share, payment_method: "venmo",   status: "unpaid" },
+      { expense_id: passExp.id, sender_email: em("simoneduval"), sender_name: nm("simoneduval"), receiver_email: em("jakemor"), receiver_name: nm("jakemor"), amount: share, payment_method: "venmo",   status: "unpaid" },
+      { expense_id: passExp.id, sender_email: em("kelseymoon"),  sender_name: nm("kelseymoon"),  receiver_email: em("jakemor"), receiver_name: nm("jakemor"), amount: share, payment_method: "venmo",   status: "unpaid" },
       { expense_id: passExp.id, sender_email: em("danaokafor"),  sender_name: nm("danaokafor"),  receiver_email: em("jakemor"), receiver_name: nm("jakemor"), amount: share, payment_method: "cashapp", status: "unpaid" },
       { expense_id: passExp.id, sender_email: em("ryanchang"),   sender_name: nm("ryanchang"),   receiver_email: em("jakemor"), receiver_name: nm("jakemor"), amount: share, payment_method: "cashapp", status: "unpaid" },
     );
   }
 
-  // Target run: Dom paid, some owe back
+  // Target run: Dom paid, some owe back (all unpaid)
   if (targetExp) {
     const share = Math.round(387 / members.length);
     paymentRecords.push(
-      { expense_id: targetExp.id, sender_email: myEmail,     sender_name: myName,     receiver_email: em("domwalker"), receiver_name: nm("domwalker"), amount: share, payment_method: "venmo", status: "confirmed" },
-      { expense_id: targetExp.id, sender_email: em("lexihayes"), sender_name: nm("lexihayes"), receiver_email: em("domwalker"), receiver_name: nm("domwalker"), amount: share, payment_method: "venmo", status: "confirmed" },
-      { expense_id: targetExp.id, sender_email: em("omarali"),   sender_name: nm("omarali"),   receiver_email: em("domwalker"), receiver_name: nm("domwalker"), amount: share, payment_method: "venmo", status: "pending" },
+      { expense_id: targetExp.id, sender_email: myEmail,     sender_name: myName,     receiver_email: em("domwalker"), receiver_name: nm("domwalker"), amount: share, payment_method: "venmo", status: "unpaid" },
+      { expense_id: targetExp.id, sender_email: em("lexihayes"), sender_name: nm("lexihayes"), receiver_email: em("domwalker"), receiver_name: nm("domwalker"), amount: share, payment_method: "venmo", status: "unpaid" },
+      { expense_id: targetExp.id, sender_email: em("omarali"),   sender_name: nm("omarali"),   receiver_email: em("domwalker"), receiver_name: nm("domwalker"), amount: share, payment_method: "venmo", status: "unpaid" },
     );
   }
 
