@@ -13,6 +13,7 @@ import TripCosts from "../components/trip/TripCosts";
 import TripCoverEditor from "../components/trip/TripCoverEditor";
 import EditTripDialog from "../components/trip/EditTripDialog";
 import TripMap from "../components/trip/TripMap";
+import TripDetailModal from "../components/trip/TripDetailModal";
 
 const tripTabs = [
   { key: "plan", label: "Plan" },
@@ -207,73 +208,69 @@ export default function TripDetail() {
         <EditTripDialog open={showEdit} onOpenChange={setShowEdit} trip={trip} onUpdated={loadData} />
 
         {/* Trip menu */}
-        <Dialog open={showMenu} onOpenChange={setShowMenu}>
-          <DialogContent className="mx-4 rounded-2xl max-w-sm p-3">
-            <DialogHeader><DialogTitle className="px-2 pt-1 text-sm">Trip Options</DialogTitle></DialogHeader>
-            <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-muted transition-colors text-left" onClick={() => { setShowMenu(false); setShowEdit(true); }}>
-              <Pencil className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Edit Trip</span>
+        <TripDetailModal open={showMenu} onOpenChange={setShowMenu} title="Trip Options">
+          <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-muted transition-colors text-left -mx-3" onClick={() => { setShowMenu(false); setShowEdit(true); }}>
+            <Pencil className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Edit Trip</span>
+          </button>
+          {isAdmin && (
+            <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-destructive/10 transition-colors text-left -mx-3" onClick={() => { setShowMenu(false); setShowDeleteConfirm(true); }}>
+              <Trash2 className="h-4 w-4 text-destructive" />
+              <span className="text-sm font-medium text-destructive">Delete Trip</span>
             </button>
-            {isAdmin && (
-              <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-destructive/10 transition-colors text-left" onClick={() => { setShowMenu(false); setShowDeleteConfirm(true); }}>
-                <Trash2 className="h-4 w-4 text-destructive" />
-                <span className="text-sm font-medium text-destructive">Delete Trip</span>
-              </button>
-            )}
-            {isMember && !isAdmin && (
-              <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-destructive/10 transition-colors text-left" onClick={() => { setShowMenu(false); setShowLeaveConfirm(true); }}>
-                <LogOut className="h-4 w-4 text-destructive" />
-                <span className="text-sm font-medium text-destructive">Leave Trip</span>
-              </button>
-            )}
-          </DialogContent>
-        </Dialog>
+          )}
+          {isMember && !isAdmin && (
+            <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-destructive/10 transition-colors text-left -mx-3" onClick={() => { setShowMenu(false); setShowLeaveConfirm(true); }}>
+              <LogOut className="h-4 w-4 text-destructive" />
+              <span className="text-sm font-medium text-destructive">Leave Trip</span>
+            </button>
+          )}
+        </TripDetailModal>
 
         {/* Invite link modal */}
-        <Dialog open={showInviteModal} onOpenChange={setShowInviteModal}>
-          <DialogContent className="mx-4 rounded-2xl max-w-sm p-6">
-            <DialogHeader><DialogTitle>Invite to {trip.name}</DialogTitle></DialogHeader>
-            <p className="text-sm text-muted-foreground mb-3">Share this link. Anyone who opens it can request to join — admin approval required.</p>
-            <div className="bg-muted/60 rounded-xl px-3 py-2.5 text-xs font-mono break-all text-foreground mb-4 select-all">
+        <TripDetailModal open={showInviteModal} onOpenChange={setShowInviteModal} title={`Invite to ${trip.name}`}>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">Share this link. Anyone who opens it can request to join — admin approval required.</p>
+            <div className="bg-muted/60 rounded-xl px-3 py-2.5 text-xs font-mono break-all text-foreground select-all">
               {`${window.location.origin}/join/trip/${trip.invite_code}`}
             </div>
-            <div className="flex gap-2">
-              <Button className="flex-1 rounded-full" onClick={async () => { await navigator.clipboard.writeText(`${window.location.origin}/join/trip/${trip.invite_code}`); toast.success('Link copied!'); }}>
+            <div className="flex gap-2 -mx-6 px-6 pt-2 border-t border-border/30">
+              <Button className="flex-1 rounded-full mt-4" onClick={async () => { await navigator.clipboard.writeText(`${window.location.origin}/join/trip/${trip.invite_code}`); toast.success('Link copied!'); }}>
                 Copy Link
               </Button>
               {navigator.share && (
-                <Button variant="outline" className="flex-1 rounded-full" onClick={async () => { try { await navigator.share({ title: trip.name, url: `${window.location.origin}/join/trip/${trip.invite_code}` }); } catch { /* dismissed */ } }}>
+                <Button variant="outline" className="flex-1 rounded-full mt-4" onClick={async () => { try { await navigator.share({ title: trip.name, url: `${window.location.origin}/join/trip/${trip.invite_code}` }); } catch { /* dismissed */ } }}>
                   Share
                 </Button>
               )}
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </TripDetailModal>
 
         {/* Delete confirm */}
-        <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-          <DialogContent className="mx-4 rounded-2xl max-w-sm">
-            <DialogHeader><DialogTitle>Delete Trip?</DialogTitle></DialogHeader>
+        <TripDetailModal open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm} title="Delete Trip?">
+          <div className="space-y-4">
             <p className="text-sm text-muted-foreground">This will permanently delete "{trip.name}" and all associated data. This cannot be undone.</p>
-            <div className="flex gap-2 mt-2">
-              <Button variant="outline" className="flex-1 rounded-full" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
-              <Button variant="destructive" className="flex-1 rounded-full" onClick={deleteTrip}>Delete</Button>
+            <div className="flex gap-2 -mx-6 px-6 pt-2 border-t border-border/30">
+              <Button variant="outline" className="flex-1 rounded-full mt-4" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+              <Button variant="destructive" className="flex-1 rounded-full mt-4" onClick={deleteTrip}>Delete</Button>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </TripDetailModal>
 
         {/* Leave confirm */}
-        <Dialog open={showLeaveConfirm} onOpenChange={setShowLeaveConfirm}>
-          <DialogContent className="mx-4 rounded-2xl max-w-sm">
-            <DialogHeader><DialogTitle>Leave Trip?</DialogTitle></DialogHeader>
-            <p className="text-sm text-muted-foreground">You'll lose access to "{trip.name}". Your expense and payment history will remain visible to other members.</p>
-            <p className="text-xs mt-1" style={{ color: "#9A7840" }}>⚠ Any unsettled balances will still be visible in the Costs view.</p>
-            <div className="flex gap-2 mt-3">
-              <Button variant="outline" className="flex-1 rounded-full" onClick={() => setShowLeaveConfirm(false)}>Cancel</Button>
-              <Button variant="destructive" className="flex-1 rounded-full" onClick={leaveTrip}>Leave Trip</Button>
+        <TripDetailModal open={showLeaveConfirm} onOpenChange={setShowLeaveConfirm} title="Leave Trip?">
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground">You'll lose access to "{trip.name}". Your expense and payment history will remain visible to other members.</p>
+              <p className="text-xs mt-2" style={{ color: "#9A7840" }}>⚠ Any unsettled balances will still be visible in the Costs view.</p>
             </div>
-          </DialogContent>
-        </Dialog>
+            <div className="flex gap-2 -mx-6 px-6 pt-2 border-t border-border/30">
+              <Button variant="outline" className="flex-1 rounded-full mt-4" onClick={() => setShowLeaveConfirm(false)}>Cancel</Button>
+              <Button variant="destructive" className="flex-1 rounded-full mt-4" onClick={leaveTrip}>Leave Trip</Button>
+            </div>
+          </div>
+        </TripDetailModal>
       </div>
     </div>
   );
