@@ -408,20 +408,111 @@ async function seedMiami(log, me) {
 
   log("Creating Expenses…");
   const expenses = [
-    { description: "South Beach Airbnb – 3 nights",    amount: 855, paid_by: em("amaraosei"),   paid_by_name: nm("amaraosei"),   split_among: members, category: "lodging",   trip_wide: true,  is_settled: false },
+    { description: "South Beach Airbnb – 3 nights",    amount: 855, paid_by: myEmail,           paid_by_name: myName,            split_among: members, category: "lodging",   trip_wide: true,  is_settled: false },
     { description: "Carbone dinner",                    amount: 380, paid_by: em("jasminewade"), paid_by_name: nm("jasminewade"), split_among: members, category: "food",      trip_wide: false, day_number: 1, is_settled: false },
     { description: "Zuma bottomless brunch",            amount: 425, paid_by: em("ninarodz"),    paid_by_name: nm("ninarodz"),    split_among: members, category: "food",      trip_wide: false, day_number: 2, is_settled: false },
-    { description: "LIV table split",                   amount: 600, paid_by: em("jasminewade"), paid_by_name: nm("jasminewade"), split_among: members, category: "activity",  trip_wide: false, day_number: 2, is_settled: false },
-    { description: "Uber pool – airport to airbnb",     amount: 42,  paid_by: em("chloekim"),    paid_by_name: nm("chloekim"),    split_among: members, category: "transport", trip_wide: false, day_number: 1, is_settled: true, settlement_notes: "everyone paid Chloe back via Venmo" },
-    { description: "Wynwood iced coffees",              amount: 37,  paid_by: em("briellesantos"),paid_by_name: nm("briellesantos"), split_among: [em("briellesantos"), em("jasminewade"), em("ninarodz")], category: "food", trip_wide: false, day_number: 3, is_settled: false },
-    { description: "Sunscreen + beach supplies – CVS",  amount: 64,  paid_by: em("chloekim"),    paid_by_name: nm("chloekim"),    split_among: members, category: "other",     trip_wide: false, day_number: 2, is_settled: false },
-    { description: "Cuban brunch – La Trova",           amount: 148, paid_by: em("amaraosei"),   paid_by_name: nm("amaraosei"),   split_among: members, category: "food",      trip_wide: false, day_number: 4, is_settled: false },
+    { description: "LIV nightclub table",               amount: 600, paid_by: myEmail,           paid_by_name: myName,            split_among: members, category: "activity",  trip_wide: false, day_number: 2, is_settled: false },
+    { description: "Uber to airport (you → Gabby)",    amount: 42,  paid_by: em("chloekim"),    paid_by_name: nm("chloekim"),    split_among: [em("chloekim"), myEmail], category: "transport", trip_wide: false, day_number: 1, is_settled: true, settlement_notes: "settled via Venmo" },
+    { description: "Wynwood Wall street art tour",      amount: 90,  paid_by: em("amaraosei"),   paid_by_name: nm("amaraosei"),   split_among: [em("amaraosei"), myEmail, em("jasminewade"), em("ninarodz"), em("briellesantos")], category: "activity", trip_wide: false, day_number: 3, is_settled: false },
+    { description: "Afternoon beach cabana rental",     amount: 180, paid_by: em("briellesantos"),paid_by_name: nm("briellesantos"), split_among: members, category: "activity",  trip_wide: false, day_number: 3, is_settled: false },
+    { description: "Cuban brunch – La Trova",           amount: 148, paid_by: em("ninarodz"),    paid_by_name: nm("ninarodz"),    split_among: members, category: "food",      trip_wide: false, day_number: 4, is_settled: false },
+    { description: "Late night mojitos at Juvia",       amount: 156, paid_by: myEmail,           paid_by_name: myName,            split_among: [myEmail, em("jasminewade"), em("chloekim"), em("briellesantos")], category: "food", trip_wide: false, day_number: 3, is_settled: true, settlement_notes: "Jas & Chloe paid back same night" },
+    { description: "Sunrise yoga class",                amount: 75,  paid_by: em("chloekim"),    paid_by_name: nm("chloekim"),    split_among: [em("chloekim"), myEmail, em("amaraosei"), em("briellesantos")], category: "activity", trip_wide: false, day_number: 2, is_settled: false },
   ];
   for (const r of expenses) {
     await base44.entities.Expense.create({ trip_id: trip.id, ...r });
     await delay(80);
   }
   log(`  ✓ ${expenses.length} expenses created`);
+
+  log("Creating Payments (varied statuses)…");
+  await delay(500);
+  const allExpenses = await base44.entities.Expense.filter({ trip_id: trip.id }, "-created_date", 50);
+  const airbnbExp = allExpenses.find(e => e.description.includes("South Beach Airbnb"));
+  const carbonExp = allExpenses.find(e => e.description.includes("Carbone"));
+  const zumaExp = allExpenses.find(e => e.description.includes("Zuma"));
+  const livExp = allExpenses.find(e => e.description.includes("LIV nightclub"));
+  const wynwoodExp = allExpenses.find(e => e.description.includes("Wynwood"));
+  const cabanaExp = allExpenses.find(e => e.description.includes("cabana"));
+  const yogaExp = allExpenses.find(e => e.description.includes("yoga"));
+
+  const paymentRecords = [];
+  
+  // Airbnb: split 6 ways, some confirmed, some pending
+  if (airbnbExp) {
+    const share = Math.round(855 / 6);
+    paymentRecords.push(
+      { expense_id: airbnbExp.id, sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "confirmed" },
+      { expense_id: airbnbExp.id, sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "confirmed" },
+      { expense_id: airbnbExp.id, sender_email: em("chloekim"),     sender_name: nm("chloekim"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "cashapp", status: "pending" },
+      { expense_id: airbnbExp.id, sender_email: em("amaraosei"),    sender_name: nm("amaraosei"),    receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
+      { expense_id: airbnbExp.id, sender_email: em("briellesantos"),sender_name: nm("briellesantos"),receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
+    );
+  }
+
+  // Carbone: you owe Jasmine (some confirmed)
+  if (carbonExp) {
+    const share = Math.round(380 / 6);
+    paymentRecords.push(
+      { expense_id: carbonExp.id, sender_email: myEmail,         sender_name: myName,         receiver_email: em("jasminewade"), receiver_name: nm("jasminewade"), amount: share, payment_method: "venmo",   status: "confirmed" },
+    );
+  }
+
+  // Zuma: you owe Nina (pending)
+  if (zumaExp) {
+    const share = Math.round(425 / 6);
+    paymentRecords.push(
+      { expense_id: zumaExp.id, sender_email: myEmail,         sender_name: myName,         receiver_email: em("ninarodz"), receiver_name: nm("ninarodz"), amount: share, payment_method: "venmo",   status: "pending" },
+      { expense_id: zumaExp.id, sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  receiver_email: em("ninarodz"), receiver_name: nm("ninarodz"), amount: share, payment_method: "cashapp", status: "confirmed" },
+    );
+  }
+
+  // LIV: you paid, some owe you
+  if (livExp) {
+    const share = Math.round(600 / 6);
+    paymentRecords.push(
+      { expense_id: livExp.id, sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "confirmed" },
+      { expense_id: livExp.id, sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "pending" },
+      { expense_id: livExp.id, sender_email: em("chloekim"),     sender_name: nm("chloekim"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "cashapp", status: "unpaid" },
+    );
+  }
+
+  // Wynwood: Amara paid, mix of payments
+  if (wynwoodExp) {
+    const share = Math.round(90 / 5);
+    paymentRecords.push(
+      { expense_id: wynwoodExp.id, sender_email: myEmail,         sender_name: myName,         receiver_email: em("amaraosei"), receiver_name: nm("amaraosei"), amount: share, payment_method: "venmo",   status: "confirmed" },
+      { expense_id: wynwoodExp.id, sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  receiver_email: em("amaraosei"), receiver_name: nm("amaraosei"), amount: share, payment_method: "venmo",   status: "pending" },
+    );
+  }
+
+  // Cabana: Bri paid, mix of owing back
+  if (cabanaExp) {
+    const share = Math.round(180 / 6);
+    paymentRecords.push(
+      { expense_id: cabanaExp.id, sender_email: myEmail,         sender_name: myName,         receiver_email: em("briellesantos"), receiver_name: nm("briellesantos"), amount: share, payment_method: "venmo",   status: "pending" },
+      { expense_id: cabanaExp.id, sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     receiver_email: em("briellesantos"), receiver_name: nm("briellesantos"), amount: share, payment_method: "venmo",   status: "unpaid" },
+      { expense_id: cabanaExp.id, sender_email: em("chloekim"),     sender_name: nm("chloekim"),     receiver_email: em("briellesantos"), receiver_name: nm("briellesantos"), amount: share, payment_method: "cashapp", status: "unpaid" },
+    );
+  }
+
+  // Yoga: Chloe paid, you owe
+  if (yogaExp) {
+    const share = Math.round(75 / 4);
+    paymentRecords.push(
+      { expense_id: yogaExp.id, sender_email: myEmail,         sender_name: myName,         receiver_email: em("chloekim"), receiver_name: nm("chloekim"), amount: share, payment_method: "cashapp", status: "unpaid" },
+      { expense_id: yogaExp.id, sender_email: em("briellesantos"),sender_name: nm("briellesantos"),receiver_email: em("chloekim"), receiver_name: nm("chloekim"), amount: share, payment_method: "venmo",   status: "confirmed" },
+    );
+  }
+
+  let payCount = 0;
+  for (const r of paymentRecords) {
+    await base44.entities.Payment.create({ trip_id: trip.id, ...r });
+    payCount++;
+    if (payCount % 5 === 0) log(`  payment ${payCount}/${paymentRecords.length}…`);
+    await delay(100);
+  }
+  log(`  ✓ ${payCount} payments created`);
 
   log("Creating Polls + votes…");
   const pm1 = await base44.entities.TripPoll.create({ trip_id: trip.id, question: "brunch day 2 – where??", options: ["Zuma (bougie but worth it)","Yardbird (comfort food)","La Mar (peruvian vibes)"], created_by_email: em("jasminewade"), created_by_name: nm("jasminewade"), is_closed: true });
