@@ -129,7 +129,7 @@ export default function FlightDetailModal({ arrival, open, onClose }) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="mx-4 rounded-2xl max-w-sm p-5">
+      <DialogContent className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-48px)] max-w-[420px] rounded-2xl p-5 z-50 safe-area-inset-left safe-area-inset-right">
         <DialogHeader>
           <DialogTitle className="text-base flex items-center gap-2">
             {isFlight ? <Plane className="h-4 w-4" /> : null}
