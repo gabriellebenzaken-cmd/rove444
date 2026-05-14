@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -92,22 +92,27 @@ function makeLogger(setLog) {
 }
 
 // ─── Main seeder ─────────────────────────────────────────────────────────────
-async function runSeed(log) {
+async function runSeed(log, me) {
   // ── 1. UserProfiles ──────────────────────────────────────────────────────
   log("Creating UserProfiles…");
-  const existingProfiles = await base44.entities.UserProfile.filter({ username_lower: `${DEMO_TAG}mayac` }, "-created_date", 1).catch(() => []);
-  if (existingProfiles.length > 0) throw new Error("Demo data already exists. Clear it first.");
+  const existingProfiles = await base44.entities.UserProfile.filter({}, "-created_date", 200).catch(() => []);
+  if (existingProfiles.some((p) => p.user_id?.startsWith(DEMO_TAG))) throw new Error("Demo data already exists. Clear it first.");
 
   const profileRecords = await Promise.all(USERS.map((u) => base44.entities.UserProfile.create(u)));
   log(`✓ ${profileRecords.length} UserProfiles created`);
+
+  // Real user's email — injected into all trips so the UI shows them
+  const myEmail = me.email;
+  const myName = me.full_name || me.email;
+  log(`✓ Seeding as ${myEmail}`);
 
   // ── 2. Group ─────────────────────────────────────────────────────────────
   log("Creating Group…");
   const group = await base44.entities.Group.create({
     name: `${DEMO_TAG}The Rove Crew`,
     description: "Our go-to travel squad for spontaneous adventures.",
-    admin_email: email("mayac"),
-    member_emails: USERS.map((u) => u.user_email),
+    admin_email: myEmail,
+    member_emails: [myEmail, ...USERS.map((u) => u.user_email)],
     invite_code: `${DEMO_TAG}ROVECREW`,
     invite_active: true,
   });
@@ -120,12 +125,12 @@ async function runSeed(log) {
     name: `${DEMO_TAG}Eurotrip: Paris & Rome`,
     destination: "Paris, France",
     description: "Two weeks of museums, pasta, and way too many croissants.",
-    start_date: "2025-06-01",
-    end_date: "2025-06-14",
+    start_date: "2026-09-01",
+    end_date: "2026-09-14",
     group_id: group.id,
-    admin_email: email("mayac"),
-    member_emails: [email("mayac"), email("sofiealv"), email("lucar"), email("laylah")],
-    invite_code: `${DEMO_TAG}EUPARIS25`,
+    admin_email: myEmail,
+    member_emails: [myEmail, email("mayac"), email("sofiealv"), email("lucar"), email("laylah")],
+    invite_code: `${DEMO_TAG}EUPARIS26`,
     invite_active: true,
     cover_image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80",
     theme_color: "#8B6F47",
@@ -135,11 +140,11 @@ async function runSeed(log) {
     name: `${DEMO_TAG}PNW Escape`,
     destination: "Seattle, WA",
     description: "Seattle coffee, Rainier hikes, and Vancouver vibes.",
-    start_date: "2025-08-05",
-    end_date: "2025-08-12",
-    admin_email: email("jordyk"),
-    member_emails: [email("jordyk"), email("aaliyahb"), email("mayac")],
-    invite_code: `${DEMO_TAG}PNWESC25`,
+    start_date: "2026-08-05",
+    end_date: "2026-08-12",
+    admin_email: myEmail,
+    member_emails: [myEmail, email("jordyk"), email("aaliyahb"), email("mayac")],
+    invite_code: `${DEMO_TAG}PNWESC26`,
     invite_active: true,
     cover_image: "https://images.unsplash.com/photo-1501466044931-62695aada8e9?w=800&q=80",
     theme_color: "#3D6B4F",
@@ -149,35 +154,38 @@ async function runSeed(log) {
     name: `${DEMO_TAG}Dubai Long Weekend`,
     destination: "Dubai, UAE",
     description: "Desert safari, rooftop pools, and skyline views.",
-    start_date: "2025-11-20",
-    end_date: "2025-11-25",
-    admin_email: email("laylah"),
-    member_emails: [email("laylah"), email("mayac"), email("sofiealv"), email("jordyk")],
-    invite_code: `${DEMO_TAG}DUBAI25`,
+    start_date: "2026-11-20",
+    end_date: "2026-11-25",
+    admin_email: myEmail,
+    member_emails: [myEmail, email("laylah"), email("mayac"), email("sofiealv"), email("jordyk")],
+    invite_code: `${DEMO_TAG}DUBAI26`,
     invite_active: false,
     cover_image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&q=80",
     theme_color: "#C9941A",
   });
 
-  log(`✓ 3 Trips created`);
+  log(`✓ 3 Trips created (you are admin + member of all)`);
 
   // ── 4. TripMembers ───────────────────────────────────────────────────────
   log("Creating TripMembers…");
   const tmRecords = [
-    // Europe trip
-    { trip_id: tripEurope.id, user_email: email("mayac"),    user_name: name("mayac"),    role: "admin",  status: "active",  invited_by_email: null },
-    { trip_id: tripEurope.id, user_email: email("sofiealv"), user_name: name("sofiealv"), role: "member", status: "active",  invited_by_email: email("mayac") },
-    { trip_id: tripEurope.id, user_email: email("lucar"),    user_name: name("lucar"),    role: "member", status: "active",  invited_by_email: email("mayac") },
-    { trip_id: tripEurope.id, user_email: email("laylah"),   user_name: name("laylah"),   role: "member", status: "invited", invited_by_email: email("mayac") },
+    // Real user is admin on every trip
+    { trip_id: tripEurope.id, user_email: myEmail,           user_name: myName,           role: "admin",  status: "active",  invited_by_email: null },
+    { trip_id: tripEurope.id, user_email: email("mayac"),    user_name: name("mayac"),    role: "member", status: "active",  invited_by_email: myEmail },
+    { trip_id: tripEurope.id, user_email: email("sofiealv"), user_name: name("sofiealv"), role: "member", status: "active",  invited_by_email: myEmail },
+    { trip_id: tripEurope.id, user_email: email("lucar"),    user_name: name("lucar"),    role: "member", status: "active",  invited_by_email: myEmail },
+    { trip_id: tripEurope.id, user_email: email("laylah"),   user_name: name("laylah"),   role: "member", status: "invited", invited_by_email: myEmail },
     // PNW trip
-    { trip_id: tripPNW.id, user_email: email("jordyk"),   user_name: name("jordyk"),   role: "admin",  status: "active",  invited_by_email: null },
-    { trip_id: tripPNW.id, user_email: email("aaliyahb"), user_name: name("aaliyahb"), role: "member", status: "active",  invited_by_email: email("jordyk") },
-    { trip_id: tripPNW.id, user_email: email("mayac"),    user_name: name("mayac"),    role: "member", status: "active",  invited_by_email: email("jordyk") },
+    { trip_id: tripPNW.id, user_email: myEmail,           user_name: myName,           role: "admin",  status: "active",  invited_by_email: null },
+    { trip_id: tripPNW.id, user_email: email("jordyk"),   user_name: name("jordyk"),   role: "member", status: "active",  invited_by_email: myEmail },
+    { trip_id: tripPNW.id, user_email: email("aaliyahb"), user_name: name("aaliyahb"), role: "member", status: "active",  invited_by_email: myEmail },
+    { trip_id: tripPNW.id, user_email: email("mayac"),    user_name: name("mayac"),    role: "member", status: "active",  invited_by_email: myEmail },
     // Dubai trip
-    { trip_id: tripDubai.id, user_email: email("laylah"),   user_name: name("laylah"),   role: "admin",  status: "active",  invited_by_email: null },
-    { trip_id: tripDubai.id, user_email: email("mayac"),    user_name: name("mayac"),    role: "member", status: "active",  invited_by_email: email("laylah") },
-    { trip_id: tripDubai.id, user_email: email("sofiealv"), user_name: name("sofiealv"), role: "member", status: "active",  invited_by_email: email("laylah") },
-    { trip_id: tripDubai.id, user_email: email("jordyk"),   user_name: name("jordyk"),   role: "member", status: "declined",invited_by_email: email("laylah") },
+    { trip_id: tripDubai.id, user_email: myEmail,           user_name: myName,           role: "admin",  status: "active",  invited_by_email: null },
+    { trip_id: tripDubai.id, user_email: email("laylah"),   user_name: name("laylah"),   role: "member", status: "active",  invited_by_email: myEmail },
+    { trip_id: tripDubai.id, user_email: email("mayac"),    user_name: name("mayac"),    role: "member", status: "active",  invited_by_email: myEmail },
+    { trip_id: tripDubai.id, user_email: email("sofiealv"), user_name: name("sofiealv"), role: "member", status: "active",  invited_by_email: myEmail },
+    { trip_id: tripDubai.id, user_email: email("jordyk"),   user_name: name("jordyk"),   role: "member", status: "declined",invited_by_email: myEmail },
   ];
   await Promise.all(tmRecords.map((r) => base44.entities.TripMember.create(r)));
   log(`✓ ${tmRecords.length} TripMembers created`);
@@ -413,7 +421,7 @@ async function runClear(log) {
   await Promise.all(demoGroups.map((g) => base44.entities.Group.delete(g.id)));
   log(`✓ Deleted ${demoGroups.length} Groups`);
 
-  // Delete Trips with DEMO_TAG invite codes
+  // Delete Trips with DEMO_TAG invite codes or names
   const trips = await base44.entities.Trip.filter({}, "-created_date", 200);
   const demoTrips = trips.filter((t) => t.invite_code?.startsWith(DEMO_TAG) || t.name?.startsWith(DEMO_TAG));
   const demoTripIds = demoTrips.map((t) => t.id);
@@ -458,12 +466,12 @@ export default function DemoSeed() {
   const [checked, setChecked] = useState(false);
 
   // Check auth + admin on mount
-  useState(() => {
+  useEffect(() => {
     base44.auth.me().then((me) => {
       setCurrentUser(me);
       setChecked(true);
     }).catch(() => setChecked(true));
-  });
+  }, []);
 
   if (!checked) {
     return (
@@ -487,7 +495,7 @@ export default function DemoSeed() {
     setStatus("seeding");
     const logger = makeLogger(setLog);
     try {
-      await runSeed(logger);
+      await runSeed(logger, currentUser);
       setStatus("done");
     } catch (e) {
       setLog((prev) => [...prev, `❌ Error: ${e.message}`]);
