@@ -280,7 +280,7 @@ export default function TripMap({ trip }) {
                                 </p>
                               )}
                               {item.time && (
-                                <p className="text-xs text-primary mt-1">{item.time}</p>
+                                <p className="text-xs text-primary mt-1">{formatTime12Hour(item.time)}</p>
                               )}
                             </div>
                           </div>
