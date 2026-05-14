@@ -26,6 +26,14 @@
     "notes": {
       "type": "string"
     },
+    "booking_url": {
+      "type": "string",
+      "description": "Booking link (Airbnb, hotel website, Booking.com, etc.)"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Thumbnail image for the lodging"
+    },
     "guest_emails": {
       "type": "array",
       "items": {

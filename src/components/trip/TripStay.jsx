@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Home, Plus, Trash2, DollarSign, Calendar } from "lucide-react";
+import { Home, Plus, Trash2, DollarSign, Calendar, ExternalLink } from "lucide-react";
 import BottomSheet from "../BottomSheet";
 import { format } from "date-fns";
 
@@ -18,6 +18,8 @@ export default function TripStay({ trip, user }) {
     check_in: "",
     check_out: "",
     notes: "",
+    booking_url: "",
+    image_url: "",
   });
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export default function TripStay({ trip, user }) {
       trip_id: trip.id,
       guest_emails: [user.email],
     });
-    setForm({ name: "", address: "", price_per_night: "", check_in: "", check_out: "", notes: "" });
+    setForm({ name: "", address: "", price_per_night: "", check_in: "", check_out: "", notes: "", booking_url: "", image_url: "" });
     setShowAdd(false);
     loadData();
   }
@@ -67,30 +69,47 @@ export default function TripStay({ trip, user }) {
       ) : (
         <div className="space-y-3">
           {lodgings.map((l) => (
-            <div key={l.id} className="bg-card rounded-2xl border border-border p-4">
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <h4 className="font-semibold text-sm">{l.name}</h4>
-                  {l.address && <p className="text-xs text-muted-foreground">{l.address}</p>}
+            <div key={l.id} className="bg-card rounded-2xl border border-border overflow-hidden">
+              <div className="flex gap-3 p-4">
+                {/* Image */}
+                {l.image_url && (
+                  <div className="w-28 h-28 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                    <img src={l.image_url} alt={l.name} className="w-full h-full object-cover" />
+                  </div>
+                )}
+                {/* Content */}
+                <div className="flex-1 min-w-0 flex flex-col justify-between">
+                  <div>
+                    <h4 className="font-semibold text-sm leading-snug">{l.name}</h4>
+                    {l.address && <p className="text-xs text-muted-foreground mt-1">{l.address}</p>}
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mt-2">
+                    {l.price_per_night && (
+                      <span className="flex items-center gap-1">
+                        <DollarSign className="h-3 w-3" /> ${l.price_per_night}/night
+                      </span>
+                    )}
+                    {l.check_in && (
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" /> {format(new Date(l.check_in), "MMM d")}
+                        {l.check_out && `–${format(new Date(l.check_out), "MMM d")}`}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => deleteLodging(l.id)}>
-                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-                </Button>
+                {/* Actions */}
+                <div className="flex flex-col gap-2 items-end justify-between">
+                  {l.booking_url && (
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => window.open(l.booking_url, '_blank')}>
+                      <ExternalLink className="h-3.5 w-3.5" style={{color:'#C8A27C'}} />
+                    </Button>
+                  )}
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => deleteLodging(l.id)}>
+                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                {l.price_per_night && (
-                  <span className="flex items-center gap-1">
-                    <DollarSign className="h-3 w-3" /> ${l.price_per_night}/night
-                  </span>
-                )}
-                {l.check_in && (
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" /> {format(new Date(l.check_in), "MMM d")}
-                    {l.check_out && ` – ${format(new Date(l.check_out), "MMM d")}`}
-                  </span>
-                )}
-              </div>
-              {l.notes && <p className="text-xs mt-2 text-muted-foreground">{l.notes}</p>}
+              {l.notes && <p className="text-xs px-4 pb-3 text-muted-foreground">{l.notes}</p>}
             </div>
           ))}
         </div>
@@ -106,17 +125,27 @@ export default function TripStay({ trip, user }) {
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Address <span style={{color:'#C0B0A0',fontWeight:400}}>(optional)</span></Label>
               <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Address" className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
             </div>
-            <div>
-              <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Check-in</Label>
-              <input type="date" value={form.check_in} onChange={(e) => setForm({ ...form, check_in: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", display: "flex", alignItems: "center" }} />
-            </div>
-            <div>
-              <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Check-out</Label>
-              <input type="date" value={form.check_out} onChange={(e) => setForm({ ...form, check_out: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))", display: "flex", alignItems: "center" }} />
+            <div className="form-row">
+              <div className="form-field">
+                <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Check-in</Label>
+                <input type="date" value={form.check_in} onChange={(e) => setForm({ ...form, check_in: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))" }} />
+              </div>
+              <div className="form-field">
+                <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Check-out</Label>
+                <input type="date" value={form.check_out} onChange={(e) => setForm({ ...form, check_out: e.target.value })} className="h-9 w-full rounded-md px-3 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)", color: "hsl(var(--foreground))" }} />
+              </div>
             </div>
             <div>
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>$/Night <span style={{color:'#C0B0A0',fontWeight:400}}>(optional)</span></Label>
               <Input type="number" value={form.price_per_night} onChange={(e) => setForm({ ...form, price_per_night: e.target.value })} placeholder="0" className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
+            </div>
+            <div>
+              <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Booking Link <span style={{color:'#C0B0A0',fontWeight:400}}>(optional)</span></Label>
+              <Input value={form.booking_url} onChange={(e) => setForm({ ...form, booking_url: e.target.value })} placeholder="https://airbnb.com/..." className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
+            </div>
+            <div>
+              <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Image URL <span style={{color:'#C0B0A0',fontWeight:400}}>(optional)</span></Label>
+              <Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="https://..." className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
             </div>
             <div>
               <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Notes <span style={{color:'#C0B0A0',fontWeight:400}}>(optional)</span></Label>
