@@ -529,14 +529,14 @@ export default function TripCosts({ trip, user }) {
       )}
 
       <Dialog open={!!detailModal} onOpenChange={(open) => { if (!open) setDetailModal(null); }}>
-        <DialogContent className="max-w-md w-[calc(100%-2rem)] rounded-3xl p-0 gap-0 overflow-hidden" style={{ background: "#FAF7F4", maxHeight: "calc(100vh - 120px)", display: "flex", flexDirection: "column" }}>
+        <DialogContent className="max-w-md w-[calc(100%-2rem)] rounded-3xl p-0 gap-0 overflow-hidden" style={{ background: "#FAF7F4", maxHeight: "calc(100dvh - 160px)", display: "flex", flexDirection: "column" }}>
           <DialogHeader className="px-5 pt-5 pb-3 shrink-0">
             <DialogTitle style={{ color: "#2A2018" }}>
               {detailModal === "all" ? "All Expenses" : detailModal === "owe" ? "What You Owe" : "Owed to You"}
             </DialogTitle>
           </DialogHeader>
-          <div className="overflow-y-auto px-5 pb-6">
-            <div className="space-y-2">
+          <div className="overflow-y-auto px-5 flex-1" style={{ WebkitOverflowScrolling: "touch" }}>
+            <div className="space-y-2 pb-20">
               {(() => {
                 const list = detailModal === "all" ? expenses
                   : detailModal === "owe" ? oweExpenses
@@ -593,8 +593,8 @@ export default function TripCosts({ trip, user }) {
           onClick={() => setShowAdd(false)}
         >
           <div
-            className="w-full max-w-md rounded-3xl max-h-[90vh] overflow-y-auto relative"
-            style={{ background: "#FAF7F4" }}
+            className="w-full max-w-md rounded-3xl relative flex flex-col"
+            style={{ background: "#FAF7F4", maxHeight: "calc(100dvh - 120px)" }}
             onClick={e => e.stopPropagation()}
           >
             <button
@@ -605,7 +605,7 @@ export default function TripCosts({ trip, user }) {
               <X className="h-4 w-4" style={{ color: "#9A8A7A" }} />
             </button>
 
-            <div className="px-6 py-6">
+            <div className="px-6 py-6 overflow-y-auto flex-1" style={{ WebkitOverflowScrolling: "touch" }}>
               <h3 className="text-lg font-semibold mb-4" style={{ color: "#2A2018" }}>Add Expense</h3>
               <form onSubmit={addExpense} className="space-y-3">
             <div>
@@ -739,6 +739,7 @@ export default function TripCosts({ trip, user }) {
             )}
             <button type="submit" disabled={!form.description || !form.amount} className="w-full h-10 rounded-full text-sm font-semibold mt-2 disabled:opacity-40" style={{ background: "#C8A27C", color: "white" }}>Add Expense</button>
               </form>
+              <div className="h-16" />
             </div>
           </div>
         </div>
