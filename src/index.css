@@ -239,6 +239,17 @@ input, textarea, select {
     z-index: 1000 !important;
   }
 
+  /* Disable Leaflet attribution links on mobile to prevent trap navigation */
+  .leaflet-control-attribution {
+    pointer-events: none;
+  }
+
+  .leaflet-control-attribution a {
+    pointer-events: none;
+    text-decoration: none;
+    cursor: default;
+  }
+
   .custom-pin {
     width: 36px;
     height: 36px;
