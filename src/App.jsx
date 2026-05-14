@@ -23,6 +23,7 @@ import Privacy from './pages/Privacy';
 import LegalConsentBanner from './components/LegalConsentBanner';
 import Terms from './pages/Terms';
 import Notifications from './pages/Notifications';
+import DemoSeed from './pages/DemoSeed';
 import Discover from './pages/Discover';
 import OnboardingModal from './components/OnboardingModal';
 import RoveSplash from './components/RoveSplash';
@@ -154,6 +155,7 @@ const AuthenticatedApp = () => {
       </Route>
       <Route path="/notifications" element={<MotionPage><Notifications /></MotionPage>} />
       <Route path="/join/:type/:code" element={<MotionPage><JoinInvite /></MotionPage>} />
+      <Route path="/demo-seed" element={<DemoSeed />} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="*" element={<PageNotFound />} />
