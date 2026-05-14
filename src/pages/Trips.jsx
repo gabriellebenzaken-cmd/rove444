@@ -68,8 +68,10 @@ export default function Trips() {
   }
 
   const today = new Date().toISOString().split("T")[0];
-  const activeTrips = trips.filter((t) => !t.end_date || t.end_date >= today);
-  const pastTrips = trips.filter((t) => t.end_date && t.end_date < today);
+  const activeTrips = trips.filter((t) => !t.end_date || t.end_date >= today)
+    .sort((a, b) => (a.start_date || "9999-12-31").localeCompare(b.start_date || "9999-12-31"));
+  const pastTrips = trips.filter((t) => t.end_date && t.end_date < today)
+    .sort((a, b) => (b.end_date || "0000-01-01").localeCompare(a.end_date || "0000-01-01"));
 
   const coverImages = [
     "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80",
