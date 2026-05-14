@@ -15,7 +15,7 @@ export default function TripDetailModal({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-48px)] max-w-[420px] rounded-3xl bg-white dark:bg-card border-0 shadow-2xl p-0 z-50">
+      <DialogContent className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-48px)] max-w-[420px] rounded-3xl bg-white dark:bg-card border-0 shadow-2xl p-0 z-50 [&>button]:hidden">
         {/* Inner padding wrapper */}
         <div className={`flex flex-col h-full overflow-hidden`}>
           {/* Header with close button */}
