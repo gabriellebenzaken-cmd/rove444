@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { base44 } from "@/api/base44Client";
 import { MapPin, List, Map } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { formatTime12Hour } from "@/lib/formatTime";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -205,7 +206,7 @@ export default function TripMap({ trip }) {
                               <p style={{ fontSize: 12, color: "#9A8A7A", margin: 0 }}>{m.location}</p>
                             )}
                             {m.time && (
-                              <p style={{ fontSize: 12, color: "#C8A27C", margin: "4px 0 0" }}>{m.time}</p>
+                              <p style={{ fontSize: 12, color: "#C8A27C", margin: "4px 0 0" }}>{formatTime12Hour(m.time)}</p>
                             )}
                           </div>
                         </Popup>

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { useLiveFlightStatus } from "@/hooks/useLiveFlightStatus";
 import { guessAirline } from "@/utils/airlines";
+import { formatTime12Hour } from "@/lib/formatTime";
 
 function FlightStatusIndicator({ status, loading, inWindow }) {
   if (loading) {
@@ -46,15 +47,7 @@ export default function TravelCard({ arrival, user, onEdit, onDelete, onClick })
     return to ? `${from} → ${to}` : from;
   }
 
-  function formatTime(timeStr) {
-    if (!timeStr) return null;
-    const [hStr, mStr] = timeStr.split(":");
-    const h = parseInt(hStr, 10);
-    const m = mStr || "00";
-    const ampm = h >= 12 ? "PM" : "AM";
-    const h12 = h % 12 || 12;
-    return `${h12}:${m} ${ampm}`;
-  }
+
 
   function getTravelIcon(type) {
     switch (type) {
@@ -123,14 +116,14 @@ export default function TravelCard({ arrival, user, onEdit, onDelete, onClick })
         {arrival.arrival_date && (
           <div className="flex items-center gap-2">
             <Clock className="h-3 w-3 shrink-0" />
-            <span>Arrives {format(new Date(arrival.arrival_date + "T00:00:00"), "MMM d")}{arrival.arrival_time ? ` at ${formatTime(arrival.arrival_time)}` : ""}</span>
+            <span>Arrives {format(new Date(arrival.arrival_date + "T00:00:00"), "MMM d")}{arrival.arrival_time ? ` at ${formatTime12Hour(arrival.arrival_time)}` : ""}</span>
           </div>
         )}
 
         {arrival.is_round_trip && arrival.departure_date && (
           <div className="flex items-center gap-2">
             <Clock className="h-3 w-3 shrink-0" />
-            <span>Returns {format(new Date(arrival.departure_date + "T00:00:00"), "MMM d")}{arrival.departure_time ? ` at ${formatTime(arrival.departure_time)}` : ""}</span>
+            <span>Returns {format(new Date(arrival.departure_date + "T00:00:00"), "MMM d")}{arrival.departure_time ? ` at ${formatTime12Hour(arrival.departure_time)}` : ""}</span>
           </div>
         )}
       </div>

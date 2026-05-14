@@ -6,18 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CalendarDays, Plus, Trash2, Clock, MapPin } from "lucide-react";
-
-function formatTime(timeStr) {
-  if (!timeStr) return null;
-  const [hStr, mStr] = timeStr.split(":");
-  const h = parseInt(hStr, 10);
-  const m = mStr || "00";
-  const ampm = h >= 12 ? "PM" : "AM";
-  const h12 = h % 12 || 12;
-  return `${h12}:${m} ${ampm}`;
-}
 import { Switch } from "@/components/ui/switch";
 import { format, eachDayOfInterval, parseISO } from "date-fns";
+import { formatTime12Hour } from "@/lib/formatTime";
 import BottomSheet from "../BottomSheet";
 import ItineraryPlanner from "./ItineraryPlanner";
 
@@ -121,7 +112,7 @@ export default function TripItinerary({ trip, user }) {
                           <div className="flex flex-wrap gap-2 mt-1 text-xs text-muted-foreground">
                             {item.time && (
                               <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" /> {formatTime(item.time)}
+                                <Clock className="h-3 w-3" /> {formatTime12Hour(item.time)}
                               </span>
                             )}
                             {item.location && (
