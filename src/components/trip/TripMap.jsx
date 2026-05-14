@@ -30,10 +30,10 @@ function getItemEmoji(item) {
   return "📍";
 }
 
-function createEmojiIcon(emoji) {
+function createEmojiIcon(emoji, dayColor) {
   return L.divIcon({
     className: "",
-    html: `<div class="custom-pin"><span class="pin-emoji">${emoji}</span></div>`,
+    html: `<div class="custom-pin" style="background: ${dayColor}; box-shadow: 0 0 0 3px rgba(255,255,255,0.9), 0 0 12px ${dayColor}80;"><span class="pin-emoji">${emoji}</span></div>`,
     iconSize: [36, 36],
     iconAnchor: [18, 36],
     popupAnchor: [0, -38],
@@ -191,12 +191,14 @@ export default function TripMap({ trip }) {
                 <MapInvalidator />
                 {markers.length > 0 && <FitBounds markers={markers} />}
                 {markers
-                  .filter(m => !selectedDay || m.date === selectedDay)
-                  .map((m) => {
-                    const emoji = getItemEmoji(m);
-                    return (
-                      <Marker key={m.id} position={[m.lat, m.lng]} icon={createEmojiIcon(emoji)}>
-                        <Popup>
+                   .filter(m => !selectedDay || m.date === selectedDay)
+                   .map((m) => {
+                     const dayIdx = uniqueDays.indexOf(m.date);
+                     const dayColor = DAY_COLORS[dayIdx % DAY_COLORS.length];
+                     const emoji = getItemEmoji(m);
+                     return (
+                       <Marker key={m.id} position={[m.lat, m.lng]} icon={createEmojiIcon(emoji, dayColor)}>
+                         <Popup>
                           <div style={{ fontFamily: "system-ui", minWidth: 120, fontSize: "14px" }}>
                             <p style={{ fontWeight: 600, marginBottom: 4 }}>{m.title}</p>
                             {m.location && (
