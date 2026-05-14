@@ -49,7 +49,7 @@ const GABBY = {
   username:      "gabbygoes",
   username_lower:"gabbygoes",
   bio:           "always planning the next trip before the last one ends",
-  profile_photo: "https://images.unsplash.com/photo-1521146764736-56c929d59c83?w=400&q=80",
+  profile_photo: "",  // No photo for demo—uses initials/avatar
   venmo:         "@gabby-b",
   instagram:     "gabbygoes",
 };
