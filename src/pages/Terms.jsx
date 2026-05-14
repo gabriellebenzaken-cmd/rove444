@@ -21,11 +21,11 @@ export default function Terms() {
 
         <div className="space-y-6 text-sm leading-relaxed text-muted-foreground">
 
-          <p>Welcome to Rove. By using the app, you agree to the following terms.</p>
+          <p>Welcome to ROVR. By using the app, you agree to the following terms.</p>
 
           <Section title="1. Overview">
-            <p>Rove is a travel planning and expense-sharing platform that allows users to organize trips, track shared costs, and coordinate payments with others.</p>
-            <p>Rove does not process payments or act as a financial intermediary.</p>
+            <p>ROVR is a travel planning and expense-sharing platform that allows users to organize trips, track shared costs, and coordinate payments with others.</p>
+            <p>ROVR does not process payments or act as a financial intermediary.</p>
           </Section>
 
           <Section title="2. User Accounts">
@@ -37,7 +37,7 @@ export default function Terms() {
           </Section>
 
           <Section title="3. User Content">
-            <p>You are responsible for all content you create or share on Rove, including:</p>
+            <p>You are responsible for all content you create or share on ROVR, including:</p>
             <ul>
               <li>Trip details</li>
               <li>Expenses</li>
@@ -59,7 +59,7 @@ export default function Terms() {
               <li>We do not enforce or guarantee payments</li>
               <li>We are not responsible for disputes between users</li>
             </ul>
-            <p className="mt-2">All payments occur outside of Rove using third-party platforms such as Venmo, PayPal, Cash App, or Zelle.</p>
+            <p className="mt-2">All payments occur outside of ROVR using third-party platforms such as Venmo, PayPal, Cash App, or Zelle.</p>
             <p className="mt-2">Users are solely responsible for:</p>
             <ul>
               <li>Verifying what they owe</li>
@@ -78,11 +78,11 @@ export default function Terms() {
               <li>Does not erase past expenses or balances</li>
               <li>Does not remove financial obligations between users</li>
             </ul>
-            <p className="mt-2">Rove is not responsible for collecting or enforcing payments after a user leaves a trip.</p>
+            <p className="mt-2">ROVR is not responsible for collecting or enforcing payments after a user leaves a trip.</p>
           </Section>
 
           <Section title="6. No Financial Liability">
-            <p>Rove is a coordination tool only.</p>
+            <p>ROVR is a coordination tool only.</p>
             <p>We are not liable for:</p>
             <ul>
               <li>Unpaid balances</li>
@@ -106,20 +106,20 @@ export default function Terms() {
           </Section>
 
           <Section title="9. Limitation of Liability">
-            <p>To the fullest extent permitted by law, Rove is not liable for any indirect, incidental, or consequential damages arising from the use of the app.</p>
+            <p>To the fullest extent permitted by law, ROVR is not liable for any indirect, incidental, or consequential damages arising from the use of the app.</p>
           </Section>
 
           <Section title="10. Changes to Terms">
-            <p>We may update these Terms from time to time. Continued use of Rove means you accept the updated Terms.</p>
+            <p>We may update these Terms from time to time. Continued use of ROVR means you accept the updated Terms.</p>
           </Section>
 
           <Section title="11. Contact">
-            <p>If you have any questions, contact us at: <a href="mailto:support@rove.app" className="underline font-semibold" style={{ color: "#C8A27C" }}>support@rove.app</a></p>
+            <p>If you have any questions, contact us at: <a href="mailto:support@rovr.app" className="underline font-semibold" style={{ color: "#C8A27C" }}>support@rovr.app</a></p>
           </Section>
 
           <div className="rounded-2xl p-4 mt-6" style={{ background: "rgba(200,162,124,0.1)", border: "1px solid rgba(200,162,124,0.2)" }}>
             <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#C8A27C" }}>TL;DR</p>
-            <p className="text-sm">Rove helps you organize trips and track costs, but you are responsible for your own payments and decisions.</p>
+            <p className="text-sm">ROVR helps you organize trips and track costs, but you are responsible for your own payments and decisions.</p>
           </div>
 
         </div>

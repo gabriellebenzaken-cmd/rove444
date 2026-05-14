@@ -35,7 +35,7 @@ export default function LegalConsentBanner() {
         }}
       >
         <p className="flex-1 text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>
-          By using Rove, you agree to our{" "}
+          By using ROVR, you agree to our{" "}
           <Link to="/terms" onClick={dismiss} className="underline font-semibold" style={{ color: "#C8A27C" }}>
             Terms of Service
           </Link>{" "}

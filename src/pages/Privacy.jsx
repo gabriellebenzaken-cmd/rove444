@@ -22,7 +22,7 @@ export default function Privacy() {
         <div className="prose prose-sm max-w-none space-y-6 text-foreground">
 
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Rove ("we", "our", or "us") is a travel planning and expense-sharing platform designed to help users organize group trips. This Privacy Policy explains how we collect, use, and protect your information.
+            ROVR ("we", "our", or "us") is a travel planning and expense-sharing platform designed to help users organize group trips. This Privacy Policy explains how we collect, use, and protect your information.
           </p>
 
           <Section title="1. Information We Collect">
@@ -35,7 +35,7 @@ export default function Privacy() {
             <Subsection title="Profile & Payment Information">
               <ul>
                 <li>Optional payment handles (such as Venmo, Cash App, PayPal, or Zelle usernames)</li>
-                <li>This information is manually entered by users and is not verified by Rove</li>
+                <li>This information is manually entered by users and is not verified by ROVR</li>
               </ul>
             </Subsection>
             <Subsection title="Trip & App Data">
@@ -66,12 +66,12 @@ export default function Privacy() {
           </Section>
 
           <Section title="3. Payments">
-            <p>Rove does not process, store, or facilitate financial transactions.</p>
-            <p>All payments occur outside of Rove using third-party platforms such as Venmo, PayPal, Cash App, or Zelle. Rove only provides links or identifiers to help users coordinate payments.</p>
+            <p>ROVR does not process, store, or facilitate financial transactions.</p>
+            <p>All payments occur outside of ROVR using third-party platforms such as Venmo, PayPal, Cash App, or Zelle. ROVR only provides links or identifiers to help users coordinate payments.</p>
           </Section>
 
           <Section title="4. Location Information">
-            <p>Rove does not collect or track precise GPS location data.</p>
+            <p>ROVR does not collect or track precise GPS location data.</p>
             <p>Any location information in the app is manually entered by users (e.g., trip destinations).</p>
           </Section>
 
@@ -85,7 +85,7 @@ export default function Privacy() {
           </Section>
 
           <Section title="6. User Responsibility & Disputes">
-            <p>Rove is a coordination tool and does not:</p>
+            <p>ROVR is a coordination tool and does not:</p>
             <ul>
               <li>Verify the accuracy of expenses</li>
               <li>Guarantee that payments will be made</li>
@@ -114,15 +114,15 @@ export default function Privacy() {
           </Section>
 
           <Section title="10. Children's Privacy">
-            <p>Rove is not intended for users under 13, and we do not knowingly collect personal information from children.</p>
+            <p>ROVR is not intended for users under 13, and we do not knowingly collect personal information from children.</p>
           </Section>
 
           <Section title="11. Changes to This Policy">
-            <p>We may update this Privacy Policy from time to time. Continued use of Rove means you accept any updates.</p>
+            <p>We may update this Privacy Policy from time to time. Continued use of ROVR means you accept any updates.</p>
           </Section>
 
           <Section title="12. Contact">
-            <p>If you have questions, contact us at: <a href="mailto:support@rove.app" className="underline" style={{ color: "#C8A27C" }}>support@rove.app</a></p>
+            <p>If you have questions, contact us at: <a href="mailto:support@rovr.app" className="underline" style={{ color: "#C8A27C" }}>support@rovr.app</a></p>
           </Section>
 
         </div>
