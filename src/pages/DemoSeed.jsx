@@ -436,9 +436,9 @@ async function seedMiami(log, me) {
   await ensureProfiles(MIAMI_USERS, log);
 
   log("Creating Miami trip…");
-  const members = [myEmail, em("jasminewade"), em("ninarodz"), em("chloekim"), em("amaraosei"), em("briellesantos")];
+  const members = [myEmail, em("jasminewade"), em("ninarodz"), em("chloekim")];
   const trip = await base44.entities.Trip.create({
-    name: "miami girls weekend 🌴", destination: "Miami, FL",
+    name: "miami girls weekend 💋", destination: "Miami, FL",
     description: "we deserve this honestly",
     start_date: "2026-06-13", end_date: "2026-06-16",
     admin_email: myEmail, member_emails: members,
@@ -454,8 +454,6 @@ async function seedMiami(log, me) {
     base44.entities.TripMember.create({ trip_id: trip.id, user_email: em("jasminewade"),    user_name: nm("jasminewade"),    role: "member", status: "active",  invited_by_email: myEmail }),
     base44.entities.TripMember.create({ trip_id: trip.id, user_email: em("ninarodz"),       user_name: nm("ninarodz"),       role: "member", status: "active",  invited_by_email: myEmail }),
     base44.entities.TripMember.create({ trip_id: trip.id, user_email: em("chloekim"),       user_name: nm("chloekim"),       role: "member", status: "active",  invited_by_email: myEmail }),
-    base44.entities.TripMember.create({ trip_id: trip.id, user_email: em("amaraosei"),      user_name: nm("amaraosei"),      role: "member", status: "active",  invited_by_email: myEmail }),
-    base44.entities.TripMember.create({ trip_id: trip.id, user_email: em("briellesantos"),  user_name: nm("briellesantos"),  role: "member", status: "invited", invited_by_email: myEmail }),
   ]);
   log("  ✓ TripMembers created");
 
@@ -472,14 +470,12 @@ async function seedMiami(log, me) {
 
   log("Creating Itinerary…");
   const itinItems = [
-    { date: "2026-06-13", time: "14:00", title: "check in + pool time 🏊",       location: "South Beach Airbnb",      notes: "Amara will have the door code. let's not lose the parking pass this time", is_required: true },
-    { date: "2026-06-13", time: "19:30", title: "dinner – Carbone Miami",         location: "1 Hotel South Beach",     notes: "reservation under Jasmine. dress cute, they judge you at the door",         is_required: true },
-    { date: "2026-06-14", time: "10:00", title: "Zuma brunch 🍾",                 location: "Epic Hotel, Miami",       notes: "bottomless brunch. Nina already confirmed. Bri is bringing the selfie stick",is_required: true },
-    { date: "2026-06-14", time: "14:00", title: "beach day – South Beach 🌊",     location: "South Beach, Miami",      notes: "someone pls bring a bluetooth speaker. Chloe has the beach towels",         is_required: false },
-    { date: "2026-06-14", time: "21:00", title: "LIV nightclub 🎉",               location: "Fontainebleau Hotel",     notes: "table booked. split between 5. wear something cute",                       is_required: true },
-    { date: "2026-06-15", time: "11:00", title: "Wynwood Walls + coffee 🎨",      location: "Wynwood, Miami",          notes: "murals everywhere. Jas and Nina will be here all day for content",          is_required: false },
-    { date: "2026-06-15", time: "17:00", title: "sunset beach picnic 🌅",         location: "South Pointe Park, Miami",notes: "bring wine + snacks. golden hour for the camera roll",                      is_required: false },
-    { date: "2026-06-16", time: "10:00", title: "last brunch + check out",        location: "Café La Trova",           notes: "iconic cuban spot. get the croquetas. then cab to airport",                 is_required: true },
+    { date: "2026-06-13", time: "14:00", title: "check in + pool time 🏊",       location: "South Beach Airbnb",      notes: "settle in, cool off",                                                   is_required: true },
+    { date: "2026-06-13", time: "19:30", title: "dinner at Carbone 🍝",            location: "South Beach",             notes: "reservation under Jasmine",                                               is_required: true },
+    { date: "2026-06-14", time: "10:00", title: "bottomless brunch 🍾",            location: "Epic Hotel",              notes: "Zuma — yes it's fancy, yes it's worth it",                               is_required: true },
+    { date: "2026-06-14", time: "15:00", title: "beach day 🌊",                    location: "South Beach",             notes: "bronze, relax, content",                                                 is_required: false },
+    { date: "2026-06-15", time: "19:00", title: "nightclub 🎉",                    location: "Fontainebleau",           notes: "LIV table — dress your best",                                            is_required: true },
+    { date: "2026-06-16", time: "10:00", title: "last coffee + goodbye",           location: "Café La Trova",           notes: "final cuban moment then off",                                            is_required: true },
   ];
   // Note: times stored in 24hr format, displayed as 12-hour AM/PM in UI
   for (const r of itinItems) {
@@ -490,16 +486,12 @@ async function seedMiami(log, me) {
 
   log("Creating Expenses…");
   const expenses = [
-    { description: "South Beach Airbnb – 3 nights",    amount: 855, paid_by: myEmail,           paid_by_name: myName,            split_among: members, category: "lodging",   trip_wide: true,  is_settled: false },
-    { description: "Carbone dinner",                    amount: 380, paid_by: em("jasminewade"), paid_by_name: nm("jasminewade"), split_among: members, category: "food",      trip_wide: false, day_number: 1, is_settled: false },
-    { description: "Zuma bottomless brunch",            amount: 425, paid_by: em("ninarodz"),    paid_by_name: nm("ninarodz"),    split_among: members, category: "food",      trip_wide: false, day_number: 2, is_settled: false },
-    { description: "LIV nightclub table",               amount: 600, paid_by: myEmail,           paid_by_name: myName,            split_among: members, category: "activity",  trip_wide: false, day_number: 2, is_settled: false },
-    { description: "Uber to airport (you → Gabby)",    amount: 42,  paid_by: em("chloekim"),    paid_by_name: nm("chloekim"),    split_among: [em("chloekim"), myEmail], category: "transport", trip_wide: false, day_number: 1, is_settled: true, settlement_notes: "settled via Venmo" },
-    { description: "Wynwood Wall street art tour",      amount: 90,  paid_by: em("amaraosei"),   paid_by_name: nm("amaraosei"),   split_among: [em("amaraosei"), myEmail, em("jasminewade"), em("ninarodz"), em("briellesantos")], category: "activity", trip_wide: false, day_number: 3, is_settled: false },
-    { description: "Afternoon beach cabana rental",     amount: 180, paid_by: em("briellesantos"),paid_by_name: nm("briellesantos"), split_among: members, category: "activity",  trip_wide: false, day_number: 3, is_settled: false },
-    { description: "Cuban brunch – La Trova",           amount: 148, paid_by: em("ninarodz"),    paid_by_name: nm("ninarodz"),    split_among: members, category: "food",      trip_wide: false, day_number: 4, is_settled: false },
-    { description: "Late night mojitos at Juvia",       amount: 156, paid_by: myEmail,           paid_by_name: myName,            split_among: [myEmail, em("jasminewade"), em("chloekim"), em("briellesantos")], category: "food", trip_wide: false, day_number: 3, is_settled: true, settlement_notes: "Jas & Chloe paid back same night" },
-    { description: "Sunrise yoga class",                amount: 75,  paid_by: em("chloekim"),    paid_by_name: nm("chloekim"),    split_among: [em("chloekim"), myEmail, em("amaraosei"), em("briellesantos")], category: "activity", trip_wide: false, day_number: 2, is_settled: false },
+    { description: "South Beach Airbnb – 3 nights",    amount: 720, paid_by: myEmail,           paid_by_name: myName,            split_among: members, category: "lodging",   trip_wide: true,  is_settled: false },
+    { description: "Carbone dinner",                    amount: 380, paid_by: em("jasminewade"), paid_by_name: nm("jasminewade"), split_among: members, category: "food",      trip_wide: false, day_number: 1, is_settled: true, settlement_notes: "paid back Venmo day 1" },
+    { description: "Zuma brunch",                       amount: 320, paid_by: em("ninarodz"),    paid_by_name: nm("ninarodz"),    split_among: members, category: "food",      trip_wide: false, day_number: 2, is_settled: false },
+    { description: "Uber to South Beach",              amount: 48,  paid_by: em("chloekim"),    paid_by_name: nm("chloekim"),    split_among: members, category: "transport", trip_wide: false, day_number: 1, is_settled: false },
+    { description: "Beach cabana rental",               amount: 200, paid_by: myEmail,           paid_by_name: myName,            split_among: members, category: "activity",  trip_wide: false, day_number: 2, is_settled: false },
+    { description: "Nightclub – LIV table",             amount: 500, paid_by: myEmail,           paid_by_name: myName,            split_among: members, category: "activity",  trip_wide: false, day_number: 3, is_settled: false },
   ];
   for (const r of expenses) {
     await base44.entities.Expense.create({ trip_id: trip.id, ...r });
@@ -511,79 +503,58 @@ async function seedMiami(log, me) {
   await delay(500);
   const allExpenses = await base44.entities.Expense.filter({ trip_id: trip.id }, "-created_date", 50);
   const airbnbExp = allExpenses.find(e => e.description.includes("South Beach Airbnb"));
-  const carbonExp = allExpenses.find(e => e.description.includes("Carbone"));
-  const zumaExp = allExpenses.find(e => e.description.includes("Zuma"));
-  const livExp = allExpenses.find(e => e.description.includes("LIV nightclub"));
-  const wynwoodExp = allExpenses.find(e => e.description.includes("Wynwood"));
+  const uberExp = allExpenses.find(e => e.description.includes("Uber to South Beach"));
+  const zumaExp = allExpenses.find(e => e.description.includes("Zuma brunch"));
   const cabanaExp = allExpenses.find(e => e.description.includes("cabana"));
-  const yogaExp = allExpenses.find(e => e.description.includes("yoga"));
+  const livExp = allExpenses.find(e => e.description.includes("LIV table"));
 
   const paymentRecords = [];
   
-  // Airbnb: split 6 ways, some confirmed, some pending
+  // Airbnb: split 4 ways, some unpaid, some confirmed
   if (airbnbExp) {
-    const share = Math.round(855 / 6);
+    const share = Math.round(720 / 4);
     paymentRecords.push(
       { expense_id: airbnbExp.id, sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "confirmed" },
-      { expense_id: airbnbExp.id, sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "confirmed" },
-      { expense_id: airbnbExp.id, sender_email: em("chloekim"),     sender_name: nm("chloekim"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "cashapp", status: "pending" },
-      { expense_id: airbnbExp.id, sender_email: em("amaraosei"),    sender_name: nm("amaraosei"),    receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
-      { expense_id: airbnbExp.id, sender_email: em("briellesantos"),sender_name: nm("briellesantos"),receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
+      { expense_id: airbnbExp.id, sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
+      { expense_id: airbnbExp.id, sender_email: em("chloekim"),     sender_name: nm("chloekim"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "cashapp", status: "unpaid" },
     );
   }
 
-  // Carbone: Jasmine owes you (unpaid for clean owed balance)
-  if (carbonExp) {
-    const share = Math.round(380 / 6);
+  // Uber: Chloe owes (unpaid)
+  if (uberExp) {
+    const share = Math.round(48 / 4);
     paymentRecords.push(
-      { expense_id: carbonExp.id, sender_email: em("jasminewade"), sender_name: nm("jasminewade"), receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
+      { expense_id: uberExp.id, sender_email: myEmail,         sender_name: myName,         receiver_email: em("chloekim"), receiver_name: nm("chloekim"), amount: share, payment_method: "venmo", status: "unpaid" },
+      { expense_id: uberExp.id, sender_email: em("jasminewade"), sender_name: nm("jasminewade"), receiver_email: em("chloekim"), receiver_name: nm("chloekim"), amount: share, payment_method: "venmo", status: "unpaid" },
     );
   }
 
-  // Zuma: Nina owes you (unpaid for clean owed balance)
+  // Zuma: Nina owes you (unpaid to show owed balance)
   if (zumaExp) {
-    const share = Math.round(425 / 6);
+    const share = Math.round(320 / 4);
     paymentRecords.push(
-      { expense_id: zumaExp.id, sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
-      { expense_id: zumaExp.id, sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "cashapp", status: "unpaid" },
+      { expense_id: zumaExp.id, sender_email: myEmail,         sender_name: myName,         receiver_email: em("ninarodz"), receiver_name: nm("ninarodz"), amount: share, payment_method: "venmo", status: "unpaid" },
+      { expense_id: zumaExp.id, sender_email: em("chloekim"),     sender_name: nm("chloekim"),     receiver_email: em("ninarodz"), receiver_name: nm("ninarodz"), amount: share, payment_method: "venmo", status: "unpaid" },
+      { expense_id: zumaExp.id, sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  receiver_email: em("ninarodz"), receiver_name: nm("ninarodz"), amount: share, payment_method: "cashapp", status: "confirmed" },
     );
   }
 
-  // LIV: you paid, some owe you (all unpaid for clean owed balance)
-  if (livExp) {
-    const share = Math.round(600 / 6);
-    paymentRecords.push(
-      { expense_id: livExp.id, sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
-      { expense_id: livExp.id, sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
-      { expense_id: livExp.id, sender_email: em("chloekim"),     sender_name: nm("chloekim"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "cashapp", status: "unpaid" },
-    );
-  }
-
-  // Wynwood: Amara owes you back (all unpaid)
-  if (wynwoodExp) {
-    const share = Math.round(90 / 5);
-    paymentRecords.push(
-      { expense_id: wynwoodExp.id, sender_email: em("amaraosei"),   sender_name: nm("amaraosei"),   receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
-      { expense_id: wynwoodExp.id, sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
-    );
-  }
-
-  // Cabana: Bri and others owe you back (all unpaid)
+  // Cabana: you paid, some owe you back (balanced — some unpaid, some owe you)
   if (cabanaExp) {
-    const share = Math.round(180 / 6);
+    const share = Math.round(200 / 4);
     paymentRecords.push(
-      { expense_id: cabanaExp.id, sender_email: em("briellesantos"), sender_name: nm("briellesantos"), receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
       { expense_id: cabanaExp.id, sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
+      { expense_id: cabanaExp.id, sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
       { expense_id: cabanaExp.id, sender_email: em("chloekim"),     sender_name: nm("chloekim"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "cashapp", status: "unpaid" },
     );
   }
 
-  // Yoga: Chloe owes you (all unpaid for clean balance)
-  if (yogaExp) {
-    const share = Math.round(75 / 4);
+  // LIV: you paid, some owe you (unpaid for clean balance view)
+  if (livExp) {
+    const share = Math.round(500 / 4);
     paymentRecords.push(
-      { expense_id: yogaExp.id, sender_email: em("chloekim"),     sender_name: nm("chloekim"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "cashapp", status: "unpaid" },
-      { expense_id: yogaExp.id, sender_email: em("briellesantos"),sender_name: nm("briellesantos"),receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
+      { expense_id: livExp.id, sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "venmo",   status: "unpaid" },
+      { expense_id: livExp.id, sender_email: em("chloekim"),     sender_name: nm("chloekim"),     receiver_email: myEmail, receiver_name: myName, amount: share, payment_method: "cashapp", status: "unpaid" },
     );
   }
 
@@ -597,50 +568,38 @@ async function seedMiami(log, me) {
   log(`  ✓ ${payCount} payments created`);
 
   log("Creating Polls + votes…");
-  const pm1 = await base44.entities.TripPoll.create({ trip_id: trip.id, question: "brunch day 2 – where??", options: ["Zuma (bougie but worth it)","Yardbird (comfort food)","La Mar (peruvian vibes)"], created_by_email: em("jasminewade"), created_by_name: nm("jasminewade"), is_closed: true });
-  const pm2 = await base44.entities.TripPoll.create({ trip_id: trip.id, question: "beach club or house party for Saturday night?", options: ["LIV at Fontainebleau","club space downtown","airbnb pregame then decide"], created_by_email: em("ninarodz"), created_by_name: nm("ninarodz"), is_closed: false });
+  const pm1 = await base44.entities.TripPoll.create({ trip_id: trip.id, question: "nightclub or lounge Saturday?", options: ["LIV at Fontainebleau","lounge vibe","beach bar"], created_by_email: em("ninarodz"), created_by_name: nm("ninarodz"), is_closed: false });
   await Promise.all([
     base44.entities.TripPollVote.create({ poll_id: pm1.id, trip_id: trip.id, voter_email: em("jasminewade"), voter_name: nm("jasminewade"), option_index: 0 }),
-    base44.entities.TripPollVote.create({ poll_id: pm1.id, trip_id: trip.id, voter_email: em("ninarodz"),    voter_name: nm("ninarodz"),    option_index: 0 }),
     base44.entities.TripPollVote.create({ poll_id: pm1.id, trip_id: trip.id, voter_email: em("chloekim"),    voter_name: nm("chloekim"),    option_index: 0 }),
-    base44.entities.TripPollVote.create({ poll_id: pm1.id, trip_id: trip.id, voter_email: em("amaraosei"),   voter_name: nm("amaraosei"),   option_index: 1 }),
-    base44.entities.TripPollVote.create({ poll_id: pm2.id, trip_id: trip.id, voter_email: em("jasminewade"), voter_name: nm("jasminewade"), option_index: 0 }),
-    base44.entities.TripPollVote.create({ poll_id: pm2.id, trip_id: trip.id, voter_email: em("ninarodz"),    voter_name: nm("ninarodz"),    option_index: 0 }),
   ]);
   log("  ✓ Polls + votes created");
 
   log("Creating Messages…");
   const msgs = [
-    { sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  content: "girls!! the airbnb confirmed 🥹 2 bed 2 bath steps from the beach" },
-    { sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     content: "SCREAMING. ok outfits planning starts now. we need a color coordination situation" },
-    { sender_email: em("chloekim"),     sender_name: nm("chloekim"),     content: "im thinking white/nude for carbone night. beach is more colorful" },
-    { sender_email: em("amaraosei"),    sender_name: nm("amaraosei"),    content: "i made a shared google doc with the full itinerary, budget breakdown, and uber schedule" },
-    { sender_email: em("briellesantos"),sender_name: nm("briellesantos"),content: "amara i love you but you need to also just let things happen organically sometimes" },
-    { sender_email: em("amaraosei"),    sender_name: nm("amaraosei"),    content: "the document is 4 pages long. i'm not taking notes." },
-    { sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  content: "carbone reservation is LOCKED. reservation under jasmine. don't be late or they'll give our table away" },
-    { sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     content: "Bri this is your warning" },
-    { sender_email: em("briellesantos"),sender_name: nm("briellesantos"),content: "i am punctual when it's important!!! also what are we wearing to LIV" },
-    { sender_email: em("chloekim"),     sender_name: nm("chloekim"),     content: "the corset dress is going to LIV with or without the group" },
+    { sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  content: "airbnb is confirmed!! 2 bed steps from the beach 🏖️" },
+    { sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     content: "ok what's the vibe for outfits? all white? pastels?" },
+    { sender_email: em("chloekim"),     sender_name: nm("chloekim"),     content: "carbone night i'm going full glam. beach days are white" },
+    { sender_email: em("jasminewade"),  sender_name: nm("jasminewade"),  content: "carbone reservation is LOCKED. jas name. pls don't be late 😭" },
+    { sender_email: em("ninarodz"),     sender_name: nm("ninarodz"),     content: "who's hyped for LIV?? i need that nightclub energy" },
+    { sender_email: em("chloekim"),     sender_name: nm("chloekim"),     content: "corset dress szn. let's go" },
   ];
   for (const m of msgs) { await base44.entities.TripMessage.create({ trip_id: trip.id, ...m, message_type: "text" }); }
   log(`  ✓ ${msgs.length} messages created`);
 
   log("Creating Links + Notifications…");
   await Promise.all([
-    base44.entities.TripLink.create({ trip_id: trip.id, url: "https://carbonemiami.com/", title: "Carbone Miami", note: "reservation under jasmine. DO NOT be late they will give the table away", category: "food", shared_by_email: em("jasminewade"), shared_by_name: nm("jasminewade") }),
-    base44.entities.TripLink.create({ trip_id: trip.id, url: "https://fontainebleau.com/nightlife/liv", title: "LIV Nightclub", note: "table split 5 ways. confirm you're coming or you lose your spot", category: "nightlife", shared_by_email: em("ninarodz"), shared_by_name: nm("ninarodz") }),
-    base44.entities.Notification.create({ user_email: em("ninarodz"),  type: "trip_added", message: "Jasmine added you to miami girls weekend 🌴", related_user_email: em("jasminewade"), related_user_name: nm("jasminewade"), related_trip_id: trip.id, is_read: true }),
-    base44.entities.Notification.create({ user_email: em("chloekim"), type: "trip_added", message: "Jasmine added you to miami girls weekend 🌴", related_user_email: em("jasminewade"), related_user_name: nm("jasminewade"), related_trip_id: trip.id, is_read: true }),
-    base44.entities.Notification.create({ user_email: em("jasminewade"), type: "friend_accepted", message: "Amara Osei accepted your friend request", related_user_email: em("amaraosei"), related_user_name: nm("amaraosei"), is_read: true }),
+    base44.entities.TripLink.create({ trip_id: trip.id, url: "https://carbonemiami.com/", title: "Carbone Miami", note: "reservation under jasmine", category: "food", shared_by_email: em("jasminewade"), shared_by_name: nm("jasminewade") }),
+    base44.entities.TripLink.create({ trip_id: trip.id, url: "https://fontainebleau.com/nightlife/liv", title: "LIV Nightclub", note: "saturday night table", category: "nightlife", shared_by_email: em("ninarodz"), shared_by_name: nm("ninarodz") }),
+    base44.entities.Notification.create({ user_email: em("ninarodz"),  type: "trip_added", message: "Jasmine added you to miami girls weekend 💋", related_user_email: em("jasminewade"), related_user_name: nm("jasminewade"), related_trip_id: trip.id, is_read: true }),
+    base44.entities.Notification.create({ user_email: em("chloekim"), type: "trip_added", message: "Jasmine added you to miami girls weekend 💋", related_user_email: em("jasminewade"), related_user_name: nm("jasminewade"), related_trip_id: trip.id, is_read: true }),
   ]);
   log("  ✓ Links + notifications created");
 
   log("Creating Friendships…");
   await Promise.all([
     base44.entities.Friendship.create({ user1_email: em("jasminewade"), user2_email: em("ninarodz") }),
-    base44.entities.Friendship.create({ user1_email: em("jasminewade"), user2_email: em("amaraosei") }),
     base44.entities.Friendship.create({ user1_email: em("chloekim"),    user2_email: em("ninarodz") }),
-    base44.entities.Friendship.create({ user1_email: em("chloekim"),    user2_email: em("briellesantos") }),
   ]);
   log("  ✓ Friendships created");
 
