@@ -3,6 +3,12 @@ import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 
+// Returns the most up-to-date token — prefers localStorage over the snapshot
+// taken at app boot, so deep-link token deliveries are picked up correctly.
+function getLiveToken() {
+  return localStorage.getItem('base44_access_token') || appParams.token;
+}
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -15,6 +21,15 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     checkAppState();
+
+    // Native iOS: when the deep-link OAuth callback fires (appUrlOpen in main.jsx),
+    // it dispatches this event so we re-validate the newly-stored token without
+    // needing a full page reload (which would lose React state).
+    const onTokenReceived = () => {
+      checkAppState();
+    };
+    window.addEventListener('base44:token-received', onTokenReceived);
+    return () => window.removeEventListener('base44:token-received', onTokenReceived);
   }, []);
 
   const checkAppState = async () => {
@@ -29,7 +44,7 @@ export const AuthProvider = ({ children }) => {
         headers: {
           'X-App-Id': appParams.appId
         },
-        token: appParams.token, // Include token if available
+        token: getLiveToken(), // Use live token so deep-link tokens are honoured
         interceptResponses: true
       });
       
@@ -37,8 +52,8 @@ export const AuthProvider = ({ children }) => {
         const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
         setAppPublicSettings(publicSettings);
         
-        // If we got the app public settings successfully, check if user is authenticated
-        if (appParams.token) {
+        // Use getLiveToken() so deep-link tokens are picked up after initial boot
+        if (getLiveToken()) {
           await checkUserAuth();
         } else {
           setIsLoadingAuth(false);
@@ -124,14 +139,48 @@ export const AuthProvider = ({ children }) => {
   };
 
   const navigateToLogin = () => {
-    // In Capacitor native builds, window.location.href is capacitor://localhost/
-    // which Google OAuth won't redirect back to. Use the published web URL instead
-    // so the token lands on the real domain and can be picked up on return.
     const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
-    const returnUrl = isNative
-      ? (import.meta.env.VITE_APP_PUBLIC_URL || window.location.href)
-      : window.location.href;
-    base44.auth.redirectToLogin(returnUrl);
+
+    if (isNative) {
+      // ─── CRITICAL for iOS ───────────────────────────────────────────────────
+      // Google OAuth BLOCKS requests from embedded web views (WKWebView).
+      // We MUST open the login URL in the system Safari browser.
+      //
+      // The return URL must be the app's published HTTPS domain (not capacitor://localhost)
+      // so Google can redirect to it. Capacitor then intercepts that navigation via
+      // the appUrlOpen deep-link listener in main.jsx and stores the token.
+      //
+      // REQUIRED: set VITE_APP_PUBLIC_URL=https://your-published-domain.base44.app
+      // in your build environment (Xcode scheme / .env.production).
+      const appWebUrl = import.meta.env.VITE_APP_PUBLIC_URL;
+      if (!appWebUrl) {
+        console.warn('[Auth] VITE_APP_PUBLIC_URL is not set — iOS Google OAuth callback will not work. Please set this env var to your published app URL.');
+      }
+      const returnUrl = appWebUrl || 'https://app.base44.com';
+
+      // Intercept the URL that redirectToLogin would navigate to, then open it
+      // in the system browser instead of inside WKWebView.
+      // We temporarily replace window.location.assign to capture the URL.
+      let loginUrl = null;
+      const origAssign = window.location.assign.bind(window.location);
+      window.location.assign = (url) => { loginUrl = url; };
+      try {
+        base44.auth.redirectToLogin(returnUrl);
+      } catch (_) {}
+      window.location.assign = origAssign;
+
+      if (loginUrl) {
+        // '_system' = Capacitor convention for the OS browser (Safari on iOS)
+        window.open(loginUrl, '_system');
+      } else {
+        // Fallback: open base44 login page directly
+        const appId = import.meta.env.VITE_BASE44_APP_ID;
+        window.open(`https://app.base44.com/auth/login?app_id=${appId}&next=${encodeURIComponent(returnUrl)}`, '_system');
+      }
+    } else {
+      // Web: standard redirect
+      base44.auth.redirectToLogin(window.location.href);
+    }
   };
 
   return (
