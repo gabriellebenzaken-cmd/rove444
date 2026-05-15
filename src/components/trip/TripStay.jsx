@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Home, Plus, Trash2, MapPin, ExternalLink, Edit2, Upload, X, Moon } from "lucide-react";
+import { Plus, Trash2, MapPin, ExternalLink, Edit2, Upload, Moon } from "lucide-react";
 import BottomSheet from "../BottomSheet";
+import LodgingDetailSheet from "./LodgingDetailSheet";
 import { format } from "date-fns";
 
 const EMPTY_FORM = {
@@ -32,6 +33,7 @@ export default function TripStay({ trip, user }) {
   const [lodgings, setLodgings] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [detailLodging, setDetailLodging] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [extracting, setExtracting] = useState(false);
 
@@ -150,15 +152,16 @@ export default function TripStay({ trip, user }) {
             return (
               <div
                 key={l.id}
-                className="rounded-2xl border border-border bg-card overflow-hidden"
+                className="rounded-2xl border border-border bg-card overflow-hidden cursor-pointer active:scale-[0.985] transition-transform"
                 style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.04), 0 0 0 0.5px rgba(0,0,0,0.04)" }}
+                onClick={() => setDetailLodging(l)}
               >
                 {/* Hero image */}
                 {l.image_url && (
                   <div className="w-full h-36 overflow-hidden bg-muted relative">
                     <img src={l.image_url} alt={l.name} className="w-full h-full object-cover" style={{ filter: "brightness(0.92)" }} />
                     {/* action buttons overlaid top-right */}
-                    <div className="absolute top-2 right-2 flex gap-1">
+                    <div className="absolute top-2 right-2 flex gap-1" onClick={(e) => e.stopPropagation()}>
                       {l.booking_url && (
                         <button
                           className="w-7 h-7 rounded-full flex items-center justify-center"
@@ -192,7 +195,7 @@ export default function TripStay({ trip, user }) {
                   <div className="flex items-start justify-between gap-2">
                     <h4 className="font-semibold text-[15px] leading-snug tracking-tight text-foreground flex-1">{l.name}</h4>
                     {!l.image_url && (
-                      <div className="flex gap-0.5 shrink-0">
+                      <div className="flex gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                         {l.booking_url && (
                           <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={() => window.open(l.booking_url, '_blank')}>
                             <ExternalLink className="h-3.5 w-3.5" style={{color:'#C8A27C'}} />
@@ -219,27 +222,20 @@ export default function TripStay({ trip, user }) {
                   {/* Date strip */}
                   {(checkIn || checkOut) && (
                     <div className="flex items-center gap-2 mt-3">
-                      {/* Check-in pill */}
                       <div className="flex-1 rounded-xl px-3 py-2" style={{ background: "rgba(200,162,124,0.08)", border: "1px solid rgba(200,162,124,0.18)" }}>
                         <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Check-in</p>
                         <p className="text-[13px] font-semibold text-foreground">{checkIn || "—"}</p>
                       </div>
-
-                      {/* Nights badge */}
                       {nights > 0 && (
                         <div className="flex flex-col items-center gap-0.5 px-1">
                           <Moon className="h-3 w-3 text-muted-foreground" />
                           <span className="text-[10px] text-muted-foreground font-medium">{nights}n</span>
                         </div>
                       )}
-
-                      {/* Check-out pill */}
                       <div className="flex-1 rounded-xl px-3 py-2" style={{ background: "rgba(200,162,124,0.08)", border: "1px solid rgba(200,162,124,0.18)" }}>
                         <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Check-out</p>
                         <p className="text-[13px] font-semibold text-foreground">{checkOut || "—"}</p>
                       </div>
-
-                      {/* Price */}
                       {l.price_per_night && (
                         <div className="flex flex-col items-end shrink-0 pl-1">
                           <p className="text-[13px] font-semibold text-foreground">${l.price_per_night}</p>
@@ -249,9 +245,9 @@ export default function TripStay({ trip, user }) {
                     </div>
                   )}
 
-                  {/* Notes */}
+                  {/* Notes preview */}
                   {l.notes && (
-                    <p className="text-[11px] text-muted-foreground mt-2.5 leading-relaxed border-t border-border pt-2.5">{l.notes}</p>
+                    <p className="text-[11px] text-muted-foreground mt-2.5 leading-relaxed border-t border-border pt-2.5 line-clamp-2">{l.notes}</p>
                   )}
                 </div>
               </div>
@@ -259,6 +255,14 @@ export default function TripStay({ trip, user }) {
           })}
         </div>
       )}
+
+      <LodgingDetailSheet
+        lodging={detailLodging}
+        open={!!detailLodging}
+        onClose={() => setDetailLodging(null)}
+        onEdit={openEdit}
+        onDelete={deleteLodging}
+      />
 
       <BottomSheet open={showAdd} onClose={closeModal} title={editingId ? "Edit Lodging" : "Add Lodging"}>
         <form onSubmit={addLodging} className="space-y-3">
