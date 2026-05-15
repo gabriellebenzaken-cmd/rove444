@@ -56,7 +56,12 @@ export default function CreateTripDialog({ open, onOpenChange, user, onCreated, 
 
   async function handleCreateTrip(e) {
     e.preventDefault();
-    if (!form.name || !form.destination || !user?.email) return;
+    console.log("[DEBUG] handleCreateTrip fired!");
+    toast.success("Next tapped ✓");
+    if (!form.name || !form.destination || !user?.email) {
+      toast.error("Missing required fields");
+      return;
+    }
     setSaving(true);
     try {
       const trip = await base44.entities.Trip.create({

@@ -179,11 +179,11 @@ export default function BottomSheet({ open, onClose, title, children }) {
           </div>
         )}
 
-        {/* Content — re-enable touch-action for normal scrolling inside */}
-        <div
+        {/* Content — re-enable touch-action for normal scrolling inside, but allow button taps */}
+         <div
           ref={contentRef}
           className="overflow-y-auto flex-1 px-5"
-          style={{ WebkitOverflowScrolling: "touch", paddingBottom: 100, touchAction: "pan-y" }}
+          style={{ WebkitOverflowScrolling: "touch", paddingBottom: 100, touchAction: "auto" }}
         >
           {children}
         </div>
