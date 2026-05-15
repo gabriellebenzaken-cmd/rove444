@@ -56,62 +56,77 @@ export default function CreateTripDialog({ open, onOpenChange, user, onCreated, 
 
   async function handleCreateTrip(e) {
     e.preventDefault();
-    if (!form.name || !form.destination) return;
+    if (!form.name || !form.destination || !user?.email) return;
     setSaving(true);
-    const trip = await base44.entities.Trip.create({
-      ...form,
-      admin_email: user.email,
-      member_emails: [user.email],
-      invite_code: generateInviteCode(),
-      invite_active: true,
-    });
-    setSaving(false);
-    setCreatedTrip(trip);
-    setStep(2);
+    try {
+      const trip = await base44.entities.Trip.create({
+        ...form,
+        admin_email: user.email,
+        member_emails: [user.email],
+        invite_code: generateInviteCode(),
+        invite_active: true,
+      });
+      setCreatedTrip(trip);
+      setStep(2);
 
-    // If a group is linked, pre-select its members
-    if (form.group_id) {
-      const g = groups.find((g) => g.id === form.group_id);
-      if (g) {
-        const preSelected = new Set(
-          (g.member_emails || []).filter((e) => e !== user.email)
-        );
-        setSelectedEmails(preSelected);
+      // If a group is linked, pre-select its members
+      if (form.group_id) {
+        const g = groups.find((g) => g.id === form.group_id);
+        if (g) {
+          const preSelected = new Set(
+            (g.member_emails || []).filter((e) => e !== user.email)
+          );
+          setSelectedEmails(preSelected);
+        }
       }
+    } catch (err) {
+      console.error("[CreateTrip] Trip.create failed:", err);
+      toast.error("Failed to create trip. Please try again.");
+    } finally {
+      setSaving(false);
     }
   }
 
   async function handleSendInvites() {
     if (!createdTrip) return;
     setInviting(true);
-    const emails = Array.from(selectedEmails);
-    await Promise.all(
-      emails.map(async (email) => {
-        const name = friends.find((f) => f.email === email)?.name ||
-          Object.values(groupMembers).flat().find((m) => m.email === email)?.name || email.split("@")[0];
-        await base44.entities.TripMember.create({
-          trip_id: createdTrip.id,
-          user_email: email,
-          user_name: name,
-          role: "member",
-          status: "invited",
-          invited_by_email: user.email,
-        });
-        await base44.entities.Notification.create({
-          user_email: email,
-          type: "trip_invite",
-          message: `${user.full_name} invited you to join "${createdTrip.name}"`,
-          related_user_email: user.email,
-          related_user_name: user.full_name,
-          related_trip_id: createdTrip.id,
-          is_read: false,
-        });
-      })
-    );
-    setInviting(false);
-    toast.success(`Trip created${emails.length > 0 ? ` · ${emails.length} invite${emails.length !== 1 ? "s" : ""} sent` : ""}`);
-    onOpenChange(false);
-    onCreated();
+    try {
+      const emails = Array.from(selectedEmails);
+      await Promise.all(
+        emails.map(async (email) => {
+          const name = friends.find((f) => f.email === email)?.name ||
+            Object.values(groupMembers).flat().find((m) => m.email === email)?.name || email.split("@")[0];
+          await base44.entities.TripMember.create({
+            trip_id: createdTrip.id,
+            user_email: email,
+            user_name: name,
+            role: "member",
+            status: "invited",
+            invited_by_email: user.email,
+          });
+          await base44.entities.Notification.create({
+            user_email: email,
+            type: "trip_invite",
+            message: `${user.full_name} invited you to join "${createdTrip.name}"`,
+            related_user_email: user.email,
+            related_user_name: user.full_name,
+            related_trip_id: createdTrip.id,
+            is_read: false,
+          });
+        })
+      );
+      const emails2 = Array.from(selectedEmails);
+      toast.success(`Trip created${emails2.length > 0 ? ` · ${emails2.length} invite${emails2.length !== 1 ? "s" : ""} sent` : ""}`);
+      onOpenChange(false);
+      onCreated();
+    } catch (err) {
+      console.error("[CreateTrip] handleSendInvites failed:", err);
+      toast.error("Trip was created but some invites failed. Try inviting from the trip page.");
+      onOpenChange(false);
+      onCreated();
+    } finally {
+      setInviting(false);
+    }
   }
 
   function skipInvites() {
