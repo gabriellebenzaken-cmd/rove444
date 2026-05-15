@@ -51,7 +51,7 @@ export default function FriendProfileModal({ friend, onClose, currentUserEmail }
 
   if (!friend) return null;
 
-  const displayName = profile?.full_name || friend.full_name || friend.display_name || "Unknown";
+  const displayName = profile?.display_name || profile?.username || profile?.full_name || friend.display_name || friend.full_name || "Unknown";
   const username = profile?.username;
   const photo = profile?.profile_photo;
   const bio = profile?.bio;

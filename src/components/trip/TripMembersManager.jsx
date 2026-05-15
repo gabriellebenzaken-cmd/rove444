@@ -30,33 +30,41 @@ export default function TripMembersManager({ trip, user, isAdmin, onMembersUpdat
 
   async function loadMembers() {
     try {
-      const [tripMembers, adminProfile] = await Promise.all([
+      const [tripMembers, allProfiles] = await Promise.all([
         base44.entities.TripMember.filter(
           { trip_id: trip.id, status: "active" },
           "-created_date",
           200
         ),
-        base44.entities.UserProfile.filter({ user_email: trip.admin_email }, "-created_date", 1),
+        base44.entities.UserProfile.list("-created_date", 300),
       ]);
+
+      const profileByEmail = {};
+      allProfiles.forEach(p => { if (p.user_email) profileByEmail[p.user_email] = p; });
 
       const seenEmails = new Set(tripMembers.map(tm => tm.user_email));
 
       // Ensure admin is always included
       if (!seenEmails.has(trip.admin_email)) {
-        const ap = adminProfile[0];
+        const ap = profileByEmail[trip.admin_email];
         tripMembers.unshift({
           id: `admin-${trip.admin_email}`,
           user_email: trip.admin_email,
-          user_name: ap?.display_name || ap?.full_name || ap?.username || trip.admin_email.split("@")[0],
+          user_name: ap?.display_name || ap?.username || ap?.full_name || trip.admin_email.split("@")[0],
         });
       }
 
-      const activeMembers = tripMembers.map(tm => ({
-        id: tm.id,
-        email: tm.user_email,
-        full_name: tm.user_name || tm.user_email.split("@")[0],
-        data: {},
-      }));
+      const activeMembers = tripMembers.map(tm => {
+        const p = profileByEmail[tm.user_email];
+        const displayName = p?.display_name || p?.username || p?.full_name || tm.user_name || tm.user_email.split("@")[0];
+        return {
+          id: tm.id,
+          email: tm.user_email,
+          full_name: displayName,
+          // Pass profile data so the card avatar and the modal use the same source
+          data: p ? { profile_photo: p.profile_photo, username: p.username } : {},
+        };
+      });
       setMembers(activeMembers);
     } catch (err) {
       console.error("Failed to load members:", err);
