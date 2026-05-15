@@ -22,6 +22,7 @@ import JoinInvite from './pages/JoinInvite';
 import Privacy from './pages/Privacy';
 import LegalConsentBanner from './components/LegalConsentBanner';
 import Terms from './pages/Terms';
+import Support from './pages/Support';
 import Notifications from './pages/Notifications';
 import DemoSeed from './pages/DemoSeed';
 import Discover from './pages/Discover';
@@ -156,8 +157,6 @@ const AuthenticatedApp = () => {
       <Route path="/notifications" element={<MotionPage><Notifications /></MotionPage>} />
       <Route path="/join/:type/:code" element={<MotionPage><JoinInvite /></MotionPage>} />
       <Route path="/demo-seed" element={<DemoSeed />} />
-      <Route path="/privacy" element={<Privacy />} />
-      <Route path="/terms" element={<Terms />} />
       <Route path="*" element={<PageNotFound />} />
       </Routes>
       )}
@@ -186,7 +185,12 @@ function App() {
       <AuthProvider>
         <QueryClientProvider client={queryClientInstance}>
           <Router>
-            <AuthenticatedApp />
+            <Routes>
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/support" element={<Support />} />
+              <Route path="*" element={<AuthenticatedApp />} />
+            </Routes>
           </Router>
           <Toaster />
         </QueryClientProvider>
