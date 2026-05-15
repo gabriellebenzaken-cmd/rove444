@@ -248,10 +248,11 @@ export default function CreateTripDialog({ open, onOpenChange, user, onCreated, 
             <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What's the vibe?" className="text-sm" rows={2} style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }} />
           </div>
           <button
-            type="submit"
+            type="button"
+            onClick={(e) => { e.preventDefault(); handleCreateTrip(e); }}
             disabled={saving || !form.name || !form.destination || (form.end_date && form.start_date && form.end_date < form.start_date)}
             className="w-full h-10 rounded-full text-sm font-semibold transition-all active:scale-[0.98] mt-1"
-            style={{ background: "#C8A27C", color: "white", opacity: (saving || !form.name || !form.destination || (form.end_date && form.start_date && form.end_date < form.start_date)) ? 0.5 : 1 }}
+            style={{ background: "#C8A27C", color: "white", opacity: (saving || !form.name || !form.destination || (form.end_date && form.start_date && form.end_date < form.start_date)) ? 0.5 : 1, pointerEvents: "auto" }}
           >
             {saving ? "Creating…" : "Next: Invite People →"}
           </button>
