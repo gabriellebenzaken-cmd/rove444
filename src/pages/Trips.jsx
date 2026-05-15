@@ -53,18 +53,28 @@ export default function Trips() {
 
   useEffect(() => {
     loadData();
+    // Re-fetch if a new token arrives via deep-link OAuth callback
+    window.addEventListener('base44:token-received', loadData);
+    return () => window.removeEventListener('base44:token-received', loadData);
   }, []);
 
   async function loadData() {
-    const me = await base44.auth.me();
-    setUser(me);
-    const allTrips = await base44.entities.Trip.list("-created_date", 100);
-    const myTrips = allTrips.filter(
-      (t) => t.member_emails?.includes(me.email) || t.admin_email === me.email
-    );
-    setTrips(myTrips);
-    setLoading(false);
-    queryClient.invalidateQueries({ queryKey: ["trips"] });
+    setLoading(true);
+    try {
+      const me = await base44.auth.me();
+      setUser(me);
+      const allTrips = await base44.entities.Trip.list("-created_date", 100);
+      const myTrips = allTrips.filter(
+        (t) => t.member_emails?.includes(me.email) || t.admin_email === me.email
+      );
+      setTrips(myTrips);
+    } catch (err) {
+      console.error("[Trips] loadData failed:", err);
+      // Still clear loading so the user sees the empty state instead of a forever spinner
+    } finally {
+      setLoading(false);
+      queryClient.invalidateQueries({ queryKey: ["trips"] });
+    }
   }
 
   const today = new Date().toISOString().split("T")[0];
