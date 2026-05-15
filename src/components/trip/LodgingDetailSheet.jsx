@@ -24,7 +24,13 @@ function InfoPanel({ label, value, sub }) {
   );
 }
 
-export default function LodgingDetailSheet({ lodging, open, onClose, onEdit, onDelete }) {
+function resolveName(email, profiles, currentUserEmail) {
+  if (email === currentUserEmail) return "You";
+  const profile = profiles?.find(p => p.user_email === email);
+  return profile?.display_name || profile?.full_name || profile?.username || null;
+}
+
+export default function LodgingDetailSheet({ lodging, open, onClose, onEdit, onDelete, currentUserEmail, profiles = [] }) {
   if (!lodging) return null;
 
   const nights =
@@ -152,21 +158,27 @@ export default function LodgingDetailSheet({ lodging, open, onClose, onEdit, onD
             </div>
           )}
 
-          {/* Guests */}
-          {lodging.guest_emails?.length > 0 && (
-            <div
-              className="flex items-start gap-2.5 rounded-xl px-3.5 py-3"
-              style={{
-                background: "rgba(200,162,124,0.05)",
-                border: "1px solid rgba(200,162,124,0.12)",
-              }}
-            >
-              <Users className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
-              <p className="text-[12px] text-muted-foreground leading-relaxed">
-                {lodging.guest_emails.join(" · ")}
-              </p>
-            </div>
-          )}
+          {/* Guests — resolved display names only */}
+          {lodging.guest_emails?.length > 0 && (() => {
+            const names = lodging.guest_emails
+              .map(e => resolveName(e, profiles, currentUserEmail))
+              .filter(Boolean);
+            if (!names.length) return null;
+            return (
+              <div
+                className="flex items-start gap-2.5 rounded-xl px-3.5 py-3"
+                style={{
+                  background: "rgba(200,162,124,0.05)",
+                  border: "1px solid rgba(200,162,124,0.12)",
+                }}
+              >
+                <Users className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                <p className="text-[12px] text-muted-foreground leading-relaxed">
+                  {names.join(" · ")}
+                </p>
+              </div>
+            );
+          })()}
 
           {/* Notes */}
           {lodging.notes && (

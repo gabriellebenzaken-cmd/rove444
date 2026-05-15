@@ -31,6 +31,7 @@ const extractMetadata = async (url) => {
 
 export default function TripStay({ trip, user }) {
   const [lodgings, setLodgings] = useState([]);
+  const [profiles, setProfiles] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [detailLodging, setDetailLodging] = useState(null);
@@ -39,11 +40,18 @@ export default function TripStay({ trip, user }) {
 
   useEffect(() => {
     loadData();
+    loadProfiles();
   }, [trip.id]);
 
   async function loadData() {
     const all = await base44.entities.Lodging.filter({ trip_id: trip.id }, "-created_date", 50);
     setLodgings(all);
+  }
+
+  async function loadProfiles() {
+    if (!trip.member_emails?.length) return;
+    const all = await base44.entities.UserProfile.filter({});
+    setProfiles(all.filter(p => trip.member_emails.includes(p.user_email)));
   }
 
   async function addLodging(e) {
@@ -262,6 +270,8 @@ export default function TripStay({ trip, user }) {
         onClose={() => setDetailLodging(null)}
         onEdit={openEdit}
         onDelete={deleteLodging}
+        currentUserEmail={user.email}
+        profiles={profiles}
       />
 
       <BottomSheet open={showAdd} onClose={closeModal} title={editingId ? "Edit Lodging" : "Add Lodging"}>
