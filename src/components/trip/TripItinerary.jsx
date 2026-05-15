@@ -11,10 +11,12 @@ import { format, eachDayOfInterval, parseISO } from "date-fns";
 import { formatTime12Hour } from "@/lib/formatTime";
 import BottomSheet from "../BottomSheet";
 import ItineraryPlanner from "./ItineraryPlanner";
+import EditItinerarySheet from "./EditItinerarySheet";
 
 export default function TripItinerary({ trip, user }) {
   const [items, setItems] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
   const [form, setForm] = useState({
     date: "",
     time: "",
@@ -107,7 +109,7 @@ export default function TripItinerary({ trip, user }) {
                     if (!b.time) return -1;
                     return a.time.localeCompare(b.time);
                   }).map((item) => (
-                    <div key={item.id} className="bg-card rounded-xl border border-border p-3">
+                    <div key={item.id} className="bg-card rounded-xl border border-border p-3 cursor-pointer active:opacity-70 transition-opacity" onClick={() => setEditingItem(item)}>
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
@@ -128,7 +130,7 @@ export default function TripItinerary({ trip, user }) {
                           </div>
                           {item.notes && <p className="text-xs text-muted-foreground mt-1">{item.notes}</p>}
                         </div>
-                        <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={() => deleteItem(item.id)}>
+                        <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }}>
                           <Trash2 className="h-3 w-3 text-muted-foreground" />
                         </Button>
                       </div>
@@ -140,6 +142,14 @@ export default function TripItinerary({ trip, user }) {
           ))}
         </div>
       )}
+
+      <EditItinerarySheet
+        open={!!editingItem}
+        onClose={() => setEditingItem(null)}
+        item={editingItem}
+        trip={trip}
+        onSaved={loadData}
+      />
 
       <BottomSheet open={showAdd} onClose={() => setShowAdd(false)} title="Add Activity">
         <form onSubmit={addItem} className="space-y-3">
