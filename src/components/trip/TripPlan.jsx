@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import DestinationAutocomplete from "../DestinationAutocomplete";
 import { Plus } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { guessAirline } from "@/utils/airlines";
 import TripMembersManager from "./TripMembersManager";
@@ -149,18 +148,31 @@ export default function TripPlan({ trip, user, onUpdate }) {
       <BottomSheet open={showAdd} onClose={closeDialog} title={`${editingId ? "Edit" : "Add"} Travel Info`}>
         <form onSubmit={addArrival} className="space-y-3">
 
-          {/* Travel type */}
+          {/* Travel type — inline chips (avoids portal-in-portal issues on mobile) */}
           <div>
-            <Label className="text-xs font-medium mb-1 block" style={{ color: "#9A8A7A" }}>Travel Type</Label>
-            <Select value={form.travel_type} onValueChange={(val) => setForm({ ...form, travel_type: val })}>
-              <SelectTrigger className="h-9 text-sm" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Flight">✈️ Flight</SelectItem>
-                <SelectItem value="Driving">🚗 Driving</SelectItem>
-                <SelectItem value="Train">🚂 Train</SelectItem>
-                <SelectItem value="Other">📋 Other</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label className="text-xs font-medium mb-1.5 block" style={{ color: "#9A8A7A" }}>Travel Type</Label>
+            <div className="grid grid-cols-4 gap-1.5">
+              {[
+                { value: "Flight",  label: "✈️ Flight" },
+                { value: "Driving", label: "🚗 Car" },
+                { value: "Train",   label: "🚂 Train" },
+                { value: "Other",   label: "📋 Other" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setForm({ ...form, travel_type: opt.value })}
+                  className="py-2 px-1 rounded-xl border text-xs font-medium transition-all text-center"
+                  style={
+                    form.travel_type === opt.value
+                      ? { background: "#C8A27C", color: "white", borderColor: "#C8A27C" }
+                      : { background: "rgba(255,255,255,0.7)", borderColor: "rgba(200,162,124,0.2)", color: "var(--foreground)" }
+                  }
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Round trip toggle (flights only) */}
