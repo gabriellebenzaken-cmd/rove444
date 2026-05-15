@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Globe, ArrowLeft } from "lucide-react";
 
 export default function Support() {
+  useEffect(() => { document.title = "Support | ROVR"; return () => { document.title = "ROVR"; }; }, []);
   return (
     <div className="min-h-screen bg-background px-6 py-12 max-w-lg mx-auto">
 

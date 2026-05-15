@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 export default function Privacy() {
+  useEffect(() => { document.title = "Privacy | ROVR"; return () => { document.title = "ROVR"; }; }, []);
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-5 pt-14 pb-20">
