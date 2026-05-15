@@ -396,7 +396,7 @@ export default function Profile() {
             <DialogTitle>Delete Account?</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            This will permanently delete your Rove account and remove you from all trips and groups. This action cannot be undone.
+            This will permanently delete your ROVR account and remove you from all trips and groups. This action cannot be undone.
           </p>
           <p className="text-xs font-medium mb-2">Type <strong>DELETE</strong> to confirm:</p>
           <Input
@@ -407,7 +407,7 @@ export default function Profile() {
           />
           {deleteConfirmText === "DELETE" && (
             <p className="text-xs text-muted-foreground bg-muted rounded-xl px-3 py-2">
-              To complete account deletion, please contact support at <strong>support@rove.app</strong> with your email address.
+              To complete account deletion, please contact support at <strong>support@rovr.app</strong> with your email address.
             </p>
           )}
           <div className="flex gap-2 mt-2">
