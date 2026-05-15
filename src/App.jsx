@@ -58,8 +58,18 @@ const AuthenticatedApp = () => {
   useEffect(() => {
     if (!isLoadingAuth && !authError) {
       base44.auth.me().then(async (me) => {
+        // If UserProfile already exists, treat the user as onboarded even if
+        // the flag was never set (handles existing accounts / reinstalls).
+        try {
+          const profiles = await base44.entities.UserProfile.filter({ user_id: me.id }, "-created_date", 1);
+          if (profiles.length > 0 && !me.onboarded) {
+            // Backfill the flag silently so it matches next time
+            await base44.auth.updateMe({ onboarded: true }).catch(() => {});
+            me = { ...me, onboarded: true };
+          }
+        } catch (_) {}
+
         setCurrentUser(me);
-        // Ensure UserProfile exists before rendering app
         await ensureUserProfile(me);
         setIsProfileReady(true);
         setCheckingOnboard(false);
