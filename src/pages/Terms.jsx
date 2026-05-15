@@ -5,12 +5,19 @@ export default function Terms() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-5 pt-14 pb-20">
+        <div className="flex justify-center mb-8">
+          <img
+            src="https://media.base44.com/images/public/69d87cbb57171725f5686a39/3c282009f_FC110BC7-E543-45BD-8163-5032A691FBA8.png"
+            alt="ROVR"
+            className="h-7 w-auto opacity-20"
+          />
+        </div>
         <Link
           to="/"
           className="inline-flex items-center gap-1.5 text-sm mb-6 active:opacity-70 transition-opacity"
           style={{ color: "#C8A27C" }}
         >
-          <ArrowLeft className="h-4 w-4" /> Back
+          <ArrowLeft className="h-4 w-4" /> Back to ROVR
         </Link>
 
         <div className="mb-8">
