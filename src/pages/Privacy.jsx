@@ -164,7 +164,7 @@ export default function Privacy() {
               <li>request deletion of your account</li>
               <li>stop using the app at any time</li>
             </ul>
-            <p>To request account deletion or data-related inquiries, contact: <a href="mailto:support@rovr.app" className="underline" style={{ color: "#C8A27C" }}>support@rovr.app</a></p>
+            <p>To request account deletion or data-related inquiries, contact: <a href="mailto:support@travelrovr.app" className="underline" style={{ color: "#C8A27C" }}>support@travelrovr.app</a></p>
           </Section>
 
           <Section title="11. Children's Privacy">
@@ -177,7 +177,7 @@ export default function Privacy() {
           </Section>
 
           <Section title="13. Contact">
-            <p>If you have any questions regarding this Privacy Policy, please contact: <a href="mailto:support@rovr.app" className="underline" style={{ color: "#C8A27C" }}>support@rovr.app</a></p>
+            <p>If you have any questions regarding this Privacy Policy, please contact: <a href="mailto:support@travelrovr.app" className="underline" style={{ color: "#C8A27C" }}>support@travelrovr.app</a></p>
           </Section>
 
         </div>

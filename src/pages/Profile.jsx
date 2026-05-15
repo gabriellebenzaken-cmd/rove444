@@ -372,6 +372,17 @@ export default function Profile() {
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>
+            <a
+              href="mailto:support@travelrovr.app"
+              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-muted transition-colors"
+              onClick={() => setShowSettings(false)}
+            >
+              <div className="flex items-center gap-3">
+                <Settings className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Contact Support</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </a>
 
             <div className="border-t border-border my-2" />
 
@@ -407,7 +418,7 @@ export default function Profile() {
           />
           {deleteConfirmText === "DELETE" && (
             <p className="text-xs text-muted-foreground bg-muted rounded-xl px-3 py-2">
-              To complete account deletion, please contact support at <strong>support@rovr.app</strong> with your email address.
+              To complete account deletion, please contact support at <strong>support@travelrovr.app</strong> with your email address.
             </p>
           )}
           <div className="flex gap-2 mt-2">

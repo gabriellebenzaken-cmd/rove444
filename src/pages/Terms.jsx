@@ -129,7 +129,7 @@ export default function Terms() {
           </Section>
 
           <Section title="11. Account Deletion">
-            <p>Users may request deletion of their account and associated data by contacting: <a href="mailto:support@rovr.app" className="underline font-semibold" style={{ color: "#C8A27C" }}>support@rovr.app</a></p>
+            <p>Users may request deletion of their account and associated data by contacting: <a href="mailto:support@travelrovr.app" className="underline font-semibold" style={{ color: "#C8A27C" }}>support@travelrovr.app</a></p>
             <p>Some records related to shared trips, expenses, or group activity may remain visible to other users where necessary for historical or financial continuity.</p>
           </Section>
 
@@ -139,7 +139,7 @@ export default function Terms() {
           </Section>
 
           <Section title="13. Contact">
-            <p>If you have any questions regarding these Terms, please contact: <a href="mailto:support@rovr.app" className="underline font-semibold" style={{ color: "#C8A27C" }}>support@rovr.app</a></p>
+            <p>If you have any questions regarding these Terms, please contact: <a href="mailto:support@travelrovr.app" className="underline font-semibold" style={{ color: "#C8A27C" }}>support@travelrovr.app</a></p>
           </Section>
 
           <div className="rounded-2xl p-4 mt-6" style={{ background: "rgba(200,162,124,0.1)", border: "1px solid rgba(200,162,124,0.2)" }}>
