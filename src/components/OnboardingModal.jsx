@@ -9,10 +9,27 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sparkles } from "lucide-react";
 
 export default function OnboardingModal({ user, onComplete }) {
-  const [username, setUsername] = useState(user?.full_name?.toLowerCase().replace(/\s+/g, "_") || "");
+  const [username, setUsername] = useState(
+    user?.data?.username ||
+    user?.full_name?.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "") ||
+    user?.email?.split("@")[0]?.toLowerCase().replace(/[^a-z0-9_]/g, "") ||
+    ""
+  );
   const [bio, setBio] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [stuckTimer, setStuckTimer] = useState(null);
+  const [showSkipHint, setShowSkipHint] = useState(false);
+
+  // If loading takes > 8 s, show a skip hint (helps on flaky iOS connections)
+  function startStuckTimer() {
+    const t = setTimeout(() => setShowSkipHint(true), 8000);
+    setStuckTimer(t);
+  }
+  function clearStuckTimer() {
+    if (stuckTimer) clearTimeout(stuckTimer);
+    setShowSkipHint(false);
+  }
 
   async function handleProfileSetup(e) {
     e.preventDefault();
@@ -21,6 +38,7 @@ export default function OnboardingModal({ user, onComplete }) {
     try {
       setLoading(true);
       setError("");
+      startStuckTimer();
 
       const normalizedUsername = username?.trim()?.toLowerCase();
 
@@ -63,10 +81,12 @@ export default function OnboardingModal({ user, onComplete }) {
       onComplete();
     } finally {
       setLoading(false);
+      clearStuckTimer();
     }
   }
 
   function handleSkip() {
+    clearStuckTimer();
     onComplete();
   }
 
@@ -120,8 +140,13 @@ export default function OnboardingModal({ user, onComplete }) {
            )}
           </Button>
           <button type="button" onClick={handleSkip} className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Skip for now
-          </button>
+             Skip for now
+           </button>
+           {showSkipHint && (
+             <p className="text-xs text-center text-amber-500 -mt-1">
+               Taking longer than usual — tap "Skip for now" to continue.
+             </p>
+           )}
         </form>
       </DialogContent>
     </Dialog>

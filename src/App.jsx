@@ -28,6 +28,7 @@ import DemoSeed from './pages/DemoSeed';
 import Discover from './pages/Discover';
 import OnboardingModal from './components/OnboardingModal';
 import RoveSplash from './components/RoveSplash';
+import AppStoreReviewerBypass from './components/AppStoreReviewerBypass';
 import { motion } from 'framer-motion';
 
 const MotionPage = ({ children }) => (
@@ -110,6 +111,8 @@ const AuthenticatedApp = () => {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+        {/* Reviewer bypass available even during loading — 5-tap activated */}
+        <AppStoreReviewerBypass onTokenApplied={() => window.location.reload()} />
       </div>
     );
   }
@@ -119,7 +122,32 @@ const AuthenticatedApp = () => {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
+      // In a Capacitor native build, don't silently redirect — show the
+      // login screen with the reviewer bypass so the OAuth callback can
+      // land back in the app after the external browser completes.
+      const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
+      if (isNative) {
+        return (
+          <div className="fixed inset-0 flex flex-col items-center justify-center bg-background gap-4 px-6">
+            <img
+              src="https://media.base44.com/images/public/69d87cbb57171725f5686a39/d17f79155_generated_image.png"
+              alt="ROVR"
+              className="w-20 h-20 rounded-2xl mb-2"
+            />
+            <h1 className="text-2xl font-bold tracking-tight">ROVR</h1>
+            <p className="text-sm text-muted-foreground text-center">
+              Sign in to start planning trips with your crew.
+            </p>
+            <button
+              className="w-full max-w-xs h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm mt-2"
+              onClick={navigateToLogin}
+            >
+              Sign in with Google
+            </button>
+            <AppStoreReviewerBypass onTokenApplied={() => window.location.reload()} />
+          </div>
+        );
+      }
       navigateToLogin();
       return null;
     }

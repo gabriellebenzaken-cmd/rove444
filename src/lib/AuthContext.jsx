@@ -124,8 +124,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   const navigateToLogin = () => {
-    // Use the SDK's redirectToLogin method
-    base44.auth.redirectToLogin(window.location.href);
+    // In Capacitor native builds, window.location.href is capacitor://localhost/
+    // which Google OAuth won't redirect back to. Use the published web URL instead
+    // so the token lands on the real domain and can be picked up on return.
+    const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
+    const returnUrl = isNative
+      ? (import.meta.env.VITE_APP_PUBLIC_URL || window.location.href)
+      : window.location.href;
+    base44.auth.redirectToLogin(returnUrl);
   };
 
   return (
