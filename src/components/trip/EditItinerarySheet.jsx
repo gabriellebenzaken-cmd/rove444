@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 const TIME_SLOTS = [
+  { label: "All day", value: "allday", hint: "all day" },
   { label: "Morning", value: "09:00", hint: "8am – 12pm" },
   { label: "Afternoon", value: "13:00", hint: "12pm – 5pm" },
   { label: "Evening", value: "18:00", hint: "5pm – 9pm" },
@@ -14,7 +15,7 @@ const TIME_SLOTS = [
 
 export default function EditItinerarySheet({ open, onClose, item, trip, onSaved }) {
   const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
+  const [selectedDates, setSelectedDates] = useState([]);
   const [timeSlot, setTimeSlot] = useState("");
   const [exactTime, setExactTime] = useState("");
   const [location, setLocation] = useState("");
@@ -25,11 +26,12 @@ export default function EditItinerarySheet({ open, onClose, item, trip, onSaved 
   useEffect(() => {
     if (open && item) {
       setTitle(item.title || "");
-      setDate(item.date || "");
+      // Support both legacy single date and new multi-dates
+      const initialDates = item.dates?.length ? item.dates : (item.date ? [item.date] : []);
+      setSelectedDates(initialDates);
       setLocation(item.location || "");
       setNotes(item.notes || "");
       setIsRequired(item.is_required || false);
-      // Determine if the item's time matches a slot or is exact
       const matchedSlot = TIME_SLOTS.find(s => s.value === item.time);
       if (matchedSlot) {
         setTimeSlot(item.time);
@@ -41,20 +43,28 @@ export default function EditItinerarySheet({ open, onClose, item, trip, onSaved 
     }
   }, [open, item]);
 
+  function toggleDate(key) {
+    setSelectedDates(prev =>
+      prev.includes(key) ? prev.filter(d => d !== key) : [...prev, key]
+    );
+  }
+
   const tripDays = trip?.start_date && trip?.end_date
     ? eachDayOfInterval({ start: parseISO(trip.start_date), end: parseISO(trip.end_date) })
     : [];
 
   async function handleSave() {
-    if (!title.trim() || !date) {
-      toast.error("Title and date are required");
+    if (!title.trim() || selectedDates.length === 0) {
+      toast.error("Title and at least one date are required");
       return;
     }
     setSaving(true);
-    const finalTime = exactTime || timeSlot || "";
+    const finalTime = timeSlot === "allday" ? "allday" : (exactTime || timeSlot || "");
+    const sorted = [...selectedDates].sort();
     await base44.entities.ItineraryItem.update(item.id, {
       title: title.trim(),
-      date,
+      date: sorted[0],
+      dates: sorted,
       time: finalTime,
       location: location.trim(),
       notes: notes.trim(),
@@ -81,18 +91,25 @@ export default function EditItinerarySheet({ open, onClose, item, trip, onSaved 
           />
         </div>
 
-        {/* Date picker */}
+        {/* Date picker — multi-select */}
         <div>
-          <label className="text-xs font-medium block mb-2" style={{ color: "#9A8A7A" }}>Choose a day</label>
+          <label className="text-xs font-medium block mb-1" style={{ color: "#9A8A7A" }}>
+            Choose day(s) <span style={{ color: "#C0B0A0", fontWeight: 400 }}>— tap to select multiple</span>
+          </label>
+          {selectedDates.length > 1 && (
+            <p className="text-[11px] mb-2" style={{ color: "#C8A27C" }}>
+              {selectedDates.length} days selected
+            </p>
+          )}
           {tripDays.length > 0 ? (
             <div className="flex flex-col gap-1.5 max-h-44 overflow-y-auto">
               {tripDays.map((d) => {
                 const key = format(d, "yyyy-MM-dd");
-                const isSelected = date === key;
+                const isSelected = selectedDates.includes(key);
                 return (
                   <button
                     key={key}
-                    onClick={() => setDate(key)}
+                    onClick={() => toggleDate(key)}
                     className="flex items-center justify-between px-4 py-2.5 rounded-xl border text-sm transition-all text-left"
                     style={
                       isSelected
@@ -109,8 +126,8 @@ export default function EditItinerarySheet({ open, onClose, item, trip, onSaved 
           ) : (
             <Input
               type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+              value={selectedDates[0] || ""}
+              onChange={(e) => setSelectedDates(e.target.value ? [e.target.value] : [])}
               className="h-9 text-sm"
               style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}
             />
@@ -122,7 +139,7 @@ export default function EditItinerarySheet({ open, onClose, item, trip, onSaved 
           <label className="text-xs font-medium block mb-2" style={{ color: "#9A8A7A" }}>
             Time <span style={{ color: "#C0B0A0", fontWeight: 400 }}>(optional)</span>
           </label>
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-5 gap-1.5">
             {TIME_SLOTS.map((slot) => (
               <button
                 key={slot.value}
@@ -139,16 +156,19 @@ export default function EditItinerarySheet({ open, onClose, item, trip, onSaved 
               </button>
             ))}
           </div>
-          <div className="mt-2 flex items-center gap-2">
-            <Input
-              type="time"
-              value={exactTime}
-              onChange={(e) => { setExactTime(e.target.value); setTimeSlot(""); }}
-              className="h-8 text-sm flex-1"
-              style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}
-            />
-            <span className="text-xs text-muted-foreground shrink-0">exact time</span>
-          </div>
+          {/* Exact time — hidden when All day is selected */}
+          {timeSlot !== "allday" && (
+            <div className="mt-2 flex items-center gap-2">
+              <Input
+                type="time"
+                value={exactTime}
+                onChange={(e) => { setExactTime(e.target.value); setTimeSlot(""); }}
+                className="h-8 text-sm flex-1"
+                style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}
+              />
+              <span className="text-xs text-muted-foreground shrink-0">exact time</span>
+            </div>
+          )}
         </div>
 
         {/* Location */}

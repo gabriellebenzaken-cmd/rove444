@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 const TIME_SLOTS = [
+  { label: "All day", value: "allday", hint: "all day" },
   { label: "Morning", value: "09:00", hint: "8am – 12pm" },
   { label: "Afternoon", value: "13:00", hint: "12pm – 5pm" },
   { label: "Evening", value: "18:00", hint: "5pm – 9pm" },
@@ -40,7 +41,7 @@ function suggestDate(trip, existingDates) {
 
 export default function AddToItinerarySheet({ open, onClose, suggestion, trip, existingDates, onAdded }) {
   const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
+  const [selectedDates, setSelectedDates] = useState([]);
   const [timeSlot, setTimeSlot] = useState("");
   const [exactTime, setExactTime] = useState("");
   const [notes, setNotes] = useState("");
@@ -51,30 +52,39 @@ export default function AddToItinerarySheet({ open, onClose, suggestion, trip, e
     if (open && suggestion) {
       setTitle(suggestion.title || "");
       setNotes(suggestion.description || "");
-      setDate(suggestDate(trip, existingDates || new Set()));
-      const suggested = suggestTime(suggestion.title);
-      setTimeSlot(suggested);
+      const suggested = suggestDate(trip, existingDates || new Set());
+      setSelectedDates(suggested ? [suggested] : []);
+      const suggestedTime = suggestTime(suggestion.title);
+      setTimeSlot(suggestedTime);
       setExactTime("");
     }
   }, [open, suggestion]);
+
+  function toggleDate(key) {
+    setSelectedDates(prev =>
+      prev.includes(key) ? prev.filter(d => d !== key) : [...prev, key]
+    );
+  }
 
   const tripDays = trip?.start_date && trip?.end_date
     ? eachDayOfInterval({ start: parseISO(trip.start_date), end: parseISO(trip.end_date) })
     : [];
 
   async function handleAdd() {
-    if (!date) {
-      toast.error("Please select a date");
+    if (selectedDates.length === 0) {
+      toast.error("Please select at least one day");
       return;
     }
     setSaving(true);
-    const finalTime = exactTime || timeSlot;
+    const finalTime = timeSlot === "allday" ? "allday" : (exactTime || timeSlot);
+    const sorted = [...selectedDates].sort();
     await base44.entities.ItineraryItem.create({
       trip_id: trip.id,
       title: title.trim(),
       location: suggestion?.location || "",
       notes: notes.trim(),
-      date,
+      date: sorted[0],
+      dates: sorted,
       time: finalTime,
       is_required: false,
     });
@@ -98,19 +108,26 @@ export default function AddToItinerarySheet({ open, onClose, suggestion, trip, e
           />
         </div>
 
-        {/* Date picker */}
+        {/* Date picker — multi-select */}
         <div>
-          <label className="text-xs font-medium block mb-2" style={{ color: "#9A8A7A" }}>Choose a day</label>
+          <label className="text-xs font-medium block mb-1" style={{ color: "#9A8A7A" }}>
+            Choose day(s) <span style={{ color: "#C0B0A0", fontWeight: 400 }}>— tap to select multiple</span>
+          </label>
+          {selectedDates.length > 1 && (
+            <p className="text-[11px] mb-2" style={{ color: "#C8A27C" }}>
+              {selectedDates.length} days selected
+            </p>
+          )}
           {tripDays.length > 0 ? (
             <div className="flex flex-col gap-1.5">
               {tripDays.map((d) => {
                 const key = format(d, "yyyy-MM-dd");
                 const isFree = existingDates && !existingDates.has(key);
-                const isSelected = date === key;
+                const isSelected = selectedDates.includes(key);
                 return (
                   <button
                     key={key}
-                    onClick={() => setDate(key)}
+                    onClick={() => toggleDate(key)}
                     className="flex items-center justify-between px-4 py-2.5 rounded-xl border text-sm transition-all text-left"
                     style={
                       isSelected
@@ -124,9 +141,7 @@ export default function AddToItinerarySheet({ open, onClose, suggestion, trip, e
                         Free day
                       </span>
                     )}
-                    {isSelected && (
-                      <span className="text-[11px] opacity-80">✓</span>
-                    )}
+                    {isSelected && <span className="text-[11px] opacity-80">✓</span>}
                   </button>
                 );
               })}
@@ -134,8 +149,8 @@ export default function AddToItinerarySheet({ open, onClose, suggestion, trip, e
           ) : (
             <Input
               type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+              value={selectedDates[0] || ""}
+              onChange={(e) => setSelectedDates(e.target.value ? [e.target.value] : [])}
               className="h-9 text-sm"
               style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}
             />
@@ -147,7 +162,7 @@ export default function AddToItinerarySheet({ open, onClose, suggestion, trip, e
           <label className="text-xs font-medium block mb-2" style={{ color: "#9A8A7A" }}>
             Time <span style={{ color: "#C0B0A0", fontWeight: 400 }}>(optional)</span>
           </label>
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-5 gap-1.5">
             {TIME_SLOTS.map((slot) => (
               <button
                 key={slot.value}
@@ -164,17 +179,19 @@ export default function AddToItinerarySheet({ open, onClose, suggestion, trip, e
               </button>
             ))}
           </div>
-          {/* Exact time */}
-          <div className="mt-2 flex items-center gap-2">
-            <Input
-              type="time"
-              value={exactTime}
-              onChange={(e) => { setExactTime(e.target.value); setTimeSlot(""); }}
-              className="h-8 text-sm flex-1"
-              style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}
-            />
-            <span className="text-xs text-muted-foreground shrink-0">exact time</span>
-          </div>
+          {/* Exact time — hidden when All day is selected */}
+          {timeSlot !== "allday" && (
+            <div className="mt-2 flex items-center gap-2">
+              <Input
+                type="time"
+                value={exactTime}
+                onChange={(e) => { setExactTime(e.target.value); setTimeSlot(""); }}
+                className="h-8 text-sm flex-1"
+                style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.2)" }}
+              />
+              <span className="text-xs text-muted-foreground shrink-0">exact time</span>
+            </div>
+          )}
         </div>
 
         {/* Notes */}
@@ -195,7 +212,7 @@ export default function AddToItinerarySheet({ open, onClose, suggestion, trip, e
         {/* CTA */}
         <button
           onClick={handleAdd}
-          disabled={saving || !title.trim()}
+          disabled={saving || !title.trim() || selectedDates.length === 0}
           className="w-full h-11 rounded-full text-sm font-semibold transition-opacity disabled:opacity-50"
           style={{ background: "#C8A27C", color: "white" }}
         >

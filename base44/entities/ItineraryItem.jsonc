@@ -7,10 +7,20 @@
     },
     "date": {
       "type": "string",
-      "format": "date"
+      "format": "date",
+      "description": "Primary date (kept for backwards compat)"
+    },
+    "dates": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "date"
+      },
+      "description": "All dates this activity spans (multi-day support)"
     },
     "time": {
-      "type": "string"
+      "type": "string",
+      "description": "Time string or 'allday'"
     },
     "title": {
       "type": "string"
@@ -34,7 +44,6 @@
   },
   "required": [
     "trip_id",
-    "date",
     "title"
   ]
 }

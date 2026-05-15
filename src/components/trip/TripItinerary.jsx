@@ -59,9 +59,12 @@ export default function TripItinerary({ trip, user }) {
 
   const groupedItems = {};
   items.forEach((item) => {
-    const day = item.date;
-    if (!groupedItems[day]) groupedItems[day] = [];
-    groupedItems[day].push(item);
+    // Support multi-date items — fall back to legacy single date
+    const itemDates = item.dates?.length ? item.dates : (item.date ? [item.date] : []);
+    itemDates.forEach((day) => {
+      if (!groupedItems[day]) groupedItems[day] = [];
+      groupedItems[day].push(item);
+    });
   });
 
   const displayDays = days.length > 0
@@ -119,7 +122,8 @@ export default function TripItinerary({ trip, user }) {
                           <div className="flex flex-wrap gap-2 mt-1 text-xs text-muted-foreground">
                             {item.time && (
                               <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" /> {formatTime12Hour(item.time)}
+                                <Clock className="h-3 w-3" />
+                                {item.time === "allday" ? "All day" : formatTime12Hour(item.time)}
                               </span>
                             )}
                             {item.location && (
