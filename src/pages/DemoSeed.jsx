@@ -42,63 +42,9 @@ const FEST_USERS = [
 
 const ALL_USERS = [...JAPAN_USERS, ...MIAMI_USERS, ...FEST_USERS];
 
-// ─── Demo persona for the real logged-in user ────────────────────────────────
-const GABBY = {
-  full_name:     "Gabby Brooks",
-  display_name:  "Gabby",
-  username:      "gabbygoes",
-  username_lower:"gabbygoes",
-  bio:           "always planning the next trip before the last one ends",
-  profile_photo: "",  // No photo for demo—uses initials/avatar
-  venmo:         "@gabby-b",
-  instagram:     "gabbygoes",
-};
-
-// Apply the Gabby persona to the real user's UserProfile (saves backup for restore)
-async function applyDemoPersona(me, log) {
-  const profiles = await base44.entities.UserProfile.filter({ user_id: me.id }, "-created_date", 1);
-  if (profiles.length === 0) {
-    log("  ⚠ No UserProfile found for real account — skipping persona");
-    return;
-  }
-  const profile = profiles[0];
-  // Only back up if not already backed up (idempotent)
-  if (!profile._demo_backup_full_name) {
-    await base44.entities.UserProfile.update(profile.id, {
-      ...GABBY,
-      _demo_backup_full_name:    profile.full_name    || "",
-      _demo_backup_display_name: profile.display_name || "",
-      _demo_backup_username:     profile.username     || "",
-      _demo_backup_bio:          profile.bio          || "",
-      _demo_backup_photo:        profile.profile_photo|| "",
-    });
-    log("  ✓ Demo persona applied (Gabby Brooks)");
-  } else {
-    log("  persona already applied, skipping");
-  }
-}
-
-// Restore the real user's UserProfile from backup
-async function removeDemoPersona(me, log) {
-  const profiles = await base44.entities.UserProfile.filter({ user_id: me.id }, "-created_date", 1);
-  if (profiles.length === 0) return;
-  const profile = profiles[0];
-  if (!profile._demo_backup_full_name && profile._demo_backup_full_name !== "") return;
-  await base44.entities.UserProfile.update(profile.id, {
-    full_name:     profile._demo_backup_full_name,
-    display_name:  profile._demo_backup_display_name,
-    username:      profile._demo_backup_username,
-    username_lower:profile._demo_backup_username?.toLowerCase() || "",
-    bio:           profile._demo_backup_bio,
-    profile_photo: profile._demo_backup_photo,
-    _demo_backup_full_name:    null,
-    _demo_backup_display_name: null,
-    _demo_backup_username:     null,
-    _demo_backup_bio:          null,
-    _demo_backup_photo:        null,
-  });
-  log("  ✓ Real profile restored");
-}
+// ─── Demo display name for the real logged-in user (read-only, never written to DB) ───
+// The real user's UserProfile is NEVER modified by the seeder.
+// Their real account is used only for permissions/trip membership.
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const uByKey = (key) => ALL_USERS.find((x) => x.username_lower === key);
@@ -160,7 +106,7 @@ async function clearTripByCode(inviteCode, demoUserIds, log) {
 // ─── JAPAN seeder ─────────────────────────────────────────────────────────────
 async function seedJapan(log, me) {
   const myEmail = me.email;
-  const myName = GABBY.full_name; // use demo persona name, not real name
+  const myName = me.full_name || me.email.split("@")[0];
   const INVITE_CODE = `${DEMO_TAG}JAPAN26`;
 
   // Duplicate check
@@ -168,9 +114,6 @@ async function seedJapan(log, me) {
   if (existingTrips.some((t) => t.invite_code === INVITE_CODE)) {
     throw new Error("Japan trip already exists. Clear it first.");
   }
-
-  log("Applying demo persona…");
-  await applyDemoPersona(me, log);
 
   log("Creating Japan profiles…");
   await ensureProfiles(JAPAN_USERS, log);
@@ -421,16 +364,13 @@ async function seedJapan(log, me) {
 // ─── MIAMI seeder ─────────────────────────────────────────────────────────────
 async function seedMiami(log, me) {
   const myEmail = me.email;
-  const myName = GABBY.full_name;
+  const myName = me.full_name || me.email.split("@")[0];
   const INVITE_CODE = `${DEMO_TAG}MIAMI26`;
 
   const existingTrips = await base44.entities.Trip.filter({}, "-created_date", 200);
   if (existingTrips.some((t) => t.invite_code === INVITE_CODE)) {
     throw new Error("Miami trip already exists. Clear it first.");
   }
-
-  log("Applying demo persona…");
-  await applyDemoPersona(me, log);
 
   log("Creating Miami profiles…");
   await ensureProfiles(MIAMI_USERS, log);
@@ -609,16 +549,13 @@ async function seedMiami(log, me) {
 // ─── FESTIVAL seeder ──────────────────────────────────────────────────────────
 async function seedFest(log, me) {
   const myEmail = me.email;
-  const myName = GABBY.full_name;
+  const myName = me.full_name || me.email.split("@")[0];
   const INVITE_CODE = `${DEMO_TAG}FEST26`;
 
   const existingTrips = await base44.entities.Trip.filter({}, "-created_date", 200);
   if (existingTrips.some((t) => t.invite_code === INVITE_CODE)) {
     throw new Error("Desert Festival trip already exists. Clear it first.");
   }
-
-  log("Applying demo persona…");
-  await applyDemoPersona(me, log);
 
   log("Creating Festival profiles…");
   await ensureProfiles(FEST_USERS, log);
@@ -817,19 +754,16 @@ async function seedFest(log, me) {
 async function clearJapan(log, me) {
   log("Clearing Japan trip…");
   await clearTripByCode(`${DEMO_TAG}JAPAN26`, JAPAN_USERS.map(u => u.user_id), log);
-  if (me) await removeDemoPersona(me, log);
   log("✓ Japan cleared.");
 }
 async function clearMiami(log, me) {
   log("Clearing Miami trip…");
   await clearTripByCode(`${DEMO_TAG}MIAMI26`, MIAMI_USERS.map(u => u.user_id), log);
-  if (me) await removeDemoPersona(me, log);
   log("✓ Miami cleared.");
 }
 async function clearFest(log, me) {
   log("Clearing Desert Festival trip…");
   await clearTripByCode(`${DEMO_TAG}FEST26`, FEST_USERS.map(u => u.user_id), log);
-  if (me) await removeDemoPersona(me, log);
   log("✓ Desert Fest cleared.");
 }
 
