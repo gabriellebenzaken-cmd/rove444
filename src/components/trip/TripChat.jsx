@@ -11,7 +11,10 @@ function detectUrl(text) {
   return match ? match[0] : null;
 }
 
-function UserAvatar({ name }) {
+function UserAvatar({ name, photo }) {
+  if (photo) {
+    return <img src={photo} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />;
+  }
   const initials = (name || "?").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
   const palette = ["#C8A27C", "#A0856A", "#B89060", "#9A7055", "#D4AE8A"];
   const bg = palette[(initials.charCodeAt(0) || 0) % palette.length];
@@ -184,7 +187,16 @@ export default function TripChat({ trip, user }) {
   const [showCreateVote, setShowCreateVote] = useState(false);
   const [prompts, setPrompts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [profileMap, setProfileMap] = useState({});
   const bottomRef = useRef(null);
+
+  useEffect(() => {
+    base44.entities.UserProfile.list("-created_date", 300).then(profiles => {
+      const map = {};
+      profiles.forEach(p => { if (p.user_email) map[p.user_email] = p; });
+      setProfileMap(map);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!trip?.id) return;
@@ -362,7 +374,7 @@ export default function TripChat({ trip, user }) {
                 return (
                   <div key={msg.id} style={{ marginBottom: 6 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                      <UserAvatar name={msg.sender_name} />
+                      <UserAvatar name={msg.sender_name} photo={profileMap[msg.sender_email]?.profile_photo} />
                       <span style={{ fontSize: 10, color: "#B0A090" }}>{msg.sender_name?.split(" ")[0]} · poll</span>
                     </div>
                     <PollCard msg={msg} user={user} onVote={handleVote} />
@@ -372,7 +384,7 @@ export default function TripChat({ trip, user }) {
 
               return (
                 <div key={msg.id} style={{ display: "flex", gap: 6, justifyContent: isMe ? "flex-end" : "flex-start", marginBottom: 2 }}>
-                  {!isMe && <div style={{ marginTop: 4 }}><UserAvatar name={msg.sender_name} /></div>}
+                  {!isMe && <div style={{ marginTop: 4 }}><UserAvatar name={msg.sender_name} photo={profileMap[msg.sender_email]?.profile_photo} /></div>}
                   <div style={{ maxWidth: "78%", display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" }}>
                     {!isMe && (
                       <span style={{ fontSize: 10, color: "#C0B0A0", marginBottom: 3, marginLeft: 2 }}>

@@ -2,7 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Send, MessageCircle, BarChart2, X, Plus } from "lucide-react";
 
-function UserAvatar({ name }) {
+function UserAvatar({ name, photo }) {
+  if (photo) {
+    return <img src={photo} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />;
+  }
   return (
     <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(200,162,124,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#C8A27C", flexShrink: 0 }}>
       {name?.[0] || "?"}
@@ -18,7 +21,16 @@ export default function GroupChat({ group, user }) {
   const [mode, setMode] = useState("text");
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState(["", ""]);
+  const [profileMap, setProfileMap] = useState({});
   const bottomRef = useRef(null);
+
+  useEffect(() => {
+    base44.entities.UserProfile.list("-created_date", 300).then(profiles => {
+      const map = {};
+      profiles.forEach(p => { if (p.user_email) map[p.user_email] = p; });
+      setProfileMap(map);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!group?.id) return;
@@ -160,7 +172,7 @@ export default function GroupChat({ group, user }) {
                 return (
                   <div key={msg.id} style={{ marginBottom: 6 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                      <UserAvatar name={msg.sender_name} />
+                      <UserAvatar name={msg.sender_name} photo={profileMap[msg.sender_email]?.profile_photo} />
                       <span style={{ fontSize: 10, color: "#B0A090" }}>{msg.sender_name?.split(" ")[0]} · poll</span>
                     </div>
                     <div style={{ background: "rgba(255,255,255,0.88)", border: "1px solid rgba(200,162,124,0.2)", borderRadius: 16, padding: 14 }}>
@@ -187,7 +199,7 @@ export default function GroupChat({ group, user }) {
 
               return (
                 <div key={msg.id} style={{ display: "flex", gap: 6, justifyContent: isMe ? "flex-end" : "flex-start", marginBottom: 2 }}>
-                  {!isMe && <div style={{ marginTop: 4 }}><UserAvatar name={msg.sender_name} /></div>}
+                  {!isMe && <div style={{ marginTop: 4 }}><UserAvatar name={msg.sender_name} photo={profileMap[msg.sender_email]?.profile_photo} /></div>}
                   <div style={{ maxWidth: "78%", display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" }}>
                     {!isMe && (
                       <span style={{ fontSize: 10, color: "#C0B0A0", marginBottom: 3, marginLeft: 2 }}>

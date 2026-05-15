@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 export default function GroupPendingInvites({ group, isAdmin, onUpdate }) {
@@ -96,24 +94,9 @@ export default function GroupPendingInvites({ group, isAdmin, onUpdate }) {
                 <p className="text-sm font-medium truncate">{inv.invitee_name || "Member"}</p>
               </div>
             </div>
-            <div className="flex gap-1.5 shrink-0">
-              <Button
-                size="icon"
-                variant="outline"
-                className="h-8 w-8 rounded-full"
-                onClick={() => approveInvite(inv)}
-              >
-                <Check className="h-4 w-4 text-primary" />
-              </Button>
-              <Button
-                size="icon"
-                variant="outline"
-                className="h-8 w-8 rounded-full"
-                onClick={() => denyInvite(inv)}
-              >
-                <X className="h-4 w-4 text-destructive" />
-              </Button>
-            </div>
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-muted text-muted-foreground shrink-0">
+              Pending
+            </span>
           </div>
         ))}
       </div>
