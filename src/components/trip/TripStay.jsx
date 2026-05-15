@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Home, Plus, Trash2, DollarSign, Calendar, ExternalLink, Edit2, Upload, X } from "lucide-react";
+import { Home, Plus, Trash2, MapPin, ExternalLink, Edit2, Upload, X, Moon } from "lucide-react";
 import BottomSheet from "../BottomSheet";
 import { format } from "date-fns";
 
@@ -140,53 +140,123 @@ export default function TripStay({ trip, user }) {
         </div>
       ) : (
         <div className="space-y-3">
-          {lodgings.map((l) => (
-            <div key={l.id} className="bg-card rounded-2xl border border-border overflow-hidden">
-              <div className="flex gap-3 p-4">
-                {/* Image */}
+          {lodgings.map((l) => {
+            const nights = l.check_in && l.check_out
+              ? Math.round((new Date(l.check_out) - new Date(l.check_in)) / 86400000)
+              : null;
+            const checkIn  = l.check_in  ? format(new Date(l.check_in  + "T00:00:00"), "MMM d") : null;
+            const checkOut = l.check_out ? format(new Date(l.check_out + "T00:00:00"), "MMM d") : null;
+
+            return (
+              <div
+                key={l.id}
+                className="rounded-2xl border border-border bg-card overflow-hidden"
+                style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.04), 0 0 0 0.5px rgba(0,0,0,0.04)" }}
+              >
+                {/* Hero image */}
                 {l.image_url && (
-                  <div className="w-28 h-28 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
-                    <img src={l.image_url} alt={l.name} className="w-full h-full object-cover" />
+                  <div className="w-full h-36 overflow-hidden bg-muted relative">
+                    <img src={l.image_url} alt={l.name} className="w-full h-full object-cover" style={{ filter: "brightness(0.92)" }} />
+                    {/* action buttons overlaid top-right */}
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      {l.booking_url && (
+                        <button
+                          className="w-7 h-7 rounded-full flex items-center justify-center"
+                          style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(8px)" }}
+                          onClick={() => window.open(l.booking_url, '_blank')}
+                        >
+                          <ExternalLink className="h-3.5 w-3.5 text-white" />
+                        </button>
+                      )}
+                      <button
+                        className="w-7 h-7 rounded-full flex items-center justify-center"
+                        style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(8px)" }}
+                        onClick={() => openEdit(l)}
+                      >
+                        <Edit2 className="h-3.5 w-3.5 text-white" />
+                      </button>
+                      <button
+                        className="w-7 h-7 rounded-full flex items-center justify-center"
+                        style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(8px)" }}
+                        onClick={() => deleteLodging(l.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-white" />
+                      </button>
+                    </div>
                   </div>
                 )}
+
                 {/* Content */}
-                <div className="flex-1 min-w-0 flex flex-col justify-between">
-                  <div>
-                    <h4 className="font-semibold text-sm leading-snug">{l.name}</h4>
-                    {l.address && <p className="text-xs text-muted-foreground mt-1">{l.address}</p>}
-                  </div>
-                  <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mt-2">
-                    {l.price_per_night && (
-                      <span className="flex items-center gap-1">
-                        <DollarSign className="h-3 w-3" /> ${l.price_per_night}/night
-                      </span>
+                <div className="px-4 pt-3.5 pb-3">
+                  {/* Header row: name + actions (no image case) */}
+                  <div className="flex items-start justify-between gap-2">
+                    <h4 className="font-semibold text-[15px] leading-snug tracking-tight text-foreground flex-1">{l.name}</h4>
+                    {!l.image_url && (
+                      <div className="flex gap-0.5 shrink-0">
+                        {l.booking_url && (
+                          <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={() => window.open(l.booking_url, '_blank')}>
+                            <ExternalLink className="h-3.5 w-3.5" style={{color:'#C8A27C'}} />
+                          </Button>
+                        )}
+                        <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={() => openEdit(l)}>
+                          <Edit2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={() => deleteLodging(l.id)}>
+                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                      </div>
                     )}
-                    {l.check_in && (
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" /> {format(new Date(l.check_in), "MMM d")}
-                        {l.check_out && `–${format(new Date(l.check_out), "MMM d")}`}
-                      </span>
-                    )}
                   </div>
-                </div>
-                {/* Actions */}
-                <div className="flex flex-col gap-2 items-end justify-between">
-                  {l.booking_url && (
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => window.open(l.booking_url, '_blank')}>
-                      <ExternalLink className="h-3.5 w-3.5" style={{color:'#C8A27C'}} />
-                    </Button>
+
+                  {/* Address */}
+                  {l.address && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
+                      <p className="text-[12px] text-muted-foreground truncate">{l.address}</p>
+                    </div>
                   )}
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(l)}>
-                    <Edit2 className="h-3.5 w-3.5 text-muted-foreground" />
-                  </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => deleteLodging(l.id)}>
-                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-                  </Button>
+
+                  {/* Date strip */}
+                  {(checkIn || checkOut) && (
+                    <div className="flex items-center gap-2 mt-3">
+                      {/* Check-in pill */}
+                      <div className="flex-1 rounded-xl px-3 py-2" style={{ background: "rgba(200,162,124,0.08)", border: "1px solid rgba(200,162,124,0.18)" }}>
+                        <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Check-in</p>
+                        <p className="text-[13px] font-semibold text-foreground">{checkIn || "—"}</p>
+                      </div>
+
+                      {/* Nights badge */}
+                      {nights > 0 && (
+                        <div className="flex flex-col items-center gap-0.5 px-1">
+                          <Moon className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-[10px] text-muted-foreground font-medium">{nights}n</span>
+                        </div>
+                      )}
+
+                      {/* Check-out pill */}
+                      <div className="flex-1 rounded-xl px-3 py-2" style={{ background: "rgba(200,162,124,0.08)", border: "1px solid rgba(200,162,124,0.18)" }}>
+                        <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Check-out</p>
+                        <p className="text-[13px] font-semibold text-foreground">{checkOut || "—"}</p>
+                      </div>
+
+                      {/* Price */}
+                      {l.price_per_night && (
+                        <div className="flex flex-col items-end shrink-0 pl-1">
+                          <p className="text-[13px] font-semibold text-foreground">${l.price_per_night}</p>
+                          <p className="text-[9px] text-muted-foreground">/night</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Notes */}
+                  {l.notes && (
+                    <p className="text-[11px] text-muted-foreground mt-2.5 leading-relaxed border-t border-border pt-2.5">{l.notes}</p>
+                  )}
                 </div>
               </div>
-              {l.notes && <p className="text-xs px-4 pb-3 text-muted-foreground">{l.notes}</p>}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
