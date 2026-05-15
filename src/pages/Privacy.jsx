@@ -22,107 +22,162 @@ export default function Privacy() {
         <div className="prose prose-sm max-w-none space-y-6 text-foreground">
 
           <p className="text-sm leading-relaxed text-muted-foreground">
-            ROVR ("we", "our", or "us") is a travel planning and expense-sharing platform designed to help users organize group trips. This Privacy Policy explains how we collect, use, and protect your information.
+            ROVR ("we", "our", or "us") is a collaborative travel planning and expense-sharing platform designed to help users organize trips, coordinate plans, and manage shared travel expenses. This Privacy Policy explains how we collect, use, store, and protect your information when you use ROVR.
           </p>
 
           <Section title="1. Information We Collect">
             <Subsection title="Account Information">
+              <p>We may collect:</p>
               <ul>
-                <li>Name and email address (provided through Google Sign-In)</li>
-                <li>Username and profile details you choose to add</li>
+                <li>name</li>
+                <li>email address</li>
+                <li>username</li>
+                <li>profile details</li>
+                <li>profile photos</li>
               </ul>
+              <p>This information may be provided through supported sign-in providers such as Google Sign-In or other authentication services.</p>
             </Subsection>
             <Subsection title="Profile & Payment Information">
+              <p>Users may optionally add:</p>
               <ul>
-                <li>Optional payment handles (such as Venmo, Cash App, PayPal, or Zelle usernames)</li>
-                <li>This information is manually entered by users and is not verified by ROVR</li>
+                <li>Venmo usernames</li>
+                <li>PayPal usernames</li>
+                <li>Cash App usernames</li>
+                <li>Zelle information</li>
+                <li>social media usernames or profile links</li>
               </ul>
+              <p>This information is manually entered by users and is not verified by ROVR.</p>
             </Subsection>
-            <Subsection title="Trip & App Data">
+            <Subsection title="Trip & Collaboration Data">
+              <p>We collect information related to trips and group collaboration, including:</p>
               <ul>
-                <li>Trip details (locations, dates, plans)</li>
-                <li>Expenses, balances, and payment activity within trips</li>
-                <li>Messages and interactions within trips (such as chat or invites)</li>
+                <li>trip names and destinations</li>
+                <li>itineraries and schedules</li>
+                <li>expenses and balances</li>
+                <li>lodging and travel details</li>
+                <li>group memberships</li>
+                <li>invites and notifications</li>
+                <li>messages and interactions within trips or groups</li>
               </ul>
             </Subsection>
             <Subsection title="Technical Information">
+              <p>We may automatically collect limited technical information such as:</p>
               <ul>
-                <li>Device and browser type</li>
-                <li>IP address and general usage data</li>
+                <li>device type</li>
+                <li>browser type</li>
+                <li>operating system</li>
+                <li>IP address</li>
+                <li>app usage analytics</li>
+                <li>crash or performance diagnostics</li>
               </ul>
+              <p>This information helps us maintain app functionality, security, and performance.</p>
             </Subsection>
           </Section>
 
           <Section title="2. How We Use Your Information">
             <p>We use your information to:</p>
             <ul>
-              <li>Create and manage your account</li>
-              <li>Enable trip planning and collaboration</li>
-              <li>Track shared expenses and balances</li>
-              <li>Facilitate payment coordination between users</li>
-              <li>Provide in-app notifications (such as invites and updates)</li>
-              <li>Improve app functionality and performance</li>
+              <li>create and manage accounts</li>
+              <li>provide trip planning and collaboration features</li>
+              <li>manage shared expenses and balances</li>
+              <li>facilitate coordination between users</li>
+              <li>provide in-app notifications and updates</li>
+              <li>improve app performance and reliability</li>
+              <li>monitor usage and prevent abuse or unauthorized activity</li>
             </ul>
           </Section>
 
           <Section title="3. Payments">
-            <p>ROVR does not process, store, or facilitate financial transactions.</p>
-            <p>All payments occur outside of ROVR using third-party platforms such as Venmo, PayPal, Cash App, or Zelle. ROVR only provides links or identifiers to help users coordinate payments.</p>
+            <p>ROVR does not process, store, transmit, or facilitate financial transactions.</p>
+            <p>All payments occur outside of ROVR through third-party services such as Venmo, PayPal, Cash App, Zelle, or similar external payment platforms.</p>
+            <p>ROVR only allows users to store or share payment identifiers to help coordinate payments between travelers.</p>
           </Section>
 
           <Section title="4. Location Information">
-            <p>ROVR does not collect or track precise GPS location data.</p>
-            <p>Any location information in the app is manually entered by users (e.g., trip destinations).</p>
+            <p>ROVR does not collect precise GPS location data from your device.</p>
+            <p>Location-related information within the app is generally:</p>
+            <ul>
+              <li>manually entered by users</li>
+              <li>based on trip destinations or travel details</li>
+              <li>inferred approximately through standard server or IP-based operations used for security and analytics purposes</li>
+            </ul>
           </Section>
 
-          <Section title="5. How Information is Shared">
-            <p>We do not sell your personal data.</p>
+          <Section title="5. How Information Is Shared">
+            <p>We do not sell personal information.</p>
             <p>Information may be shared:</p>
             <ul>
-              <li>With other users in your trip (such as your username, payment handles, expenses, and balances)</li>
-              <li>With service providers that help operate the app (e.g., hosting infrastructure)</li>
+              <li>with other users participating in the same trip or group</li>
+              <li>with infrastructure and service providers used to operate the platform</li>
+              <li>when required by law, legal process, or to protect the safety and integrity of the platform</li>
             </ul>
-          </Section>
-
-          <Section title="6. User Responsibility & Disputes">
-            <p>ROVR is a coordination tool and does not:</p>
+            <p>Depending on how you use ROVR, other users may see:</p>
             <ul>
-              <li>Verify the accuracy of expenses</li>
-              <li>Guarantee that payments will be made</li>
-              <li>Resolve disputes between users</li>
+              <li>usernames</li>
+              <li>profile details</li>
+              <li>payment handles</li>
+              <li>social links</li>
+              <li>trip participation</li>
+              <li>expenses and balances</li>
+              <li>shared trip content</li>
             </ul>
-            <p>Users are solely responsible for verifying expenses and completing payments.</p>
           </Section>
 
-          <Section title="7. Data Retention">
-            <p>We retain your data while your account is active or as needed to provide the service.</p>
-            <p>If you delete your account, your personal data will be removed, though certain trip or transaction records may remain as part of shared group history.</p>
+          <Section title="6. Analytics & Service Providers">
+            <p>ROVR may use third-party infrastructure and analytics providers to support:</p>
+            <ul>
+              <li>authentication</li>
+              <li>hosting</li>
+              <li>storage</li>
+              <li>analytics</li>
+              <li>app performance monitoring</li>
+            </ul>
+            <p>These providers may process limited technical or usage information necessary to operate the service.</p>
           </Section>
 
-          <Section title="8. Security">
-            <p>We take reasonable measures to protect your information, but no method of transmission or storage is completely secure.</p>
+          <Section title="7. User Responsibility & Disputes">
+            <p>ROVR is a coordination tool only and does not:</p>
+            <ul>
+              <li>verify expense accuracy</li>
+              <li>guarantee payments</li>
+              <li>mediate financial disputes</li>
+              <li>enforce balances between users</li>
+            </ul>
+            <p>Users are solely responsible for verifying expenses, confirming payments, and resolving disputes with other users.</p>
           </Section>
 
-          <Section title="9. Your Rights & Choices">
+          <Section title="8. Data Retention">
+            <p>We retain information while accounts remain active or as reasonably necessary to provide the service.</p>
+            <p>If you delete your account, certain information may remain visible within shared trip history, expense records, or group activity where necessary for continuity between other users.</p>
+          </Section>
+
+          <Section title="9. Security">
+            <p>We use reasonable administrative and technical safeguards designed to protect your information.</p>
+            <p>However, no method of electronic transmission or storage is completely secure, and we cannot guarantee absolute security.</p>
+          </Section>
+
+          <Section title="10. Your Rights & Choices">
             <p>You may:</p>
             <ul>
-              <li>Update your profile information</li>
-              <li>Leave trips at any time</li>
-              <li>Delete your account</li>
-              <li>Stop using the app whenever you choose</li>
+              <li>update your profile information</li>
+              <li>leave trips or groups</li>
+              <li>request deletion of your account</li>
+              <li>stop using the app at any time</li>
             </ul>
+            <p>To request account deletion or data-related inquiries, contact: <a href="mailto:support@rovr.app" className="underline" style={{ color: "#C8A27C" }}>support@rovr.app</a></p>
           </Section>
 
-          <Section title="10. Children's Privacy">
-            <p>ROVR is not intended for users under 13, and we do not knowingly collect personal information from children.</p>
+          <Section title="11. Children's Privacy">
+            <p>ROVR is not intended for children under 13 years old, and we do not knowingly collect personal information from children under 13.</p>
           </Section>
 
-          <Section title="11. Changes to This Policy">
-            <p>We may update this Privacy Policy from time to time. Continued use of ROVR means you accept any updates.</p>
+          <Section title="12. Changes to This Policy">
+            <p>We may update this Privacy Policy from time to time.</p>
+            <p>Continued use of ROVR after updates means you accept the revised policy.</p>
           </Section>
 
-          <Section title="12. Contact">
-            <p>If you have questions, contact us at: <a href="mailto:support@rovr.app" className="underline" style={{ color: "#C8A27C" }}>support@rovr.app</a></p>
+          <Section title="13. Contact">
+            <p>If you have any questions regarding this Privacy Policy, please contact: <a href="mailto:support@rovr.app" className="underline" style={{ color: "#C8A27C" }}>support@rovr.app</a></p>
           </Section>
 
         </div>
