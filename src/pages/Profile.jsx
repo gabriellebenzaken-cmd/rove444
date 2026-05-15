@@ -307,7 +307,7 @@ export default function Profile() {
 
       {/* Settings Sheet */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="mx-4 rounded-2xl max-w-sm">
+        <DialogContent className="rounded-2xl max-w-sm w-[calc(100%-2rem)]">
           <DialogHeader>
             <DialogTitle>Settings</DialogTitle>
           </DialogHeader>
@@ -391,7 +391,7 @@ export default function Profile() {
 
       {/* Delete Confirm */}
       <Dialog open={showDeleteConfirm} onOpenChange={(v) => { setShowDeleteConfirm(v); if (!v) setDeleteConfirmText(""); }}>
-        <DialogContent className="mx-4 rounded-2xl max-w-sm">
+        <DialogContent className="rounded-2xl max-w-sm w-[calc(100%-2rem)]">
           <DialogHeader>
             <DialogTitle>Delete Account?</DialogTitle>
           </DialogHeader>
