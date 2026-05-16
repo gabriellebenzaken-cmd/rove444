@@ -27,7 +27,9 @@ public class ASWebAuthPlugin: CAPPlugin, ASWebAuthenticationPresentationContextP
                 callbackURLScheme: callbackScheme
             ) { callbackURL, error in
                 if let error = error {
-                    if case ASWebAuthenticationSessionError.cancelledByUser = error {
+                    // Check if user cancelled (error code 1)
+                    let nsError = error as NSError
+                    if nsError.code == 1 {
                         self.callPromise?.reject("User cancelled sign-in")
                     } else {
                         self.callPromise?.reject("Authentication failed: \(error.localizedDescription)")
