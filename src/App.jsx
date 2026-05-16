@@ -154,8 +154,13 @@ const AuthenticatedApp = () => {
             Sign in to start planning trips with your crew.
           </p>
           <button
-            className="w-full max-w-xs h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm mt-2"
-            onClick={navigateToLogin}
+            className="w-full max-w-xs h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm mt-2 cursor-pointer"
+            onClick={(e) => {
+              console.log('[App] Sign-in button clicked (authError screen)');
+              e.preventDefault();
+              navigateToLogin();
+            }}
+            type="button"
           >
             Sign in with Google
           </button>
@@ -181,8 +186,13 @@ const AuthenticatedApp = () => {
           Sign in to start planning trips with your crew.
         </p>
         <button
-          className="w-full max-w-xs h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm mt-2"
-          onClick={navigateToLogin}
+          className="w-full max-w-xs h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm mt-2 cursor-pointer"
+          onClick={(e) => {
+            console.log('[App] Sign-in button clicked');
+            e.preventDefault();
+            navigateToLogin();
+          }}
+          type="button"
         >
           Sign in with Google
         </button>

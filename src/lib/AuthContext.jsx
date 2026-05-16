@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
+import { toast } from 'sonner';
 
 // Returns the most up-to-date token — prefers localStorage over the snapshot
 // taken at app boot, so deep-link token deliveries are picked up correctly.
@@ -159,46 +160,37 @@ export const AuthProvider = ({ children }) => {
   };
 
   const navigateToLogin = () => {
+    console.log('[Auth] navigateToLogin called');
     const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
+    console.log('[Auth] isNative:', isNative);
 
     if (isNative) {
       // ─── CRITICAL for iOS ───────────────────────────────────────────────────
       // Google OAuth BLOCKS requests from embedded web views (WKWebView).
       // We MUST open the login URL in the system Safari browser.
-      //
-      // The return URL must be the app's published HTTPS domain (not capacitor://localhost)
-      // so Google can redirect to it. Capacitor then intercepts that navigation via
-      // the appUrlOpen deep-link listener in main.jsx and stores the token.
-      //
-      // REQUIRED: set VITE_APP_PUBLIC_URL=https://your-published-domain.base44.app
-      // in your build environment (Xcode scheme / .env.production).
+      // Use Capacitor's Browser plugin to open the auth URL directly.
       const appWebUrl = import.meta.env.VITE_APP_PUBLIC_URL;
-      if (!appWebUrl) {
-        console.warn('[Auth] VITE_APP_PUBLIC_URL is not set — iOS Google OAuth callback will not work. Please set this env var to your published app URL.');
-      }
+      const appId = import.meta.env.VITE_BASE44_APP_ID;
       const returnUrl = appWebUrl || 'https://app.base44.com';
 
-      // Intercept the URL that redirectToLogin would navigate to, then open it
-      // in the system browser instead of inside WKWebView.
-      // We temporarily replace window.location.assign to capture the URL.
-      let loginUrl = null;
-      const origAssign = window.location.assign.bind(window.location);
-      window.location.assign = (url) => { loginUrl = url; };
-      try {
-        base44.auth.redirectToLogin(returnUrl);
-      } catch (_) {}
-      window.location.assign = origAssign;
+      if (!appWebUrl) {
+        console.warn('[Auth] VITE_APP_PUBLIC_URL is not set — iOS Google OAuth callback may not work. Please set this env var to your published app URL.');
+      }
 
-      if (loginUrl) {
-        // '_system' = Capacitor convention for the OS browser (Safari on iOS)
+      // Build the login URL directly
+      const loginUrl = `https://app.base44.com/auth/login?app_id=${appId}&next=${encodeURIComponent(returnUrl)}`;
+      console.log('[Auth] Opening login URL in system browser:', loginUrl);
+
+      // Use window.open with '_system' for Capacitor to open in native Safari
+      try {
         window.open(loginUrl, '_system');
-      } else {
-        // Fallback: open base44 login page directly
-        const appId = import.meta.env.VITE_BASE44_APP_ID;
-        window.open(`https://app.base44.com/auth/login?app_id=${appId}&next=${encodeURIComponent(returnUrl)}`, '_system');
+      } catch (err) {
+        console.error('[Auth] Failed to open login URL:', err);
+        toast.error('Failed to open sign-in. Please try again.');
       }
     } else {
       // Web: standard redirect
+      console.log('[Auth] Web platform — redirecting to login');
       base44.auth.redirectToLogin(window.location.href);
     }
   };
