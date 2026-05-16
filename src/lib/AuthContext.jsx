@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
+import { Browser } from '@capacitor/browser';
 import { toast } from 'sonner';
 
 // Returns the most up-to-date token — prefers localStorage over the snapshot
@@ -173,10 +174,21 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      // Use the official SDK method for Google provider login
-      // This handles the correct Base44 auth endpoint and OAuth flow
-      console.log('[Auth] Calling base44.auth.loginWithProvider("google", appPublicUrl)');
-      await base44.auth.loginWithProvider("google", appPublicUrl);
+      if (isNative) {
+        // Use Capacitor Browser plugin to open Google OAuth in native secure browser
+        // This uses SFSafariViewController on iOS (Google-approved), not WKWebView
+        const authUrl = `https://base44.com/auth?app_id=${appParams.appId}&next=${encodeURIComponent(appPublicUrl)}`;
+        console.log('[Auth] Opening Google OAuth in native browser:', authUrl);
+        
+        await Browser.open({
+          url: authUrl,
+          presentationStyle: 'popover' // iOS: use SFSafariViewController (Google-safe)
+        });
+      } else {
+        // Web: use SDK method
+        console.log('[Auth] Web platform — using SDK loginWithProvider');
+        await base44.auth.loginWithProvider("google", appPublicUrl);
+      }
     } catch (err) {
       console.error('[Auth] loginWithProvider error:', err);
       toast.error('Failed to initiate sign-in. Please try again.');
