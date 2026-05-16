@@ -58,12 +58,26 @@ export default function CreateTripDialog({ open, onOpenChange, user, onCreated, 
     e.preventDefault();
     console.log("[DEBUG] handleCreateTrip fired!");
     toast.success("Next tapped ✓");
-    if (!form.name || !form.destination || !user?.email) {
-      toast.error("Missing required fields");
+
+    console.log("[DEBUG] Validating current user...");
+    if (!user || !user.email) {
+      console.error("[DEBUG] User or user email missing. Blocking trip creation.");
+      toast.error("Please sign in again before creating a trip.");
       return;
     }
+    console.log(`[DEBUG] Current user email: ${user.email}`);
+
+    if (!form.name || !form.destination) {
+      console.warn("[DEBUG] Form validation failed: Missing name or destination.");
+      toast.error("Trip name and destination are required.");
+      console.log("[DEBUG] Validation failed.");
+      return;
+    }
+    console.log("[DEBUG] Form validation passed.");
+
     setSaving(true);
     try {
+      console.log("[DEBUG] Starting base44.entities.Trip.create()...");
       const trip = await base44.entities.Trip.create({
         ...form,
         admin_email: user.email,
@@ -71,10 +85,13 @@ export default function CreateTripDialog({ open, onOpenChange, user, onCreated, 
         invite_code: generateInviteCode(),
         invite_active: true,
       });
+      console.log("[DEBUG] base44.entities.Trip.create() success:", trip);
+      toast.success("Trip created successfully! Moving to invite step.");
+
       setCreatedTrip(trip);
       setStep(2);
+      console.log("[DEBUG] Moving to invite step (Step 2).");
 
-      // If a group is linked, pre-select its members
       if (form.group_id) {
         const g = groups.find((g) => g.id === form.group_id);
         if (g) {
@@ -85,10 +102,11 @@ export default function CreateTripDialog({ open, onOpenChange, user, onCreated, 
         }
       }
     } catch (err) {
-      console.error("[CreateTrip] Trip.create failed:", err);
-      toast.error("Failed to create trip. Please try again.");
+      console.error("[DEBUG] Trip.create failed:", err);
+      toast.error(`Failed to create trip: ${err.message || "An unexpected error occurred"}. Please try again.`);
     } finally {
       setSaving(false);
+      console.log("[DEBUG] handleCreateTrip finally block executed. Saving state reset.");
     }
   }
 
