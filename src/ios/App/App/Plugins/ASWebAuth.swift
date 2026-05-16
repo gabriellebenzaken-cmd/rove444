@@ -2,12 +2,13 @@ import Capacitor
 import AuthenticationServices
 import UIKit
 
-@objc(ASWebAuthPlugin)
-public class ASWebAuthPlugin: CAPPlugin, ASWebAuthenticationPresentationContextProviding {
+@objc(ASWebAuth)
+public class ASWebAuth: CAPPlugin, ASWebAuthenticationPresentationContextProviding {
     private var authSession: ASWebAuthenticationSession?
     private var callPromise: CAPPluginCall?
 
-    @objc func open(_ call: CAPPluginCall) {
+    @objc
+    func open(_ call: CAPPluginCall) {
         guard let urlString = call.getString("url") else {
             call.reject("Missing url parameter")
             return

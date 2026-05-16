@@ -181,12 +181,12 @@ export const AuthProvider = ({ children }) => {
         console.log('[Auth] Available plugins:', Object.keys(window.Capacitor?.Plugins || {}));
         
         // Use ASWebAuthenticationSession (native iOS OAuth framework, Google-compliant)
-        if (!window.Capacitor?.Plugins?.ASWebAuthPlugin) {
-          throw new Error('ASWebAuthPlugin not registered. Run: npx cap sync ios && rebuild');
+        if (!window.Capacitor?.Plugins?.ASWebAuth) {
+          throw new Error('ASWebAuth plugin not registered. Run: npx cap sync ios && rebuild');
         }
         
         console.log('[Auth] Using ASWebAuthenticationSession (native iOS OAuth)');
-        const result = await window.Capacitor.Plugins.ASWebAuthPlugin.open({
+        const result = await window.Capacitor.Plugins.ASWebAuth.open({
           url: authUrl,
           callbackScheme: 'rovr'
         });
