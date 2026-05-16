@@ -106,28 +106,48 @@ export const AuthProvider = ({ children }) => {
     try {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
+      console.log('[Auth] Calling base44.auth.me()...');
       const currentUser = await base44.auth.me();
+      console.log('[Auth] base44.auth.me() success:', currentUser);
+      
+      // HARD STOP: User must have email/id
+      if (!currentUser || !currentUser.email || !currentUser.id) {
+        console.error('[Auth] HARD STOP: User missing email or id:', currentUser);
+        localStorage.removeItem('base44_access_token');
+        setUser(null);
+        setIsAuthenticated(false);
+        setIsLoadingAuth(false);
+        setAuthError({
+          type: 'auth_required',
+          message: 'Invalid user session. Please sign in again.'
+        });
+        return;
+      }
+      
       setUser(currentUser);
       setIsAuthenticated(true);
       setIsLoadingAuth(false);
     } catch (error) {
-      console.error('User auth check failed:', error);
+      console.error('[Auth] HARD STOP: User auth check failed:', error);
+      // Clear stale token
+      localStorage.removeItem('base44_access_token');
+      setUser(null);
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
-      
-      // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
-        setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
-        });
-      }
+      setAuthError({
+        type: 'auth_required',
+        message: 'Authentication required. Please sign in.'
+      });
     }
   };
 
   const logout = (shouldRedirect = true) => {
+    console.log('[Auth] Logging out...');
+    // Clear token before logout
+    localStorage.removeItem('base44_access_token');
     setUser(null);
     setIsAuthenticated(false);
+    setAuthError(null);
     
     if (shouldRedirect) {
       // Use the SDK's logout method which handles token cleanup and redirect

@@ -43,12 +43,10 @@ const MotionPage = ({ children }) => (
 );
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
-  const [currentUser, setCurrentUser] = useState(null);
+  const { user, isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
   const [checkingOnboard, setCheckingOnboard] = useState(true);
   const [onboardingError, setOnboardingError] = useState(false);
   const [isProfileReady, setIsProfileReady] = useState(false);
-
 
   // Initialize theme from preference or system on app load
   useEffect(() => {
@@ -56,7 +54,18 @@ const AuthenticatedApp = () => {
   }, []);
 
   useEffect(() => {
-    if (!isLoadingAuth && !authError) {
+    console.log('[App] AuthenticatedApp effect: user=', user, 'isLoadingAuth=', isLoadingAuth, 'authError=', authError);
+    
+    // HARD STOP: If no user after auth loading is done, block everything
+    if (!isLoadingAuth && !user) {
+      console.log('[App] HARD STOP: No authenticated user. Showing login screen.');
+      setCheckingOnboard(false);
+      setIsProfileReady(true);
+      return;
+    }
+
+    if (!isLoadingAuth && user && user.email) {
+      console.log('[App] Valid user found:', user.email);
       base44.auth.me().then(async (me) => {
         // If UserProfile already exists, treat the user as onboarded even if
         // the flag was never set (handles existing accounts / reinstalls).
@@ -69,21 +78,22 @@ const AuthenticatedApp = () => {
           }
         } catch (_) {}
 
-        setCurrentUser(me);
         await ensureUserProfile(me);
         setIsProfileReady(true);
         setCheckingOnboard(false);
         window.__roveSplashShown = true;
-      }).catch(() => {
+      }).catch((err) => {
+        console.error('[App] Failed to load profile:', err);
         setCheckingOnboard(false);
         setIsProfileReady(true);
         toast.error("Failed to load profile");
       });
     } else if (authError) {
+      console.log('[App] Auth error detected:', authError);
       setCheckingOnboard(false);
       setIsProfileReady(true);
     }
-  }, [isLoadingAuth, authError]);
+  }, [isLoadingAuth, authError, user]);
 
   async function ensureUserProfile(me) {
     try {
@@ -121,8 +131,6 @@ const AuthenticatedApp = () => {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
-        {/* Reviewer bypass available even during loading — 5-tap activated */}
-        <AppStoreReviewerBypass onTokenApplied={() => window.location.reload()} />
       </div>
     );
   }
@@ -132,49 +140,69 @@ const AuthenticatedApp = () => {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // In a Capacitor native build, don't silently redirect — show the
-      // login screen with the reviewer bypass so the OAuth callback can
-      // land back in the app after the external browser completes.
+      // Show login screen
       const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
-      if (isNative) {
-        return (
-          <div className="fixed inset-0 flex flex-col items-center justify-center bg-background gap-4 px-6">
-            <img
-              src="https://media.base44.com/images/public/69d87cbb57171725f5686a39/d17f79155_generated_image.png"
-              alt="ROVR"
-              className="w-20 h-20 rounded-2xl mb-2"
-            />
-            <h1 className="text-2xl font-bold tracking-tight">ROVR</h1>
-            <p className="text-sm text-muted-foreground text-center">
-              Sign in to start planning trips with your crew.
-            </p>
-            <button
-              className="w-full max-w-xs h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm mt-2"
-              onClick={navigateToLogin}
-            >
-              Sign in with Google
-            </button>
-            <AppStoreReviewerBypass onTokenApplied={() => window.location.reload()} />
-          </div>
-        );
-      }
-      navigateToLogin();
-      return null;
+      return (
+        <div className="fixed inset-0 flex flex-col items-center justify-center bg-background gap-4 px-6">
+          <img
+            src="https://media.base44.com/images/public/69d87cbb57171725f5686a39/d17f79155_generated_image.png"
+            alt="ROVR"
+            className="w-20 h-20 rounded-2xl mb-2"
+          />
+          <h1 className="text-2xl font-bold tracking-tight">ROVR</h1>
+          <p className="text-sm text-muted-foreground text-center">
+            Sign in to start planning trips with your crew.
+          </p>
+          <button
+            className="w-full max-w-xs h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm mt-2"
+            onClick={navigateToLogin}
+          >
+            Sign in with Google
+          </button>
+          {isNative && <AppStoreReviewerBypass onTokenApplied={() => window.location.reload()} />}
+        </div>
+      );
     }
   }
 
-  // Render the main app
+  // HARD STOP: If no authenticated user at all, show login screen
+  if (!user) {
+    console.log('[App] HARD STOP in render: No user. Showing login screen.');
+    const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-background gap-4 px-6">
+        <img
+          src="https://media.base44.com/images/public/69d87cbb57171725f5686a39/d17f79155_generated_image.png"
+          alt="ROVR"
+          className="w-20 h-20 rounded-2xl mb-2"
+        />
+        <h1 className="text-2xl font-bold tracking-tight">ROVR</h1>
+        <p className="text-sm text-muted-foreground text-center">
+          Sign in to start planning trips with your crew.
+        </p>
+        <button
+          className="w-full max-w-xs h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm mt-2"
+          onClick={navigateToLogin}
+        >
+          Sign in with Google
+        </button>
+        {isNative && <AppStoreReviewerBypass onTokenApplied={() => window.location.reload()} />}
+      </div>
+    );
+  }
+
+  // Render the main app (only reached if user is authenticated)
   return (
     <>
     <LegalConsentBanner />
-    {currentUser && !currentUser.onboarded && !onboardingError && (
-      <OnboardingModal user={currentUser} onComplete={() => base44.auth.me().then(setCurrentUser).catch(() => setOnboardingError(true))} />
+    {user && !user.onboarded && !onboardingError && (
+      <OnboardingModal user={user} onComplete={() => base44.auth.me().then(() => window.location.reload()).catch(() => setOnboardingError(true))} />
     )}
     {onboardingError && (
       <div className="fixed inset-0 flex items-center justify-center bg-background">
         <div className="text-center">
           <p className="mb-4">Setup encountered an issue.</p>
-          <button onClick={() => { setOnboardingError(false); setCurrentUser(null); }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg">
+          <button onClick={() => { setOnboardingError(false); }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg">
             Try Again
           </button>
         </div>
