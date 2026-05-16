@@ -181,7 +181,8 @@ export const AuthProvider = ({ children }) => {
       }
 
       // Build the Base44 login URL directly
-      const loginUrl = `https://app.base44.com/auth/login?app_id=${appId}&next=${encodeURIComponent(appPublicUrl)}`;
+      // The correct auth endpoint is at base44.com (not app.base44.com)
+      const loginUrl = `https://base44.com/auth?app_id=${appId}&next=${encodeURIComponent(appPublicUrl)}`;
       console.log('[Auth] Opening auth URL in system Safari:', loginUrl);
 
       // Open in system Safari — Capacitor intercepts the callback deep link
