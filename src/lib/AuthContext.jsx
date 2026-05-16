@@ -177,27 +177,20 @@ export const AuthProvider = ({ children }) => {
       if (isNative) {
         const authUrl = `https://base44.com/auth?app_id=${appParams.appId}&next=${encodeURIComponent(appPublicUrl)}`;
         
-        // Try ASWebAuthenticationSession (native iOS OAuth framework, Google-compliant)
-        if (window.Capacitor?.Plugins?.ASWebAuthPlugin) {
-          console.log('[Auth] Using ASWebAuthenticationSession (native iOS OAuth)');
-          try {
-            const result = await window.Capacitor.Plugins.ASWebAuthPlugin.open({
-              url: authUrl,
-              callbackScheme: 'rovr'
-            });
-            console.log('[Auth] OAuth callback received:', result.url);
-            return;
-          } catch (asErr) {
-            console.warn('[Auth] ASWebAuthenticationSession failed, falling back to Browser:', asErr);
-          }
+        // Check available plugins
+        console.log('[Auth] Available plugins:', Object.keys(window.Capacitor?.Plugins || {}));
+        
+        // Use ASWebAuthenticationSession (native iOS OAuth framework, Google-compliant)
+        if (!window.Capacitor?.Plugins?.ASWebAuthPlugin) {
+          throw new Error('ASWebAuthPlugin not registered. Run: npx cap sync ios && rebuild');
         }
         
-        // Fallback: use Capacitor Browser (SFSafariViewController)
-        console.log('[Auth] Falling back to Capacitor Browser');
-        await Browser.open({
+        console.log('[Auth] Using ASWebAuthenticationSession (native iOS OAuth)');
+        const result = await window.Capacitor.Plugins.ASWebAuthPlugin.open({
           url: authUrl,
-          presentationStyle: 'popover'
+          callbackScheme: 'rovr'
         });
+        console.log('[Auth] OAuth callback received:', result.url);
       } else {
         // Web: use SDK method
         console.log('[Auth] Web platform — using SDK loginWithProvider');
