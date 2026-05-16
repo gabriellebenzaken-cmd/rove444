@@ -159,43 +159,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const navigateToLogin = () => {
+  const navigateToLogin = async () => {
     console.log('[Auth] navigateToLogin called');
     const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
     console.log('[Auth] isNative:', isNative);
 
-    if (isNative) {
-      // ─── CRITICAL for iOS ───────────────────────────────────────────────────
-      // Google OAuth BLOCKS requests from embedded web views (WKWebView).
-      // We MUST open the login URL in the system Safari browser.
-      //
-      // Build the Base44 auth URL directly without calling redirectToLogin()
-      // to avoid readonly property errors in WKWebView.
-      const appPublicUrl = import.meta.env.VITE_APP_PUBLIC_URL;
-      const appId = appParams.appId;
+    const appPublicUrl = import.meta.env.VITE_APP_PUBLIC_URL;
 
-      if (!appPublicUrl) {
-        console.error('[Auth] VITE_APP_PUBLIC_URL is not set. Set it to your published app domain (e.g., https://rove-travel-mate.base44.app)');
-        toast.error('App configuration error. Please contact support.');
-        return;
-      }
+    if (!appPublicUrl) {
+      console.error('[Auth] VITE_APP_PUBLIC_URL is not set. Set it to your published app domain (e.g., https://travelrovr.base44.app)');
+      toast.error('App configuration error. Please contact support.');
+      return;
+    }
 
-      // Build the Base44 login URL directly
-      // The correct auth endpoint is at base44.com (not app.base44.com)
-      const loginUrl = `https://base44.com/auth?app_id=${appId}&next=${encodeURIComponent(appPublicUrl)}`;
-      console.log('[Auth] Opening auth URL in system Safari:', loginUrl);
-
-      // Open in system Safari — Capacitor intercepts the callback deep link
-      try {
-        window.open(loginUrl, '_system');
-      } catch (err) {
-        console.error('[Auth] Failed to open login URL:', err);
-        toast.error('Failed to open sign-in. Please try again.');
-      }
-    } else {
-      // Web: standard redirect
-      console.log('[Auth] Web platform — redirecting to login');
-      base44.auth.redirectToLogin(window.location.href);
+    try {
+      // Use the official SDK method for Google provider login
+      // This handles the correct Base44 auth endpoint and OAuth flow
+      console.log('[Auth] Calling base44.auth.loginWithProvider("google", appPublicUrl)');
+      await base44.auth.loginWithProvider("google", appPublicUrl);
+    } catch (err) {
+      console.error('[Auth] loginWithProvider error:', err);
+      toast.error('Failed to initiate sign-in. Please try again.');
     }
   };
 
