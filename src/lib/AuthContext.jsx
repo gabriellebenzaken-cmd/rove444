@@ -175,14 +175,27 @@ export const AuthProvider = ({ children }) => {
 
     try {
       if (isNative) {
-        // Use Capacitor Browser plugin to open Google OAuth in native secure browser
-        // This uses SFSafariViewController on iOS (Google-approved), not WKWebView
         const authUrl = `https://base44.com/auth?app_id=${appParams.appId}&next=${encodeURIComponent(appPublicUrl)}`;
-        console.log('[Auth] Opening Google OAuth in native browser:', authUrl);
         
+        // Try ASWebAuthenticationSession (native iOS OAuth framework, Google-compliant)
+        if (window.Capacitor?.Plugins?.ASWebAuth) {
+          console.log('[Auth] Using ASWebAuthenticationSession (native iOS OAuth)');
+          try {
+            await window.Capacitor.Plugins.ASWebAuth.authenticate({
+              url: authUrl,
+              callbackURL: appPublicUrl
+            });
+            return;
+          } catch (asErr) {
+            console.warn('[Auth] ASWebAuthenticationSession failed, falling back to Browser:', asErr);
+          }
+        }
+        
+        // Fallback: use Capacitor Browser (SFSafariViewController)
+        console.log('[Auth] Falling back to Capacitor Browser');
         await Browser.open({
           url: authUrl,
-          presentationStyle: 'popover' // iOS: use SFSafariViewController (Google-safe)
+          presentationStyle: 'popover'
         });
       } else {
         // Web: use SDK method
@@ -190,7 +203,7 @@ export const AuthProvider = ({ children }) => {
         await base44.auth.loginWithProvider("google", appPublicUrl);
       }
     } catch (err) {
-      console.error('[Auth] loginWithProvider error:', err);
+      console.error('[Auth] navigateToLogin error:', err);
       toast.error('Failed to initiate sign-in. Please try again.');
     }
   };
