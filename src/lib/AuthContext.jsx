@@ -178,13 +178,14 @@ export const AuthProvider = ({ children }) => {
         const authUrl = `https://base44.com/auth?app_id=${appParams.appId}&next=${encodeURIComponent(appPublicUrl)}`;
         
         // Try ASWebAuthenticationSession (native iOS OAuth framework, Google-compliant)
-        if (window.Capacitor?.Plugins?.ASWebAuth) {
+        if (window.Capacitor?.Plugins?.ASWebAuthPlugin) {
           console.log('[Auth] Using ASWebAuthenticationSession (native iOS OAuth)');
           try {
-            await window.Capacitor.Plugins.ASWebAuth.authenticate({
+            const result = await window.Capacitor.Plugins.ASWebAuthPlugin.open({
               url: authUrl,
-              callbackURL: appPublicUrl
+              callbackScheme: 'rovr'
             });
+            console.log('[Auth] OAuth callback received:', result.url);
             return;
           } catch (asErr) {
             console.warn('[Auth] ASWebAuthenticationSession failed, falling back to Browser:', asErr);
