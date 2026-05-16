@@ -168,25 +168,54 @@ export const AuthProvider = ({ children }) => {
       // ─── CRITICAL for iOS ───────────────────────────────────────────────────
       // Google OAuth BLOCKS requests from embedded web views (WKWebView).
       // We MUST open the login URL in the system Safari browser.
-      // Use Capacitor's Browser plugin to open the auth URL directly.
-      const appWebUrl = import.meta.env.VITE_APP_PUBLIC_URL;
-      const appId = import.meta.env.VITE_BASE44_APP_ID;
-      const returnUrl = appWebUrl || 'https://app.base44.com';
+      //
+      // The returnUrl MUST be your app's published HTTPS domain (where Capacitor
+      // is configured to intercept deep links). Base44 will redirect there with
+      // ?access_token=..., and Capacitor's appUrlOpen listener will capture it.
+      //
+      // Example: if your app is https://rovr.base44.app, set:
+      //   VITE_APP_PUBLIC_URL=https://rovr.base44.app
+      //
+      // Then Base44 redirects to: https://rovr.base44.app/?access_token=...
+      // Capacitor intercepts and fires appUrlOpen event.
+      const appPublicUrl = import.meta.env.VITE_APP_PUBLIC_URL;
 
-      if (!appWebUrl) {
-        console.warn('[Auth] VITE_APP_PUBLIC_URL is not set — iOS Google OAuth callback may not work. Please set this env var to your published app URL.');
+      if (!appPublicUrl) {
+        console.error('[Auth] VITE_APP_PUBLIC_URL is not set. Cannot proceed with native OAuth. Set it to your published app domain (e.g., https://rovr.base44.app)');
+        toast.error('App configuration error. Please contact support.');
+        return;
       }
 
-      // Build the login URL directly
-      const loginUrl = `https://app.base44.com/auth/login?app_id=${appId}&next=${encodeURIComponent(returnUrl)}`;
-      console.log('[Auth] Opening login URL in system browser:', loginUrl);
+      console.log('[Auth] Using appPublicUrl as return URL:', appPublicUrl);
 
-      // Use window.open with '_system' for Capacitor to open in native Safari
+      // Call base44.auth.redirectToLogin with the return URL.
+      // This builds the correct Base44 auth URL internally and attempts to navigate.
+      // Since we're in a try-catch, we intercept the redirect and open it in Safari instead.
+      let capturedUrl = null;
+      const origAssign = window.location.assign.bind(window.location);
+      
       try {
-        window.open(loginUrl, '_system');
+        // Temporarily override window.location.assign to capture the URL
+        window.location.assign = (url) => {
+          capturedUrl = url;
+          console.log('[Auth] Captured redirect URL:', url);
+        };
+        
+        // This will call window.location.assign with the Base44 auth URL
+        base44.auth.redirectToLogin(appPublicUrl);
       } catch (err) {
-        console.error('[Auth] Failed to open login URL:', err);
-        toast.error('Failed to open sign-in. Please try again.');
+        console.error('[Auth] redirectToLogin error:', err);
+      } finally {
+        // Restore original
+        window.location.assign = origAssign;
+      }
+
+      if (capturedUrl) {
+        console.log('[Auth] Opening auth URL in system Safari:', capturedUrl);
+        window.open(capturedUrl, '_system');
+      } else {
+        console.error('[Auth] Failed to capture auth URL');
+        toast.error('Failed to initiate sign-in. Please try again.');
       }
     } else {
       // Web: standard redirect
