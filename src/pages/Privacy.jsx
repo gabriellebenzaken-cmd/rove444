@@ -131,16 +131,16 @@ export default function Privacy() {
             </ul>
           </Section>
 
-          <Section title="6. Analytics & Service Providers">
-            <p>ROVR may use third-party infrastructure and analytics providers to support:</p>
+          <Section title="6. Third-Party Service Providers">
+            <p>ROVR uses trusted third-party service providers to operate, maintain, and improve the platform. These providers may process limited account and usage information solely as necessary to deliver core app functionality. Categories of providers include:</p>
             <ul>
-              <li>authentication</li>
-              <li>hosting</li>
-              <li>storage</li>
-              <li>analytics</li>
-              <li>app performance monitoring</li>
+              <li><strong>Authentication</strong> — to securely verify user identity and manage login sessions</li>
+              <li><strong>Cloud hosting &amp; infrastructure</strong> — to store data and serve the application reliably</li>
+              <li><strong>Database management</strong> — to store and retrieve account, trip, and collaboration data</li>
+              <li><strong>Analytics &amp; performance monitoring</strong> — to understand how the app is used and diagnose issues</li>
             </ul>
-            <p>These providers may process limited technical or usage information necessary to operate the service.</p>
+            <p>Information these providers may access is limited to what is necessary for their specific function — such as email addresses, usernames, profile information, or app usage data.</p>
+            <p><strong>We do not sell user data to advertisers or any third parties.</strong> Data is only shared with service providers as strictly required to operate the platform securely and reliably.</p>
           </Section>
 
           <Section title="7. User Responsibility & Disputes">
