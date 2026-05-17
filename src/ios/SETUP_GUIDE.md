@@ -1,97 +1,124 @@
 # ROVR iOS – Clean Setup Guide
 
-## Prerequisites
+## The CapApp-SPM problem
+
+Capacitor 6's `npx cap add ios` generates an Xcode project that references
+`CapApp-SPM` (Swift Package Manager).  That SPM package resolves fine on the
+machine that ran `npx cap add ios`, but fails on every other machine because
+Xcode tries to re-resolve it from the network and the cache is missing.
+
+**Fix: delete the generated iOS project and regenerate it with CocoaPods,
+then add our custom plugin files.**
+
+---
+
+## One-time setup (run these in order)
+
 ```bash
+# 0. Install project deps and build the web bundle
 npm install
 npm run build
-npx cap sync ios        # copies www/ and capacitor.config into ios/
+
+# 1. Remove any previously generated iOS project
+rm -rf ios/
+
+# 2. Re-generate a fresh iOS project
+npx cap add ios
+
+# 3. Copy the Podfile that uses CocoaPods (not SPM)
+#    (this file is committed to the repo at ios/App/Podfile)
+#    npx cap add ios creates ios/App/Podfile automatically — overwrite it:
+cp ios/App/Podfile ios/App/Podfile   # already in place from the repo
+
+# 4. Install CocoaPods dependencies
+cd ios/App
+pod install
+cd ../..
+
+# 5. Sync Capacitor config + web assets
+npx cap sync ios
 ```
 
+After `pod install` you will have `ios/App/App.xcworkspace`.
+**Always open the `.xcworkspace`, never the `.xcodeproj`.**
+
 ---
 
-## 1. Open Xcode
-```bash
-npx cap open ios
+## Add the ASWebAuth plugin to Xcode
+
+The two plugin files are committed to `ios/App/App/Plugins/`:
+
+```
+ios/App/App/Plugins/ASWebAuth.swift
+ios/App/App/Plugins/ASWebAuth.m
 ```
 
----
+In Xcode (with `App.xcworkspace` open):
 
-## 2. Add the ASWebAuth plugin files to the Xcode project
-
-The two files live in `ios/App/App/Plugins/`:
-- `ASWebAuth.swift`
-- `ASWebAuth.m`
-
-**In Xcode:**
-1. Right-click `App/App` in the Project Navigator → **Add Files to "App"…**
-2. Navigate to `ios/App/App/Plugins/`, select **both files**, tick  
-   ☑ **Copy items if needed** and ☑ **Add to targets: App**  
-3. Click **Add**
-
-Verify both files appear in:  
-`TARGETS → App → Build Phases → Compile Sources`
+1. In the Project Navigator expand **App → App**
+2. Right-click the `App` folder → **Add Files to "App"…**
+3. Navigate into `Plugins/`, select **both files**
+4. Tick ☑ **Copy items if needed** and ☑ **Add to targets: App**
+5. Click **Add**
+6. Confirm both files appear under  
+   **TARGETS → App → Build Phases → Compile Sources**
 
 ---
 
-## 3. Add the URL scheme (custom scheme callback)
+## Add the URL scheme
 
-1. Select the **App** project in the Navigator → **App** target → **Info** tab
-2. Scroll to **URL Types** → click **+**
+In Xcode:
+
+1. Select the **App** project → **App** target → **Info** tab
+2. Scroll to **URL Types** → **+**
 3. Set:
    - **Identifier**: `app.travelrovr.app`
    - **URL Schemes**: `rovr`
    - **Role**: Editor
 
-This allows `ASWebAuthenticationSession` to hand the callback URL back to the app.
-
 ---
 
-## 4. Set the VITE_APP_PUBLIC_URL environment variable
+## Set the required environment variable
 
-In `vite.config.ts` or a `.env` file:
+In a `.env` file (or Vite config):
+
 ```
 VITE_APP_PUBLIC_URL=https://travelrovr.base44.app
 ```
 
-This is the URL Base44 redirects back to after Google auth, and where the
-`?access_token=` is appended.
-
 ---
 
-## 5. Build & run
+## Build & verify
 
-1. Select your **iPhone simulator or device**
+1. Open `ios/App/App.xcworkspace` in Xcode
 2. **Product → Clean Build Folder** (⇧⌘K)
-3. **Product → Run** (⌘R)
-4. Watch Xcode console for:
+3. Select simulator or device → **Run** (⌘R)
+4. Watch console for:
    ```
    [Auth] Available Capacitor plugins: [..., ASWebAuth, ...]
    ```
 
 ---
 
-## How the auth flow works
+## Auth flow summary
 
 ```
-User taps "Sign in with Google"
-  → navigateToLogin() (AuthContext.jsx)
+Tap "Sign in with Google"
   → ASWebAuth.open({ url: "https://base44.com/auth?...", callbackScheme: "rovr" })
-  → iOS opens ASWebAuthenticationSession (native browser, SFSafariViewController)
-  → User completes Google sign-in
-  → Base44 redirects to https://travelrovr.base44.app/?access_token=<token>
-  → ASWebAuthenticationSession sees the https:// redirect, returns full URL to Swift
-  → Swift resolves the Capacitor call with { url: "https://...?access_token=<token>" }
-  → AuthContext extracts token, stores in localStorage
-  → checkUserAuth() validates token → user is logged in ✅
+  → iOS opens ASWebAuthenticationSession (native Safari sheet)
+  → Google sign-in completes
+  → Base44 redirects → https://travelrovr.base44.app/?access_token=<token>
+  → Swift completion handler resolves with { url: "https://...?access_token=..." }
+  → AuthContext extracts token → localStorage → checkUserAuth() → logged in ✅
 ```
 
 ---
 
 ## Troubleshooting
 
-| Symptom | Fix |
+| Error | Fix |
 |---|---|
-| `ASWebAuth plugin not found` | Confirm both `.swift` and `.m` are in Compile Sources; clean build |
-| `Failed to start ASWebAuthenticationSession` | Run on device/sim (not Catalyst); check iOS deployment target ≥ 13 |
-| `canceledByUser` | User dismissed the sheet — no action needed |
-| Token not found in callback | Verify `VITE_APP_PUBLIC_URL` matches the Base44 app's published domain |
+| `Missing package product 'CapApp-SPM'` | You opened the `.xcodeproj` — open `.xcworkspace` instead, or re-run `pod install` |
+| `ASWebAuth plugin not found` | Both `.swift` + `.m` must be in Compile Sources; clean build |
+| `Failed to start ASWebAuthenticationSession` | Run on simulator/device, not Catalyst; iOS ≥ 14 |
+| Token not found after auth | Check `VITE_APP_PUBLIC_URL` matches your Base44 published domain |

@@ -1,0 +1,6 @@
+# CocoaPods
+Pods/
+*.xcworkspace
+
+# SPM — we use CocoaPods, not SPM
+*.resolved
