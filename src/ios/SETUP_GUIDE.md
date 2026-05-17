@@ -25,9 +25,18 @@ rm -rf ios/
 # 2. Re-generate a fresh iOS project
 npx cap add ios
 
-# 3. ⚠️  CRITICAL: Strip the stale CapApp-SPM reference from the pbxproj
-#    (npx cap add ios injects an SPM dependency that breaks on other machines)
-bash ios/fix-spm.sh
+# 3. ⚠️  CRITICAL: Strip ALL SPM references from the generated pbxproj
+#    Run this single command from the repo root — no script file needed:
+perl -i -0pe '
+  # Remove XCRemoteSwiftPackageReference and XCSwiftPackageProductDependency sections
+  s/\t+[0-9A-F]{24} \/\* XCRemoteSwiftPackageReference[^\}]+\};\n//g;
+  s/\t+[0-9A-F]{24} \/\* XCSwiftPackageProductDependency[^\}]+\};\n//g;
+  # Remove any standalone line mentioning CapApp-SPM
+  s/[^\n]*CapApp-SPM[^\n]*\n//g;
+  # Remove packageReferences and packageProductDependencies array entries
+  s/\t+packageReferences = \(\n(\t+[0-9A-F]{24}[^\n]*,\n)*\t+\);\n//g;
+  s/\t+packageProductDependencies = \(\n(\t+[0-9A-F]{24}[^\n]*,\n)*\t+\);\n//g;
+' ios/App/App.xcodeproj/project.pbxproj
 
 # 4. Install CocoaPods dependencies
 #    (the Podfile is already committed to the repo at ios/App/Podfile)
