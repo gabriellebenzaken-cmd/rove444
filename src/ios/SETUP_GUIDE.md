@@ -138,15 +138,20 @@ compile them as part of the App target.
 ```
 User is unauthenticated
   → navigateToLogin() detects native platform
-  → Capacitor Browser.open() opens SFSafariViewController
+  → Capacitor Browser.open() opens SFSafariViewController with:
+    https://travelrovr.base44.app/login?from_url=rovr%3A%2F%2Fauth%2Fcallback
   → Full Base44 login page loads (Google, Apple, email/password, signup, forgot password)
   → User signs in
-  → Base44 redirects → https://travelrovr.base44.app/?access_token=<token>
-  → appUrlOpen listener in main.jsx fires with rovr:// deep-link OR
-    handleTokenFromUrl() parses token from redirect URL
-  → Token stored in localStorage
-  → Browser.close() dismisses the SFSafariViewController
-  → 'base44:token-received' event fires → checkAppState() → logged in ✅
+  → Base44 redirects to: rovr://auth/callback?access_token=<token>
+  → iOS intercepts the rovr:// URL → fires appUrlOpen in the Capacitor WebView
+  → appUrlOpen handler in main.jsx:
+      - stores token in localStorage('base44_access_token')
+      - calls Browser.close() to dismiss SFSafariViewController
+      - dispatches 'base44:token-received' event
+  → AuthContext listener calls checkAppState() → base44.auth.me() succeeds → logged in ✅
+
+KEY: from_url MUST be rovr:// (not https://) so iOS can intercept the redirect.
+     If from_url is https://, the token stays inside Safari and the app never sees it.
 ```
 
 ---

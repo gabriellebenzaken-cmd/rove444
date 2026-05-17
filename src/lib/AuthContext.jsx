@@ -180,28 +180,31 @@ export const AuthProvider = ({ children }) => {
 
   const navigateToLogin = async () => {
     if (isNative()) {
-      // On native iOS, window.location.href redirects inside the Capacitor WebView
-      // which can't load Base44's login page properly (wrong origin, no cookies, etc).
-      // Instead, open the full Base44 login page in a native SFSafariViewController
-      // via the Capacitor Browser plugin. Base44 will redirect back to PRODUCTION_URL
-      // after login, and our appUrlOpen listener in main.jsx captures the token.
+      // On native iOS, open the full Base44 login page in a native SFSafariViewController
+      // via the Capacitor Browser plugin.
+      //
+      // CRITICAL: from_url must be the rovr:// deep-link scheme, NOT an https:// URL.
+      // When from_url is https://, Base44 redirects the browser sheet to that https page —
+      // the token stays inside Safari and our Capacitor app never sees it.
+      // When from_url is rovr://, iOS intercepts the redirect, fires appUrlOpen in the
+      // Capacitor WebView, and main.jsx picks up the token from the URL.
       try {
         const { Browser } = await import('@capacitor/browser');
-        const fromUrl = encodeURIComponent(PRODUCTION_URL + '/');
+        // rovr://auth/callback will carry ?access_token=... after Base44 login
+        const fromUrl = encodeURIComponent('rovr://auth/callback');
         const loginUrl = `${PRODUCTION_URL}/login?from_url=${fromUrl}`;
         console.log('[Auth] Opening native browser for login:', loginUrl);
-        await Browser.open({ url: loginUrl, presentationStyle: 'fullscreen' });
 
-        // Listen for the token to arrive via the rovr:// deep-link (appUrlOpen in main.jsx)
-        const onTokenReceived = async () => {
+        // Listen for the token to arrive via the rovr:// deep-link (appUrlOpen in main.jsx).
+        // Set this up BEFORE Browser.open so we don't miss a fast callback.
+        const onTokenReceived = () => {
           window.removeEventListener('base44:token-received', onTokenReceived);
-          try { await Browser.close(); } catch (_) {}
-          await checkAppState();
         };
         window.addEventListener('base44:token-received', onTokenReceived);
+
+        await Browser.open({ url: loginUrl, presentationStyle: 'fullscreen' });
       } catch (err) {
         console.error('[Auth] Native browser open failed, falling back:', err);
-        // Last-resort fallback: let Base44 SDK handle it (may open in-app)
         base44.auth.redirectToLogin(PRODUCTION_URL + '/');
       }
     } else {
