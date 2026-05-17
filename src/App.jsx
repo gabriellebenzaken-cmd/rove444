@@ -28,6 +28,7 @@ import DemoSeed from './pages/DemoSeed';
 import Discover from './pages/Discover';
 import OnboardingModal from './components/OnboardingModal';
 import RoveSplash from './components/RoveSplash';
+import NativeLoginScreen from './components/NativeLoginScreen';
 import { motion } from 'framer-motion';
 
 const MotionPage = ({ children }) => (
@@ -42,7 +43,7 @@ const MotionPage = ({ children }) => (
 );
 
 const AuthenticatedApp = () => {
-  const { user, isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { user, isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, checkAppState, isNative } = useAuth();
   const [checkingOnboard, setCheckingOnboard] = useState(true);
   const [onboardingError, setOnboardingError] = useState(false);
   const [isProfileReady, setIsProfileReady] = useState(false);
@@ -150,13 +151,20 @@ const AuthenticatedApp = () => {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Handled by the useEffect below — render null while redirect fires
+      if (isNative()) {
+        // On native: show in-app login form — no redirects, no browser sheet
+        return <NativeLoginScreen onSuccess={checkAppState} />;
+      }
+      // Web: useEffect already triggered navigateToLogin() redirect — render nothing
       return null;
     }
   }
 
-  // HARD STOP: If no authenticated user at all, render null while redirect fires
+  // No user and no auth error — show login
   if (!user) {
+    if (isNative()) {
+      return <NativeLoginScreen onSuccess={checkAppState} />;
+    }
     return null;
   }
 
