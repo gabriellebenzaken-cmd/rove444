@@ -25,7 +25,7 @@ export default function Terms() {
         <div className="mb-8">
           <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#C8A27C" }}>Legal</p>
           <h1 className="text-3xl font-bold tracking-tight">Terms of Service</h1>
-          <p className="text-sm text-muted-foreground mt-2">Effective Date: April 13, 2025</p>
+          <p className="text-sm text-muted-foreground mt-2">Effective Date: May 17, 2025</p>
         </div>
 
         <div className="space-y-6 text-sm leading-relaxed text-muted-foreground">
@@ -43,13 +43,13 @@ export default function Terms() {
           </Section>
 
           <Section title="3. User Accounts">
-            <p>To use certain features, you must sign in using a valid account supported by ROVR authentication services.</p>
-            <p>You are responsible for:</p>
+            <p>Accounts are created using email and password. You are responsible for:</p>
             <ul>
-              <li>maintaining the security of your account</li>
-              <li>keeping your login credentials confidential</li>
+              <li>maintaining the security of your account and password</li>
               <li>all activity that occurs under your account</li>
+              <li>keeping your email address current and accurate</li>
             </ul>
+            <p>Your email address is used for authentication, trip invitations, notifications, and account-related communication. We do not use Google Sign-In or other third-party OAuth providers.</p>
             <p>We reserve the right to suspend or terminate accounts that violate these Terms or harm the platform or its users.</p>
           </Section>
 
@@ -83,7 +83,7 @@ export default function Terms() {
               <li>ROVR does not guarantee repayment between users</li>
               <li>ROVR is not responsible for disputes between users</li>
             </ul>
-            <p>All payments occur outside of ROVR through third-party services such as Venmo, PayPal, Cash App, Zelle, or other external payment platforms.</p>
+            <p>Payment handles (Venmo, PayPal, Cash App, Zelle) displayed in ROVR are user-provided references only. ROVR does not initiate, process, or facilitate any financial transactions. All payments occur directly between users through those external platforms.</p>
             <p>Users are solely responsible for:</p>
             <ul>
               <li>verifying balances</li>

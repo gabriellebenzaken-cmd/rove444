@@ -25,7 +25,7 @@ export default function Privacy() {
         <div className="mb-8">
           <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#C8A27C" }}>Legal</p>
           <h1 className="text-3xl font-bold tracking-tight">Privacy Policy</h1>
-          <p className="text-sm text-muted-foreground mt-2">Effective Date: April 13, 2025</p>
+          <p className="text-sm text-muted-foreground mt-2">Effective Date: May 17, 2025</p>
         </div>
 
         <div className="prose prose-sm max-w-none space-y-6 text-foreground">
@@ -36,15 +36,14 @@ export default function Privacy() {
 
           <Section title="1. Information We Collect">
             <Subsection title="Account Information">
-              <p>We may collect:</p>
+              <p>When you create an account, we collect:</p>
               <ul>
-                <li>name</li>
-                <li>email address</li>
-                <li>username</li>
-                <li>profile details</li>
-                <li>profile photos</li>
+                <li>email address (used for authentication, trip participation, notifications, and account-related communication)</li>
+                <li>full name and username</li>
+                <li>profile photo (optional)</li>
+                <li>bio (optional)</li>
               </ul>
-              <p>This information may be provided through supported sign-in providers such as Google Sign-In or other authentication services.</p>
+              <p>Accounts are created with email and password. We do not use Google Sign-In or other third-party OAuth providers.</p>
             </Subsection>
             <Subsection title="Profile & Payment Information">
               <p>Users may optionally add:</p>
@@ -98,8 +97,8 @@ export default function Privacy() {
 
           <Section title="3. Payments">
             <p>ROVR does not process, store, transmit, or facilitate financial transactions.</p>
-            <p>All payments occur outside of ROVR through third-party services such as Venmo, PayPal, Cash App, Zelle, or similar external payment platforms.</p>
-            <p>ROVR only allows users to store or share payment identifiers to help coordinate payments between travelers.</p>
+            <p>Payment handles (Venmo, PayPal, Cash App, Zelle) are user-provided references only. ROVR stores them solely to help trip members coordinate payments between themselves. All actual payments happen outside of ROVR through those third-party platforms.</p>
+            <p>ROVR is not responsible for the accuracy, completion, or disputes arising from any payments made through third-party services.</p>
           </Section>
 
           <Section title="4. Location Information">
@@ -168,24 +167,28 @@ export default function Privacy() {
           <Section title="10. Your Rights & Choices">
             <p>You may:</p>
             <ul>
-              <li>update your profile information</li>
+              <li>update your profile information at any time</li>
               <li>leave trips or groups</li>
-              <li>request deletion of your account</li>
+              <li>request deletion of your account and associated data</li>
               <li>stop using the app at any time</li>
             </ul>
-            <p>To request account deletion or data-related inquiries, contact: <a href="mailto:support@travelrovr.app" className="underline" style={{ color: "#C8A27C" }}>support@travelrovr.app</a></p>
+            <p>To request account or data deletion, contact: <a href="mailto:support@travelrovr.app" className="underline" style={{ color: "#C8A27C" }}>support@travelrovr.app</a>. We will process deletion requests within a reasonable timeframe. Some data visible to other trip members (e.g. shared expense history) may be retained for continuity.</p>
           </Section>
 
-          <Section title="11. Children's Privacy">
+          <Section title="11. Affiliate Links & Recommendations">
+            <p>ROVR may in the future display travel suggestions, booking links, or recommendations that include affiliate relationships. Any such links will be used to support the platform at no additional cost to users. ROVR does not currently receive compensation for any booking or travel recommendations displayed in the app.</p>
+          </Section>
+
+          <Section title="12. Children's Privacy">
             <p>ROVR is not intended for children under 13 years old, and we do not knowingly collect personal information from children under 13.</p>
           </Section>
 
-          <Section title="12. Changes to This Policy">
+          <Section title="13. Changes to This Policy">
             <p>We may update this Privacy Policy from time to time.</p>
             <p>Continued use of ROVR after updates means you accept the revised policy.</p>
           </Section>
 
-          <Section title="13. Contact">
+          <Section title="14. Contact">
             <p>If you have any questions regarding this Privacy Policy, please contact: <a href="mailto:support@travelrovr.app" className="underline" style={{ color: "#C8A27C" }}>support@travelrovr.app</a></p>
           </Section>
 
