@@ -28,77 +28,55 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAppState = async () => {
+    setAuthError(null);
+
+    // On native, skip the public-settings HTTP call entirely —
+    // it hits a URL that returns 404 from file:// context.
+    // Just check if we have a token and validate it directly.
+    if (isNative()) {
+      setIsLoadingPublicSettings(false);
+      if (getLiveToken()) {
+        await checkUserAuth();
+      } else {
+        setIsLoadingAuth(false);
+        setIsAuthenticated(false);
+        setAuthError({ type: 'auth_required', message: 'Authentication required' });
+      }
+      return;
+    }
+
+    // Web: check app public settings first (handles auth_required, user_not_registered, etc.)
     try {
       setIsLoadingPublicSettings(true);
-      setAuthError(null);
-      
-      // On native Capacitor the app runs from file:// — relative URLs don't reach
-      // the Base44 server. Always use the absolute production URL.
-      const apiBase = isNative()
-        ? `${PRODUCTION_URL}/api/apps/public`
-        : `/api/apps/public`;
 
-      // First, check app public settings (with token if available)
-      // This will tell us if auth is required, user not registered, etc.
       const appClient = createAxiosClient({
-        baseURL: apiBase,
-        headers: {
-          'X-App-Id': appParams.appId
-        },
+        baseURL: `/api/apps/public`,
+        headers: { 'X-App-Id': appParams.appId },
         token: getLiveToken(),
         interceptResponses: true
       });
-      
-      try {
-        const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
-        setAppPublicSettings(publicSettings);
-        
-        if (getLiveToken()) {
-          await checkUserAuth();
-        } else {
-          setIsLoadingAuth(false);
-          setIsAuthenticated(false);
-          setAuthError({ type: 'auth_required', message: 'Authentication required' });
-        }
-        setIsLoadingPublicSettings(false);
-      } catch (appError) {
-        console.error('App state check failed:', appError);
-        
-        // Handle app-level errors
-        if (appError.status === 403 && appError.data?.extra_data?.reason) {
-          const reason = appError.data.extra_data.reason;
-          if (reason === 'auth_required') {
-            setAuthError({
-              type: 'auth_required',
-              message: 'Authentication required'
-            });
-          } else if (reason === 'user_not_registered') {
-            setAuthError({
-              type: 'user_not_registered',
-              message: 'User not registered for this app'
-            });
-          } else {
-            setAuthError({
-              type: reason,
-              message: appError.message
-            });
-          }
-        } else {
-          setAuthError({
-            type: 'unknown',
-            message: appError.message || 'Failed to load app'
-          });
-        }
-        setIsLoadingPublicSettings(false);
-        setIsLoadingAuth(false);
-      }
-    } catch (error) {
-      console.error('Unexpected error:', error);
-      setAuthError({
-        type: 'unknown',
-        message: error.message || 'An unexpected error occurred'
-      });
+
+      const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
+      setAppPublicSettings(publicSettings);
       setIsLoadingPublicSettings(false);
+
+      if (getLiveToken()) {
+        await checkUserAuth();
+      } else {
+        setIsLoadingAuth(false);
+        setIsAuthenticated(false);
+        setAuthError({ type: 'auth_required', message: 'Authentication required' });
+      }
+    } catch (appError) {
+      console.error('App state check failed:', appError);
+      setIsLoadingPublicSettings(false);
+
+      if (appError.status === 403 && appError.data?.extra_data?.reason) {
+        const reason = appError.data.extra_data.reason;
+        setAuthError({ type: reason, message: appError.message });
+      } else {
+        setAuthError({ type: 'unknown', message: appError.message || 'Failed to load app' });
+      }
       setIsLoadingAuth(false);
     }
   };

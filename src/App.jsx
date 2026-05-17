@@ -141,14 +141,16 @@ const AuthenticatedApp = () => {
   if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      if (isNative()) {
-        return <NativeLoginScreen onSuccess={checkAppState} />;
-      }
-      // Web: redirect to hosted login
-      base44.auth.redirectToLogin(window.location.href);
-      return null;
     }
+    // auth_required OR any unknown error on native → show in-app login
+    if (isNative()) {
+      return <NativeLoginScreen onSuccess={checkAppState} />;
+    }
+    // Web: redirect to hosted login for auth_required; show nothing otherwise
+    if (authError.type === 'auth_required') {
+      base44.auth.redirectToLogin(window.location.href);
+    }
+    return null;
   }
 
   // No user — show login
