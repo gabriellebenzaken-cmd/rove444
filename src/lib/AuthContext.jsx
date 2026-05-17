@@ -177,20 +177,33 @@ export const AuthProvider = ({ children }) => {
       if (isNative) {
         const authUrl = `https://base44.com/auth?app_id=${appParams.appId}&next=${encodeURIComponent(appPublicUrl)}`;
         
-        // Check available plugins
-        console.log('[Auth] Available plugins:', Object.keys(window.Capacitor?.Plugins || {}));
-        
-        // Use ASWebAuthenticationSession (native iOS OAuth framework, Google-compliant)
-        if (!window.Capacitor?.Plugins?.ASWebAuth) {
-          throw new Error('ASWebAuth plugin not registered. Run: npx cap sync ios && rebuild');
+        console.log('[Auth] Available Capacitor plugins:', Object.keys(window.Capacitor?.Plugins || {}));
+
+        const ASWebAuth = window.Capacitor?.Plugins?.ASWebAuth;
+        if (!ASWebAuth) {
+          throw new Error('ASWebAuth plugin not found. Ensure ASWebAuth.m is in Xcode target, clean build, and npx cap sync ios was run.');
         }
-        
-        console.log('[Auth] Using ASWebAuthenticationSession (native iOS OAuth)');
-        const result = await window.Capacitor.Plugins.ASWebAuth.open({
-          url: authUrl,
-          callbackScheme: 'rovr'
-        });
-        console.log('[Auth] OAuth callback received:', result.url);
+
+        console.log('[Auth] Opening ASWebAuthenticationSession...');
+        const result = await ASWebAuth.open({ url: authUrl, callbackScheme: 'rovr' });
+        console.log('[Auth] OAuth session completed, callback URL:', result?.url);
+
+        // Extract token from the callback URL and persist it
+        if (result?.url) {
+          try {
+            const u = new URL(result.url);
+            const token = u.searchParams.get('access_token');
+            if (token) {
+              localStorage.setItem('base44_access_token', token);
+              // Re-run auth check with the new token
+              await checkUserAuth();
+              return; // Done — no further action needed
+            }
+          } catch (parseErr) {
+            console.error('[Auth] Failed to parse callback URL:', parseErr);
+          }
+        }
+        throw new Error('No access_token found in OAuth callback URL: ' + result?.url);
       } else {
         // Web: use SDK method
         console.log('[Auth] Web platform — using SDK loginWithProvider');

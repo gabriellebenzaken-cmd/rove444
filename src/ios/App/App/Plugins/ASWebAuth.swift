@@ -4,64 +4,77 @@ import UIKit
 
 @objc(ASWebAuth)
 public class ASWebAuth: CAPPlugin, ASWebAuthenticationPresentationContextProviding {
+
     private var authSession: ASWebAuthenticationSession?
-    private var callPromise: CAPPluginCall?
+    // Keep the call alive until the session finishes
+    private var savedCall: CAPPluginCall?
 
     @objc
     func open(_ call: CAPPluginCall) {
-        guard let urlString = call.getString("url") else {
-            call.reject("Missing url parameter")
+        call.keepAlive = true            // Required – prevents Capacitor GC-ing the call
+
+        guard let urlString = call.getString("url"), let url = URL(string: urlString) else {
+            call.reject("Invalid or missing url parameter")
             return
         }
-        
-        guard let url = URL(string: urlString) else {
-            call.reject("Invalid URL")
-            return
-        }
-        
-        let callbackScheme = call.getString("callbackScheme") ?? "rovr"
-        self.callPromise = call
-        
-        DispatchQueue.main.async {
+
+        let scheme = call.getString("callbackScheme") ?? "rovr"
+        savedCall = call
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
             self.authSession = ASWebAuthenticationSession(
                 url: url,
-                callbackURLScheme: callbackScheme
-            ) { callbackURL, error in
+                callbackURLScheme: scheme
+            ) { [weak self] callbackURL, error in
+                guard let self = self else { return }
+
+                defer {
+                    self.authSession = nil
+                    self.savedCall = nil
+                }
+
                 if let error = error {
-                    // Check if user cancelled (error code 1)
                     let nsError = error as NSError
+                    // ASWebAuthenticationSessionErrorCode.canceledLogin == 1
                     if nsError.code == 1 {
-                        self.callPromise?.reject("User cancelled sign-in")
+                        call.reject("canceledByUser")
                     } else {
-                        self.callPromise?.reject("Authentication failed: \(error.localizedDescription)")
+                        call.reject("Authentication failed: \(error.localizedDescription)")
                     }
                     return
                 }
-                
+
                 if let callbackURL = callbackURL {
-                    self.callPromise?.resolve([
-                        "url": callbackURL.absoluteString
-                    ])
+                    call.resolve(["url": callbackURL.absoluteString])
                 } else {
-                    self.callPromise?.reject("No callback URL received")
+                    call.reject("No callback URL received")
                 }
-                
-                self.authSession = nil
             }
-            
-            // Present the session with the app's key window
+
             self.authSession?.presentationContextProvider = self
-            let started = self.authSession?.start() ?? false
-            
-            if !started {
-                self.callPromise?.reject("Failed to start authentication session")
+            self.authSession?.prefersEphemeralWebBrowserSession = false   // Allow SSO cookies
+
+            guard self.authSession?.start() == true else {
+                call.reject("Failed to start ASWebAuthenticationSession")
                 self.authSession = nil
+                self.savedCall = nil
+                return
             }
         }
     }
 
-    // MARK: - ASWebAuthenticationPresentationContextProviding
+    // MARK: – ASWebAuthenticationPresentationContextProviding
     public func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        return (UIApplication.shared.delegate?.window ?? UIApplication.shared.windows.first)!
+        // Safe for iOS 13+; SceneDelegate-based apps will have keyWindow via connectedScenes
+        if let windowScene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive }),
+           let window = windowScene.windows.first(where: { $0.isKeyWindow }) {
+            return window
+        }
+        // Fallback for apps without SceneDelegate
+        return UIApplication.shared.windows.first { $0.isKeyWindow } ?? UIWindow()
     }
 }

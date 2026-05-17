@@ -3,53 +3,55 @@ import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import '@/index.css'
 
-// ─── Capacitor / OAuth token bootstrap ──────────────────────────────────────
+// ─── OAuth token bootstrap ────────────────────────────────────────────────────
 //
-// FLOW (native iOS):
-//   1. User taps "Sign in with Google"
-//   2. navigateToLogin() calls window.open(loginUrl, '_system') → opens Safari
-//   3. Google auth completes → Base44 redirects to:
-//        https://<app-domain>/?access_token=<token>
-//   4. Capacitor intercepts the deep link and fires appUrlOpen with that URL
-//   5. handleTokenFromUrl() stores the token in localStorage under the key
-//        that app-params.js expects: "base44_access_token"
-//   6. We call checkAppState() on the AuthContext to re-validate without
-//        a full page reload (which would lose the in-memory React tree).
+// FLOWS:
 //
-// FLOW (web):
-//   The browser navigates to the return URL with ?access_token= in the URL.
-//   app-params.js reads it on import (step below).
+// A) Web:
+//    Google auth finishes → Base44 redirects to https://<app>/?access_token=<t>
+//    handleTokenFromUrl() runs immediately on page load and stores the token.
+//
+// B) Native iOS (ASWebAuthenticationSession):
+//    1. ASWebAuth.swift opens ASWebAuthenticationSession with the Base44 auth URL
+//    2. Google auth completes → Base44 redirects to:
+//         https://<app>/?access_token=<token>
+//    3. Because ASWebAuthenticationSession uses callbackURLScheme="rovr", iOS
+//       intercepts any redirect that starts with rovr:// — BUT Base44 returns an
+//       https:// redirect, so the session just completes and returns the full URL
+//       to our Swift completion handler.
+//    4. The Swift resolve({ url }) result lands back in navigateToLogin() in
+//       AuthContext, which calls handleTokenFromUrl(result.url) directly.
+//
+// So for native we handle the token in AuthContext (result.url from the plugin),
+// and here we only need the web fallback + the appUrlOpen safety net.
 
 function handleTokenFromUrl(url) {
   try {
     const u = new URL(url);
     const token = u.searchParams.get('access_token');
     if (token) {
-      // Store under the key app-params.js uses (base44_<snake_case(access_token)>)
       localStorage.setItem('base44_access_token', token);
-      // Strip from visible URL
-      u.searchParams.delete('access_token');
-      window.history.replaceState({}, document.title, u.pathname + (u.search || '') + (u.hash || ''));
+      // Remove token from visible URL (web only — on native there's no address bar)
+      try {
+        u.searchParams.delete('access_token');
+        window.history.replaceState({}, document.title, u.pathname + (u.search || '') + (u.hash || ''));
+      } catch (_) {}
       return true;
     }
   } catch (_) {}
   return false;
 }
 
-// 1. Web flow: check the current URL on every page load
+// Web flow: parse token from current URL on every page load
 handleTokenFromUrl(window.location.href);
 
-// 2. Native flow: listen for deep-link callbacks via Capacitor App plugin
-//    We use window.Capacitor.Plugins.App to avoid a hard npm dependency on
-//    @capacitor/app (which isn't installed in this project).
-//    When the token arrives we dispatch a custom event so AuthContext can
-//    re-run checkAppState() without a full page reload.
+// Native safety net: if the OS delivers the callback URL via appUrlOpen
+// (e.g. a Universal Link or custom scheme fallback), capture it here too.
 if (window.Capacitor?.isNativePlatform?.()) {
   const CapApp = window.Capacitor?.Plugins?.App;
   if (CapApp) {
     CapApp.addListener('appUrlOpen', ({ url }) => {
       if (handleTokenFromUrl(url)) {
-        // Signal AuthContext to re-check auth state with the new token
         window.dispatchEvent(new CustomEvent('base44:token-received'));
       }
     });
