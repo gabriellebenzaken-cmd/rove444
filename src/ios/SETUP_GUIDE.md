@@ -1,152 +1,161 @@
 # ROVR iOS – Clean Setup Guide
 
-## The CapApp-SPM problem
+## Why you see "Missing package product 'CapApp-SPM'"
 
-Capacitor 6's `npx cap add ios` generates an Xcode project that references
-`CapApp-SPM` (Swift Package Manager).  That SPM package resolves fine on the
-machine that ran `npx cap add ios`, but fails on every other machine because
-Xcode tries to re-resolve it from the network and the cache is missing.
+`npx cap add ios` generates an Xcode project that references `CapApp-SPM` via
+Swift Package Manager (SPM).  Xcode then tries to resolve that package from the
+network on every machine that opens the project.  This fails because:
 
-**Fix: delete the generated iOS project and regenerate it with CocoaPods,
-then add our custom plugin files.**
+- The resolved SPM cache only exists on the machine that ran `npx cap add ios`
+- **Resetting Package Caches / Resolve Package Versions does NOT fix it** — the
+  broken reference is baked into `project.pbxproj` and must be deleted from that
+  file before Xcode ever opens the project.
+
+**The fix:** strip all SPM references from `project.pbxproj` with
+`ios/fix-spm.sh`, then use CocoaPods (via `pod install`) to manage all
+Capacitor dependencies instead.  CocoaPods produces an `.xcworkspace` file that
+already has everything linked correctly.
 
 ---
 
-## One-time setup (run these in order)
+## ⚠️  Critical rule: ALWAYS open the `.xcworkspace`, never the `.xcodeproj`
+
+```
+✅  open ios/App/App.xcworkspace
+❌  open ios/App/App.xcodeproj   ← this bypasses CocoaPods and breaks the build
+```
+
+If Xcode is already open with `.xcodeproj`, close it completely before
+following the steps below.
+
+---
+
+## Full clean setup (run every time you recreate the iOS folder)
 
 ```bash
-# 0. Install project deps and build the web bundle
+# 0. Make sure deps and the web bundle are up-to-date
 npm install
 npm run build
 
-# 1. Remove any previously generated iOS project
+# 1. Wipe any previous iOS project (do this from the repo root)
 rm -rf ios/
 
-# 2. Re-generate a fresh iOS project
+# 2. Regenerate a fresh Capacitor iOS project
 npx cap add ios
 
-# 3. ⚠️  CRITICAL: Strip ALL SPM references from the generated pbxproj
-#    Run this single command from the repo root — no script file needed:
-perl -i -0pe '
-  # Remove XCRemoteSwiftPackageReference and XCSwiftPackageProductDependency sections
-  s/\t+[0-9A-F]{24} \/\* XCRemoteSwiftPackageReference[^\}]+\};\n//g;
-  s/\t+[0-9A-F]{24} \/\* XCSwiftPackageProductDependency[^\}]+\};\n//g;
-  # Remove any standalone line mentioning CapApp-SPM
-  s/[^\n]*CapApp-SPM[^\n]*\n//g;
-  # Remove packageReferences and packageProductDependencies array entries
-  s/\t+packageReferences = \(\n(\t+[0-9A-F]{24}[^\n]*,\n)*\t+\);\n//g;
-  s/\t+packageProductDependencies = \(\n(\t+[0-9A-F]{24}[^\n]*,\n)*\t+\);\n//g;
-' ios/App/App.xcodeproj/project.pbxproj
+# 3. ⚠️  STRIP ALL SPM REFERENCES — must be done before opening Xcode
+bash ios/fix-spm.sh
 
-# 4. Install CocoaPods dependencies
-#    (the Podfile is already committed to the repo at ios/App/Podfile)
+# 4. Install CocoaPods dependencies (Podfile is already committed in ios/App/)
 cd ios/App
 pod install
 cd ../..
 
-# 5. Sync Capacitor config + web assets
+# 5. Sync Capacitor config + web assets into the native project
 npx cap sync ios
+
+# 6. Open the WORKSPACE (not the project)
+open ios/App/App.xcworkspace
 ```
 
-After `pod install` you will have `ios/App/App.xcworkspace`.
-**Always open the `.xcworkspace`, never the `.xcodeproj`.**
-
-> **If Xcode still shows "Missing package product CapApp-SPM"** after following
-> the steps above, it means the project was opened before running `fix-spm.sh`.
-> Close Xcode, run `fix-spm.sh`, then `pod install`, then re-open the workspace.
-> "Reset Package Caches" in Xcode will NOT help — the reference must be deleted
-> from the pbxproj itself.
+After step 4 you will have `ios/App/App.xcworkspace` — that is the file you
+must always open in Xcode.
 
 ---
 
-## Add the ASWebAuth plugin to Xcode (REQUIRED — do not skip)
+## If you already have an iOS folder but the build is broken
 
-The plugin files are in `ios/App/App/Plugins/`. Xcode must compile them.
+You don't necessarily need to delete everything.  If the pbxproj is the only
+problem:
 
-**Step-by-step:**
+```bash
+# Close Xcode completely first!
+bash ios/fix-spm.sh
+cd ios/App && pod install && cd ../..
+npx cap sync ios
+open ios/App/App.xcworkspace
+```
+
+Then in Xcode: **Product → Clean Build Folder** (⇧⌘K) → **Run** (⌘R).
+
+---
+
+## Add the ASWebAuth plugin to Xcode (required — do not skip)
+
+The plugin source files live in `ios/App/App/Plugins/`.  You must tell Xcode to
+compile them as part of the App target.
 
 1. Open `App.xcworkspace` in Xcode
 2. In the **Project Navigator** (left panel) expand **App → App**
-3. If a `Plugins` group already exists, click on `ASWebAuth.swift` →  
-   open the **File Inspector** (right panel, ⌥⌘1) →  
-   under **Target Membership** tick ☑ **App**  
-   Repeat for `ASWebAuth.m`
-4. If the `Plugins` group does NOT exist:  
-   Right-click the `App` folder → **Add Files to "App"…** →  
-   navigate into `Plugins/` → select both files →  
-   tick ☑ **Add to targets: App** → **Add**
-5. **Verify**: select the **App** target → **Build Phases** → **Compile Sources**  
-   Both `ASWebAuth.swift` and `ASWebAuth.m` must appear in the list.  
-   If they don't, drag them in from the Project Navigator.
-6. **Product → Clean Build Folder** (⇧⌘K) then **Run** (⌘R)
-7. In the Xcode console confirm:
+3. If a `Plugins` group already exists:
+   - Click `ASWebAuth.swift` → open **File Inspector** (⌥⌘1, right panel)
+   - Under **Target Membership** check ☑ **App**
+   - Repeat for `ASWebAuth.m`
+4. If the `Plugins` group does NOT exist:
+   - Right-click the `App` folder → **Add Files to "App"…**
+   - Navigate into `Plugins/` → select `ASWebAuth.swift` and `ASWebAuth.m`
+   - Tick ☑ **Add to targets: App** → **Add**
+5. Verify: **App target → Build Phases → Compile Sources** — both files must
+   appear in the list.  If not, drag them in from the Project Navigator.
+6. **Product → Clean Build Folder** (⇧⌘K) → **Run** (⌘R)
+7. In the Xcode console you should see:
    ```
    [Auth] Available Capacitor plugins: [..., "ASWebAuth", ...]
    ```
 
-> **If ASWebAuth is still missing from the plugin list** even after step 5-6,
-> the app will automatically fall back to the Capacitor Browser plugin
-> (opens an SFSafariViewController) which also works — the token comes back
-> via the `rovr://` deep-link. So auth will succeed either way.
+> If ASWebAuth is still missing the app automatically falls back to the
+> Capacitor Browser plugin (SFSafariViewController) which also works — auth
+> succeeds via the `rovr://` deep-link either way.
 
 ---
 
-## Add the URL scheme
-
-In Xcode:
+## Add the `rovr://` URL scheme
 
 1. Select the **App** project → **App** target → **Info** tab
 2. Scroll to **URL Types** → **+**
-3. Set:
-   - **Identifier**: `app.travelrovr.app`
-   - **URL Schemes**: `rovr`
-   - **Role**: Editor
+3. Fill in:
+   | Field | Value |
+   |---|---|
+   | Identifier | `app.travelrovr.app` |
+   | URL Schemes | `rovr` |
+   | Role | Editor |
 
 ---
 
-## Set the required environment variable
+## Build & verify checklist
 
-In a `.env` file (or Vite config):
-
-```
-VITE_APP_PUBLIC_URL=https://travelrovr.base44.app
-```
-
----
-
-## Build & verify
-
-1. Open `ios/App/App.xcworkspace` in Xcode
-2. **Product → Clean Build Folder** (⇧⌘K)
-3. Select simulator or device → **Run** (⌘R)
-4. Watch console for:
-   ```
-   [Auth] Available Capacitor plugins: [..., ASWebAuth, ...]
-   ```
+- [ ] Opened `App.xcworkspace` (not `App.xcodeproj`)
+- [ ] `pod install` completed without errors
+- [ ] `npx cap sync ios` completed without errors
+- [ ] Both `ASWebAuth.swift` and `ASWebAuth.m` are in **Compile Sources**
+- [ ] `rovr` URL scheme is set in **Info → URL Types**
+- [ ] Clean Build Folder (⇧⌘K) → Run (⌘R) → console shows `ASWebAuth` in plugin list
 
 ---
 
 ## Auth flow summary
 
 ```
-Tap "Sign in with Google"
-  → ASWebAuth.open({ url: "https://base44.com/auth?...", callbackScheme: "rovr" })
-  → iOS opens ASWebAuthenticationSession (native Safari sheet)
-  → Google sign-in completes
+User taps "Sign in"
+  → Base44 redirectToLogin() opens ASWebAuthenticationSession
+  → iOS native Safari sheet appears
+  → User signs in (Google / email)
   → Base44 redirects → https://travelrovr.base44.app/?access_token=<token>
-  → Swift completion handler resolves with { url: "https://...?access_token=..." }
-  → AuthContext extracts token → localStorage → checkUserAuth() → logged in ✅
+  → main.jsx extracts token → localStorage
+  → AuthContext detects 'base44:token-received' event → checkUserAuth()
+  → User is logged in ✅
 ```
 
 ---
 
 ## Troubleshooting
 
-| Error | Fix |
+| Symptom | Fix |
 |---|---|
-| `Missing package product 'CapApp-SPM'` | Close Xcode → run the perl one-liner → `pod install` → re-open `.xcworkspace` |
-| `Available plugins: [...] — no ASWebAuth` | Files not in Compile Sources — follow "Add the ASWebAuth plugin" steps above |
-| `navigateToLogin error: {}` | Same as above — ASWebAuth missing; app now auto-falls back to Browser plugin |
-| `Failed to start ASWebAuthenticationSession` | Run on simulator/device, not Catalyst; iOS ≥ 14 |
-| Token not found after auth | Base44 must redirect to `rovr://auth?access_token=...` — `next=rovr%3A%2F%2Fauth` in auth URL |
-| `rovr://` deep-link not received | Confirm URL scheme `rovr` is in Xcode Info tab → URL Types |
+| `Missing package product 'CapApp-SPM'` | Close Xcode → `bash ios/fix-spm.sh` → `pod install` → open `.xcworkspace` |
+| Build fails immediately after `npx cap add ios` | You opened `.xcodeproj` — always use `.xcworkspace` |
+| `Available plugins: [...] — no ASWebAuth` | Files not in Compile Sources — follow "Add the ASWebAuth plugin" steps |
+| `Failed to start ASWebAuthenticationSession` | Run on simulator or physical device (iOS ≥ 14); not Mac Catalyst |
+| Token not found after sign-in | Confirm `rovr` URL scheme is in Info → URL Types |
+| Deep-link `rovr://` not received | Same as above |
+| `pod install` fails with "Unable to find a specification for Capacitor" | Run `npm install` first so `node_modules/@capacitor` exists |
