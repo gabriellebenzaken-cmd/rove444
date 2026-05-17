@@ -54,30 +54,21 @@ const AuthenticatedApp = () => {
   }, []);
 
   useEffect(() => {
-    console.log('[App] AuthenticatedApp effect: user=', user, 'isLoadingAuth=', isLoadingAuth, 'authError=', authError);
-    
-    // HARD STOP: If no user after auth loading is done, block everything
     if (!isLoadingAuth && !user) {
-      console.log('[App] HARD STOP: No authenticated user. Showing login screen.');
       setCheckingOnboard(false);
       setIsProfileReady(true);
       return;
     }
 
     if (!isLoadingAuth && user && user.email) {
-      console.log('[App] Valid user found:', user.email);
       base44.auth.me().then(async (me) => {
-        // If UserProfile already exists, treat the user as onboarded even if
-        // the flag was never set (handles existing accounts / reinstalls).
         try {
           const profiles = await base44.entities.UserProfile.filter({ user_id: me.id }, "-created_date", 1);
           if (profiles.length > 0 && !me.onboarded) {
-            // Backfill the flag silently so it matches next time
             await base44.auth.updateMe({ onboarded: true }).catch(() => {});
             me = { ...me, onboarded: true };
           }
         } catch (_) {}
-
         await ensureUserProfile(me);
         setIsProfileReady(true);
         setCheckingOnboard(false);
@@ -89,7 +80,6 @@ const AuthenticatedApp = () => {
         toast.error("Failed to load profile");
       });
     } else if (authError) {
-      console.log('[App] Auth error detected:', authError);
       setCheckingOnboard(false);
       setIsProfileReady(true);
     }
@@ -109,16 +99,13 @@ const AuthenticatedApp = () => {
           full_name: me.full_name || "",
           display_name: me.full_name || "",
         });
-        console.log("[App] UserProfile created for:", me.email);
       } else {
-        // Backfill username_lower if missing
         const p = existing[0];
         if (p.username && !p.username_lower) {
           await base44.entities.UserProfile.update(p.id, {
             username_lower: p.username.toLowerCase(),
             full_name: p.full_name || me.full_name || "",
           });
-          console.log("[App] Backfilled username_lower for:", me.email);
         }
       }
     } catch (err) {
@@ -126,41 +113,47 @@ const AuthenticatedApp = () => {
     }
   }
 
-  // Show loading spinner while checking app public settings or auth.
-  // Skip spinner if auth is done and there's no user — render the login screen directly.
-  const authDoneNoUser = !isLoadingAuth && !isLoadingPublicSettings && !user;
-  if (!authDoneNoUser && (isLoadingPublicSettings || isLoadingAuth || checkingOnboard || !isProfileReady)) {
+  // ── NATIVE: always show NativeLoginScreen when not authenticated ─────────────
+  // This check runs BEFORE any spinner — native must never show a blank screen.
+  if (isNative()) {
+    if (isLoadingAuth) {
+      return (
+        <div className="fixed inset-0 flex items-center justify-center bg-[#f7f3ee] dark:bg-[#12121a]">
+          <div className="w-8 h-8 border-4 border-[#C8A27C] border-t-transparent rounded-full animate-spin" />
+        </div>
+      );
+    }
+    if (!user) {
+      return <NativeLoginScreen onSuccess={checkAppState} />;
+    }
+  }
+
+  // ── WEB: spinner while loading, then redirect if no user ─────────────────────
+  if (!isNative()) {
+    if (isLoadingPublicSettings || isLoadingAuth || checkingOnboard || !isProfileReady) {
+      return (
+        <div className="fixed inset-0 flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+        </div>
+      );
+    }
+    if (authError?.type === 'user_not_registered') return <UserNotRegisteredError />;
+    if (!user) {
+      base44.auth.redirectToLogin(window.location.href);
+      return null;
+    }
+  }
+
+  // ── Authenticated: native waits for profile setup ─────────────────────────────
+  if (isNative() && (checkingOnboard || !isProfileReady)) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+      <div className="fixed inset-0 flex items-center justify-center bg-[#f7f3ee] dark:bg-[#12121a]">
+        <div className="w-8 h-8 border-4 border-[#C8A27C] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  // Handle authentication errors
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    }
-    // auth_required OR any unknown error on native → show in-app login
-    if (isNative()) {
-      return <NativeLoginScreen onSuccess={checkAppState} />;
-    }
-    // Web: redirect to hosted login for auth_required; show nothing otherwise
-    if (authError.type === 'auth_required') {
-      base44.auth.redirectToLogin(window.location.href);
-    }
-    return null;
-  }
-
-  // No user — show login
-  if (!user) {
-    if (isNative()) {
-      return <NativeLoginScreen onSuccess={checkAppState} />;
-    }
-    base44.auth.redirectToLogin(window.location.href);
-    return null;
-  }
+  if (authError?.type === 'user_not_registered') return <UserNotRegisteredError />;
 
   // Render the main app (only reached if user is authenticated)
   return (
