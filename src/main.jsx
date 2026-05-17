@@ -27,14 +27,17 @@ import '@/index.css'
 
 function handleTokenFromUrl(url) {
   try {
-    const u = new URL(url);
+    // Normalise rovr://auth?access_token=... → parseable URL
+    const normalised = url.replace(/^rovr:\/\//, 'https://rovr.app/');
+    const u = new URL(normalised);
     const token = u.searchParams.get('access_token');
     if (token) {
       localStorage.setItem('base44_access_token', token);
       // Remove token from visible URL (web only — on native there's no address bar)
       try {
-        u.searchParams.delete('access_token');
-        window.history.replaceState({}, document.title, u.pathname + (u.search || '') + (u.hash || ''));
+        const orig = new URL(url);
+        orig.searchParams.delete('access_token');
+        window.history.replaceState({}, document.title, orig.pathname + (orig.search || '') + (orig.hash || ''));
       } catch (_) {}
       return true;
     }

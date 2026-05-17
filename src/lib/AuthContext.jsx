@@ -175,29 +175,43 @@ export const AuthProvider = ({ children }) => {
 
     try {
       if (isNative) {
-        const authUrl = `https://base44.com/auth?app_id=${appParams.appId}&next=${encodeURIComponent(appPublicUrl)}`;
-        
-        console.log('[Auth] Available Capacitor plugins:', Object.keys(window.Capacitor?.Plugins || {}));
+        const availablePlugins = Object.keys(window.Capacitor?.Plugins || {});
+        console.log('[Auth] Available Capacitor plugins:', availablePlugins);
 
         const ASWebAuth = window.Capacitor?.Plugins?.ASWebAuth;
+
         if (!ASWebAuth) {
-          throw new Error('ASWebAuth plugin not found. Ensure ASWebAuth.m is in Xcode target, clean build, and npx cap sync ios was run.');
+          // Plugin not compiled in — fall back to Capacitor Browser plugin which
+          // opens an in-app SFSafariViewController. Token lands via deep-link.
+          console.warn('[Auth] ASWebAuth not found — falling back to Browser plugin');
+          const { Browser } = await import('@capacitor/browser');
+          // Use rovr:// as the next URL so Base44 redirects back to the custom scheme
+          const callbackUrl = `rovr://auth`;
+          const authUrl = `https://base44.com/auth?app_id=${appParams.appId}&next=${encodeURIComponent(callbackUrl)}`;
+          console.log('[Auth] Opening Browser with URL:', authUrl);
+          await Browser.open({ url: authUrl, windowName: '_self' });
+          // Token delivery happens via appUrlOpen → main.jsx → base44:token-received
+          return;
         }
 
-        console.log('[Auth] Opening ASWebAuthenticationSession...');
+        // ASWebAuthenticationSession path — preferred (no 403 disallowed_useragent)
+        // Use rovr:// as the next/callback so Base44 redirects to rovr://auth?access_token=...
+        // ASWebAuthenticationSession intercepts any URL starting with callbackURLScheme.
+        const callbackUrl = `rovr://auth`;
+        const authUrl = `https://base44.com/auth?app_id=${appParams.appId}&next=${encodeURIComponent(callbackUrl)}`;
+        console.log('[Auth] Opening ASWebAuthenticationSession with URL:', authUrl);
+
         const result = await ASWebAuth.open({ url: authUrl, callbackScheme: 'rovr' });
         console.log('[Auth] OAuth session completed, callback URL:', result?.url);
 
-        // Extract token from the callback URL and persist it
         if (result?.url) {
           try {
             const u = new URL(result.url);
             const token = u.searchParams.get('access_token');
             if (token) {
               localStorage.setItem('base44_access_token', token);
-              // Re-run auth check with the new token
               await checkUserAuth();
-              return; // Done — no further action needed
+              return;
             }
           } catch (parseErr) {
             console.error('[Auth] Failed to parse callback URL:', parseErr);

@@ -59,24 +59,35 @@ After `pod install` you will have `ios/App/App.xcworkspace`.
 
 ---
 
-## Add the ASWebAuth plugin to Xcode
+## Add the ASWebAuth plugin to Xcode (REQUIRED — do not skip)
 
-The two plugin files are committed to `ios/App/App/Plugins/`:
+The plugin files are in `ios/App/App/Plugins/`. Xcode must compile them.
 
-```
-ios/App/App/Plugins/ASWebAuth.swift
-ios/App/App/Plugins/ASWebAuth.m
-```
+**Step-by-step:**
 
-In Xcode (with `App.xcworkspace` open):
+1. Open `App.xcworkspace` in Xcode
+2. In the **Project Navigator** (left panel) expand **App → App**
+3. If a `Plugins` group already exists, click on `ASWebAuth.swift` →  
+   open the **File Inspector** (right panel, ⌥⌘1) →  
+   under **Target Membership** tick ☑ **App**  
+   Repeat for `ASWebAuth.m`
+4. If the `Plugins` group does NOT exist:  
+   Right-click the `App` folder → **Add Files to "App"…** →  
+   navigate into `Plugins/` → select both files →  
+   tick ☑ **Add to targets: App** → **Add**
+5. **Verify**: select the **App** target → **Build Phases** → **Compile Sources**  
+   Both `ASWebAuth.swift` and `ASWebAuth.m` must appear in the list.  
+   If they don't, drag them in from the Project Navigator.
+6. **Product → Clean Build Folder** (⇧⌘K) then **Run** (⌘R)
+7. In the Xcode console confirm:
+   ```
+   [Auth] Available Capacitor plugins: [..., "ASWebAuth", ...]
+   ```
 
-1. In the Project Navigator expand **App → App**
-2. Right-click the `App` folder → **Add Files to "App"…**
-3. Navigate into `Plugins/`, select **both files**
-4. Tick ☑ **Copy items if needed** and ☑ **Add to targets: App**
-5. Click **Add**
-6. Confirm both files appear under  
-   **TARGETS → App → Build Phases → Compile Sources**
+> **If ASWebAuth is still missing from the plugin list** even after step 5-6,
+> the app will automatically fall back to the Capacitor Browser plugin
+> (opens an SFSafariViewController) which also works — the token comes back
+> via the `rovr://` deep-link. So auth will succeed either way.
 
 ---
 
@@ -133,7 +144,9 @@ Tap "Sign in with Google"
 
 | Error | Fix |
 |---|---|
-| `Missing package product 'CapApp-SPM'` | Close Xcode → run `bash ios/fix-spm.sh` → `pod install` → re-open `.xcworkspace` |
-| `ASWebAuth plugin not found` | Both `.swift` + `.m` must be in Compile Sources; clean build |
+| `Missing package product 'CapApp-SPM'` | Close Xcode → run the perl one-liner → `pod install` → re-open `.xcworkspace` |
+| `Available plugins: [...] — no ASWebAuth` | Files not in Compile Sources — follow "Add the ASWebAuth plugin" steps above |
+| `navigateToLogin error: {}` | Same as above — ASWebAuth missing; app now auto-falls back to Browser plugin |
 | `Failed to start ASWebAuthenticationSession` | Run on simulator/device, not Catalyst; iOS ≥ 14 |
-| Token not found after auth | Check `VITE_APP_PUBLIC_URL` matches your Base44 published domain |
+| Token not found after auth | Base44 must redirect to `rovr://auth?access_token=...` — `next=rovr%3A%2F%2Fauth` in auth URL |
+| `rovr://` deep-link not received | Confirm URL scheme `rovr` is in Xcode Info tab → URL Types |
