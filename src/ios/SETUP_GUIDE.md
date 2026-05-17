@@ -25,12 +25,12 @@ rm -rf ios/
 # 2. Re-generate a fresh iOS project
 npx cap add ios
 
-# 3. Copy the Podfile that uses CocoaPods (not SPM)
-#    (this file is committed to the repo at ios/App/Podfile)
-#    npx cap add ios creates ios/App/Podfile automatically — overwrite it:
-cp ios/App/Podfile ios/App/Podfile   # already in place from the repo
+# 3. ⚠️  CRITICAL: Strip the stale CapApp-SPM reference from the pbxproj
+#    (npx cap add ios injects an SPM dependency that breaks on other machines)
+bash ios/fix-spm.sh
 
 # 4. Install CocoaPods dependencies
+#    (the Podfile is already committed to the repo at ios/App/Podfile)
 cd ios/App
 pod install
 cd ../..
@@ -41,6 +41,12 @@ npx cap sync ios
 
 After `pod install` you will have `ios/App/App.xcworkspace`.
 **Always open the `.xcworkspace`, never the `.xcodeproj`.**
+
+> **If Xcode still shows "Missing package product CapApp-SPM"** after following
+> the steps above, it means the project was opened before running `fix-spm.sh`.
+> Close Xcode, run `fix-spm.sh`, then `pod install`, then re-open the workspace.
+> "Reset Package Caches" in Xcode will NOT help — the reference must be deleted
+> from the pbxproj itself.
 
 ---
 
@@ -118,7 +124,7 @@ Tap "Sign in with Google"
 
 | Error | Fix |
 |---|---|
-| `Missing package product 'CapApp-SPM'` | You opened the `.xcodeproj` — open `.xcworkspace` instead, or re-run `pod install` |
+| `Missing package product 'CapApp-SPM'` | Close Xcode → run `bash ios/fix-spm.sh` → `pod install` → re-open `.xcworkspace` |
 | `ASWebAuth plugin not found` | Both `.swift` + `.m` must be in Compile Sources; clean build |
 | `Failed to start ASWebAuthenticationSession` | Run on simulator/device, not Catalyst; iOS ≥ 14 |
 | Token not found after auth | Check `VITE_APP_PUBLIC_URL` matches your Base44 published domain |
