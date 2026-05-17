@@ -165,13 +165,8 @@ export const AuthProvider = ({ children }) => {
     const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
     console.log('[Auth] isNative:', isNative);
 
-    const appPublicUrl = import.meta.env.VITE_APP_PUBLIC_URL;
-
-    if (!appPublicUrl) {
-      console.error('[Auth] VITE_APP_PUBLIC_URL is not set. Set it to your published app domain (e.g., https://travelrovr.base44.app)');
-      toast.error('App configuration error. Please contact support.');
-      return;
-    }
+    // For web: fall back to current origin if env var not set
+    const appPublicUrl = import.meta.env.VITE_APP_PUBLIC_URL || window.location.origin;
 
     try {
       if (isNative) {
@@ -180,33 +175,27 @@ export const AuthProvider = ({ children }) => {
 
         const ASWebAuth = window.Capacitor?.Plugins?.ASWebAuth;
 
+        // Build auth URL using the SDK's redirect endpoint
+        const callbackUrl = `rovr://auth`;
+        const authUrl = `https://app.base44.com/auth?app_id=${appParams.appId}&next=${encodeURIComponent(callbackUrl)}`;
+
         if (!ASWebAuth) {
-          // Plugin not compiled in — fall back to Capacitor Browser plugin which
-          // opens an in-app SFSafariViewController. Token lands via deep-link.
+          // Plugin not compiled in — fall back to Capacitor Browser plugin
           console.warn('[Auth] ASWebAuth not found — falling back to Browser plugin');
           const { Browser } = await import('@capacitor/browser');
-          // Use rovr:// as the next URL so Base44 redirects back to the custom scheme
-          const callbackUrl = `rovr://auth`;
-          const authUrl = `https://base44.com/auth?app_id=${appParams.appId}&next=${encodeURIComponent(callbackUrl)}`;
           console.log('[Auth] Opening Browser with URL:', authUrl);
           await Browser.open({ url: authUrl, windowName: '_self' });
-          // Token delivery happens via appUrlOpen → main.jsx → base44:token-received
           return;
         }
 
         // ASWebAuthenticationSession path — preferred (no 403 disallowed_useragent)
-        // Use rovr:// as the next/callback so Base44 redirects to rovr://auth?access_token=...
-        // ASWebAuthenticationSession intercepts any URL starting with callbackURLScheme.
-        const callbackUrl = `rovr://auth`;
-        const authUrl = `https://base44.com/auth?app_id=${appParams.appId}&next=${encodeURIComponent(callbackUrl)}`;
         console.log('[Auth] Opening ASWebAuthenticationSession with URL:', authUrl);
-
         const result = await ASWebAuth.open({ url: authUrl, callbackScheme: 'rovr' });
         console.log('[Auth] OAuth session completed, callback URL:', result?.url);
 
         if (result?.url) {
           try {
-            const u = new URL(result.url);
+            const u = new URL(result.url.replace(/^rovr:\/\//, 'https://rovr.app/'));
             const token = u.searchParams.get('access_token');
             if (token) {
               localStorage.setItem('base44_access_token', token);
@@ -219,8 +208,8 @@ export const AuthProvider = ({ children }) => {
         }
         throw new Error('No access_token found in OAuth callback URL: ' + result?.url);
       } else {
-        // Web: use SDK method
-        console.log('[Auth] Web platform — using SDK loginWithProvider');
+        // Web: use SDK method — redirects to Base44 auth, then back to appPublicUrl
+        console.log('[Auth] Web platform — using SDK loginWithProvider, redirecting to:', appPublicUrl);
         await base44.auth.loginWithProvider("google", appPublicUrl);
       }
     } catch (err) {
