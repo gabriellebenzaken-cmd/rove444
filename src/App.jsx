@@ -143,19 +143,20 @@ const AuthenticatedApp = () => {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
       if (isNative()) {
-        // On native: show in-app login form — no redirects, no browser sheet
         return <NativeLoginScreen onSuccess={checkAppState} />;
       }
-      // Web: useEffect already triggered navigateToLogin() redirect — render nothing
+      // Web: redirect to hosted login
+      base44.auth.redirectToLogin(window.location.href);
       return null;
     }
   }
 
-  // No user and no auth error — show login
+  // No user — show login
   if (!user) {
     if (isNative()) {
       return <NativeLoginScreen onSuccess={checkAppState} />;
     }
+    base44.auth.redirectToLogin(window.location.href);
     return null;
   }
 
