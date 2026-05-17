@@ -151,13 +151,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const navigateToLogin = () => {
+    // Web only — redirects to hosted login page.
+    // On native: the render tree shows NativeLoginScreen directly; no redirect needed.
     if (!isNative()) {
-      // Web: standard redirect — Base44 login page returns user to current URL
       base44.auth.redirectToLogin(window.location.href);
     }
-    // On native: AuthContext consumers check isNative() + !user to show NativeLoginScreen inline.
-    // No redirect needed — the in-app login form calls base44.auth.loginViaEmailPassword()
-    // directly, which stores the token in localStorage automatically.
   };
 
   return (

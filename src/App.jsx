@@ -43,7 +43,7 @@ const MotionPage = ({ children }) => (
 );
 
 const AuthenticatedApp = () => {
-  const { user, isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, checkAppState, isNative } = useAuth();
+  const { user, isLoadingAuth, isLoadingPublicSettings, authError, checkAppState, isNative } = useAuth();
   const [checkingOnboard, setCheckingOnboard] = useState(true);
   const [onboardingError, setOnboardingError] = useState(false);
   const [isProfileReady, setIsProfileReady] = useState(false);
@@ -52,17 +52,6 @@ const AuthenticatedApp = () => {
   useEffect(() => {
     initializeTheme();
   }, []);
-
-  // Fire the login redirect exactly once when auth finishes and user is absent.
-  // Using an effect (not render-time call) ensures it runs once, never during SSR,
-  // and doesn't conflict with React's render cycle.
-  useEffect(() => {
-    if (!isLoadingAuth && !isLoadingPublicSettings && !user &&
-        (!authError || authError.type === 'auth_required')) {
-      navigateToLogin();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoadingAuth, isLoadingPublicSettings, user, authError]);
 
   useEffect(() => {
     console.log('[App] AuthenticatedApp effect: user=', user, 'isLoadingAuth=', isLoadingAuth, 'authError=', authError);
@@ -137,8 +126,10 @@ const AuthenticatedApp = () => {
     }
   }
 
-  // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth || checkingOnboard || !isProfileReady) {
+  // Show loading spinner while checking app public settings or auth.
+  // Skip spinner if auth is done and there's no user — render the login screen directly.
+  const authDoneNoUser = !isLoadingAuth && !isLoadingPublicSettings && !user;
+  if (!authDoneNoUser && (isLoadingPublicSettings || isLoadingAuth || checkingOnboard || !isProfileReady)) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
