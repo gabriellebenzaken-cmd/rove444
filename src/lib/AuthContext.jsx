@@ -2,18 +2,13 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
-import { toast } from 'sonner';
 
-// The production web URL — Base44 will redirect the token here after login,
-// and our appUrlOpen / handleTokenFromUrl listeners will pick it up.
 const PRODUCTION_URL = 'https://travelrovr.base44.app';
 
 function isNative() {
   return typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
 }
 
-// Returns the most up-to-date token — prefers localStorage over the snapshot
-// taken at app boot, so deep-link token deliveries are picked up correctly.
 function getLiveToken() {
   return localStorage.getItem('base44_access_token') || appParams.token;
 }
@@ -30,15 +25,6 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     checkAppState();
-
-    // Native iOS: when the deep-link OAuth callback fires (appUrlOpen in main.jsx),
-    // it dispatches this event so we re-validate the newly-stored token without
-    // needing a full page reload (which would lose React state).
-    const onTokenReceived = () => {
-      checkAppState();
-    };
-    window.addEventListener('base44:token-received', onTokenReceived);
-    return () => window.removeEventListener('base44:token-received', onTokenReceived);
   }, []);
 
   const checkAppState = async () => {
@@ -59,7 +45,7 @@ export const AuthProvider = ({ children }) => {
         headers: {
           'X-App-Id': appParams.appId
         },
-        token: getLiveToken(), // Use live token so deep-link tokens are honoured
+        token: getLiveToken(),
         interceptResponses: true
       });
       
@@ -67,17 +53,12 @@ export const AuthProvider = ({ children }) => {
         const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
         setAppPublicSettings(publicSettings);
         
-        // Use getLiveToken() so deep-link tokens are picked up after initial boot
         if (getLiveToken()) {
           await checkUserAuth();
         } else {
           setIsLoadingAuth(false);
           setIsAuthenticated(false);
-          // On native with no token, set auth_required immediately so App.jsx
-          // triggers the Browser.open login flow without waiting for further API calls.
-          if (isNative()) {
-            setAuthError({ type: 'auth_required', message: 'Authentication required' });
-          }
+          setAuthError({ type: 'auth_required', message: 'Authentication required' });
         }
         setIsLoadingPublicSettings(false);
       } catch (appError) {
@@ -161,21 +142,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = (shouldRedirect = true) => {
-    console.log('[Auth] Logging out...');
-    // Clear token before logout
+  const logout = () => {
     localStorage.removeItem('base44_access_token');
     setUser(null);
     setIsAuthenticated(false);
-    setAuthError(null);
-    
-    if (shouldRedirect) {
-      // Use the SDK's logout method which handles token cleanup and redirect
-      base44.auth.logout(window.location.href);
-    } else {
-      // Just remove the token without redirect
-      base44.auth.logout();
-    }
+    setAuthError({ type: 'auth_required', message: 'Authentication required' });
+    base44.auth.logout();
   };
 
   const navigateToLogin = () => {
