@@ -28,7 +28,6 @@ import DemoSeed from './pages/DemoSeed';
 import Discover from './pages/Discover';
 import OnboardingModal from './components/OnboardingModal';
 import RoveSplash from './components/RoveSplash';
-import AppStoreReviewerBypass from './components/AppStoreReviewerBypass';
 import { motion } from 'framer-motion';
 
 const MotionPage = ({ children }) => (
@@ -140,65 +139,15 @@ const AuthenticatedApp = () => {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Show login screen
-      const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
-      return (
-        <div className="fixed inset-0 flex flex-col items-center justify-center bg-background gap-4 px-6">
-          <img
-            src="https://media.base44.com/images/public/69d87cbb57171725f5686a39/d17f79155_generated_image.png"
-            alt="ROVR"
-            className="w-20 h-20 rounded-2xl mb-2"
-          />
-          <h1 className="text-2xl font-bold tracking-tight">ROVR</h1>
-          <p className="text-sm text-muted-foreground text-center">
-            Sign in to start planning trips with your crew.
-          </p>
-          <button
-            className="w-full max-w-xs h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm mt-2 cursor-pointer"
-            onClick={(e) => {
-              console.log('[App] Sign-in button clicked (authError screen)');
-              e.preventDefault();
-              navigateToLogin();
-            }}
-            type="button"
-          >
-            Sign in with Google
-          </button>
-          {isNative && <AppStoreReviewerBypass onTokenApplied={() => window.location.reload()} />}
-        </div>
-      );
+      navigateToLogin();
+      return null;
     }
   }
 
-  // HARD STOP: If no authenticated user at all, show login screen
+  // HARD STOP: If no authenticated user at all, redirect to Base44 login
   if (!user) {
-    console.log('[App] HARD STOP in render: No user. Showing login screen.');
-    const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
-    return (
-      <div className="fixed inset-0 flex flex-col items-center justify-center bg-background gap-4 px-6">
-        <img
-          src="https://media.base44.com/images/public/69d87cbb57171725f5686a39/d17f79155_generated_image.png"
-          alt="ROVR"
-          className="w-20 h-20 rounded-2xl mb-2"
-        />
-        <h1 className="text-2xl font-bold tracking-tight">ROVR</h1>
-        <p className="text-sm text-muted-foreground text-center">
-          Sign in to start planning trips with your crew.
-        </p>
-        <button
-          className="w-full max-w-xs h-11 rounded-full bg-primary text-primary-foreground font-semibold text-sm mt-2 cursor-pointer"
-          onClick={(e) => {
-            console.log('[App] Sign-in button clicked');
-            e.preventDefault();
-            navigateToLogin();
-          }}
-          type="button"
-        >
-          Sign in with Google
-        </button>
-        {isNative && <AppStoreReviewerBypass onTokenApplied={() => window.location.reload()} />}
-      </div>
-    );
+    navigateToLogin();
+    return null;
   }
 
   // Render the main app (only reached if user is authenticated)

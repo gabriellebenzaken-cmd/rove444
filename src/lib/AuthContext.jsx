@@ -2,7 +2,6 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
-import { Browser } from '@capacitor/browser';
 import { toast } from 'sonner';
 
 // Returns the most up-to-date token — prefers localStorage over the snapshot
@@ -160,62 +159,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const navigateToLogin = async () => {
-    console.log('[Auth] navigateToLogin called');
-    const isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
-    console.log('[Auth] isNative:', isNative);
-
-    // For web: fall back to current origin if env var not set
-    const appPublicUrl = import.meta.env.VITE_APP_PUBLIC_URL || window.location.origin;
-
-    try {
-      if (isNative) {
-        const availablePlugins = Object.keys(window.Capacitor?.Plugins || {});
-        console.log('[Auth] Available Capacitor plugins:', availablePlugins);
-
-        const ASWebAuth = window.Capacitor?.Plugins?.ASWebAuth;
-
-        // Build auth URL using the SDK's redirect endpoint
-        const callbackUrl = `rovr://auth`;
-        const authUrl = `https://app.base44.com/auth?app_id=${appParams.appId}&next=${encodeURIComponent(callbackUrl)}`;
-
-        if (!ASWebAuth) {
-          // Plugin not compiled in — fall back to Capacitor Browser plugin
-          console.warn('[Auth] ASWebAuth not found — falling back to Browser plugin');
-          const { Browser } = await import('@capacitor/browser');
-          console.log('[Auth] Opening Browser with URL:', authUrl);
-          await Browser.open({ url: authUrl, windowName: '_self' });
-          return;
-        }
-
-        // ASWebAuthenticationSession path — preferred (no 403 disallowed_useragent)
-        console.log('[Auth] Opening ASWebAuthenticationSession with URL:', authUrl);
-        const result = await ASWebAuth.open({ url: authUrl, callbackScheme: 'rovr' });
-        console.log('[Auth] OAuth session completed, callback URL:', result?.url);
-
-        if (result?.url) {
-          try {
-            const u = new URL(result.url.replace(/^rovr:\/\//, 'https://rovr.app/'));
-            const token = u.searchParams.get('access_token');
-            if (token) {
-              localStorage.setItem('base44_access_token', token);
-              await checkUserAuth();
-              return;
-            }
-          } catch (parseErr) {
-            console.error('[Auth] Failed to parse callback URL:', parseErr);
-          }
-        }
-        throw new Error('No access_token found in OAuth callback URL: ' + result?.url);
-      } else {
-        // Web: use SDK method — redirects to Base44 auth, then back to appPublicUrl
-        console.log('[Auth] Web platform — using SDK loginWithProvider, redirecting to:', appPublicUrl);
-        await base44.auth.loginWithProvider("google", appPublicUrl);
-      }
-    } catch (err) {
-      console.error('[Auth] navigateToLogin error:', err);
-      toast.error('Failed to initiate sign-in. Please try again.');
-    }
+  const navigateToLogin = () => {
+    // Use Base44's built-in auth page — supports email/password + Google
+    // redirectToLogin() sends the user to Base44's hosted login UI and
+    // returns them to the current page after successful auth.
+    base44.auth.redirectToLogin(window.location.href);
   };
 
   return (
