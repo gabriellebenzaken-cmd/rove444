@@ -136,14 +136,17 @@ compile them as part of the App target.
 ## Auth flow summary
 
 ```
-User taps "Sign in"
-  → Base44 redirectToLogin() opens ASWebAuthenticationSession
-  → iOS native Safari sheet appears
-  → User signs in (Google / email)
+User is unauthenticated
+  → navigateToLogin() detects native platform
+  → Capacitor Browser.open() opens SFSafariViewController
+  → Full Base44 login page loads (Google, Apple, email/password, signup, forgot password)
+  → User signs in
   → Base44 redirects → https://travelrovr.base44.app/?access_token=<token>
-  → main.jsx extracts token → localStorage
-  → AuthContext detects 'base44:token-received' event → checkUserAuth()
-  → User is logged in ✅
+  → appUrlOpen listener in main.jsx fires with rovr:// deep-link OR
+    handleTokenFromUrl() parses token from redirect URL
+  → Token stored in localStorage
+  → Browser.close() dismisses the SFSafariViewController
+  → 'base44:token-received' event fires → checkAppState() → logged in ✅
 ```
 
 ---

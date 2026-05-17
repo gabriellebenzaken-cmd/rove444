@@ -49,12 +49,18 @@ function handleTokenFromUrl(url) {
 handleTokenFromUrl(window.location.href);
 
 // Native safety net: if the OS delivers the callback URL via appUrlOpen
-// (e.g. a Universal Link or custom scheme fallback), capture it here too.
+// (rovr:// deep-link or Universal Link), capture the token and close any
+// open SFSafariViewController browser sheet.
 if (window.Capacitor?.isNativePlatform?.()) {
   const CapApp = window.Capacitor?.Plugins?.App;
   if (CapApp) {
-    CapApp.addListener('appUrlOpen', ({ url }) => {
+    CapApp.addListener('appUrlOpen', async ({ url }) => {
       if (handleTokenFromUrl(url)) {
+        // Close the SFSafariViewController opened by navigateToLogin
+        try {
+          const { Browser } = await import('@capacitor/browser');
+          await Browser.close();
+        } catch (_) {}
         window.dispatchEvent(new CustomEvent('base44:token-received'));
       }
     });

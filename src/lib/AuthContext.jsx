@@ -4,6 +4,14 @@ import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 import { toast } from 'sonner';
 
+// The production web URL — Base44 will redirect the token here after login,
+// and our appUrlOpen / handleTokenFromUrl listeners will pick it up.
+const PRODUCTION_URL = 'https://travelrovr.base44.app';
+
+function isNative() {
+  return typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
+}
+
 // Returns the most up-to-date token — prefers localStorage over the snapshot
 // taken at app boot, so deep-link token deliveries are picked up correctly.
 function getLiveToken() {
@@ -159,11 +167,36 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const navigateToLogin = () => {
-    // Use Base44's built-in auth page — supports email/password + Google
-    // redirectToLogin() sends the user to Base44's hosted login UI and
-    // returns them to the current page after successful auth.
-    base44.auth.redirectToLogin(window.location.href);
+  const navigateToLogin = async () => {
+    if (isNative()) {
+      // On native iOS, window.location.href redirects inside the Capacitor WebView
+      // which can't load Base44's login page properly (wrong origin, no cookies, etc).
+      // Instead, open the full Base44 login page in a native SFSafariViewController
+      // via the Capacitor Browser plugin. Base44 will redirect back to PRODUCTION_URL
+      // after login, and our appUrlOpen listener in main.jsx captures the token.
+      try {
+        const { Browser } = await import('@capacitor/browser');
+        const fromUrl = encodeURIComponent(PRODUCTION_URL + '/');
+        const loginUrl = `${PRODUCTION_URL}/login?from_url=${fromUrl}`;
+        console.log('[Auth] Opening native browser for login:', loginUrl);
+        await Browser.open({ url: loginUrl, presentationStyle: 'fullscreen' });
+
+        // Listen for the token to arrive via the rovr:// deep-link (appUrlOpen in main.jsx)
+        const onTokenReceived = async () => {
+          window.removeEventListener('base44:token-received', onTokenReceived);
+          try { await Browser.close(); } catch (_) {}
+          await checkAppState();
+        };
+        window.addEventListener('base44:token-received', onTokenReceived);
+      } catch (err) {
+        console.error('[Auth] Native browser open failed, falling back:', err);
+        // Last-resort fallback: let Base44 SDK handle it (may open in-app)
+        base44.auth.redirectToLogin(PRODUCTION_URL + '/');
+      }
+    } else {
+      // Web: standard redirect — Base44 login page returns user to current URL
+      base44.auth.redirectToLogin(window.location.href);
+    }
   };
 
   return (
