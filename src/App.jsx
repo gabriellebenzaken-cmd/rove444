@@ -52,6 +52,17 @@ const AuthenticatedApp = () => {
     initializeTheme();
   }, []);
 
+  // Fire the login redirect exactly once when auth finishes and user is absent.
+  // Using an effect (not render-time call) ensures it runs once, never during SSR,
+  // and doesn't conflict with React's render cycle.
+  useEffect(() => {
+    if (!isLoadingAuth && !isLoadingPublicSettings && !user &&
+        (!authError || authError.type === 'auth_required')) {
+      navigateToLogin();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoadingAuth, isLoadingPublicSettings, user, authError]);
+
   useEffect(() => {
     console.log('[App] AuthenticatedApp effect: user=', user, 'isLoadingAuth=', isLoadingAuth, 'authError=', authError);
     
@@ -139,14 +150,13 @@ const AuthenticatedApp = () => {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      navigateToLogin();
+      // Handled by the useEffect below — render null while redirect fires
       return null;
     }
   }
 
-  // HARD STOP: If no authenticated user at all, redirect to Base44 login
+  // HARD STOP: If no authenticated user at all, render null while redirect fires
   if (!user) {
-    navigateToLogin();
     return null;
   }
 

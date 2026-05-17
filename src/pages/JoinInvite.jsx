@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, Check, X, Loader2 } from "lucide-react";
@@ -10,6 +11,7 @@ import { toast } from "sonner";
 export default function JoinInvite() {
   const { type, code } = useParams();
   const navigate = useNavigate();
+  const { navigateToLogin } = useAuth();
   const [user, setUser] = useState(null);
   const [entity, setEntity] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -245,7 +247,7 @@ export default function JoinInvite() {
           <p className="text-muted-foreground mb-6">You need to be logged in to join this trip.</p>
           <Button
             className="w-full rounded-full mb-3"
-            onClick={() => base44.auth.redirectToLogin()}
+            onClick={() => navigateToLogin()}
           >
             Sign In
           </Button>

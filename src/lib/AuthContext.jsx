@@ -46,10 +46,16 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingPublicSettings(true);
       setAuthError(null);
       
+      // On native Capacitor the app runs from file:// — relative URLs don't reach
+      // the Base44 server. Always use the absolute production URL.
+      const apiBase = isNative()
+        ? `${PRODUCTION_URL}/api/apps/public`
+        : `/api/apps/public`;
+
       // First, check app public settings (with token if available)
       // This will tell us if auth is required, user not registered, etc.
       const appClient = createAxiosClient({
-        baseURL: `/api/apps/public`,
+        baseURL: apiBase,
         headers: {
           'X-App-Id': appParams.appId
         },
@@ -67,6 +73,11 @@ export const AuthProvider = ({ children }) => {
         } else {
           setIsLoadingAuth(false);
           setIsAuthenticated(false);
+          // On native with no token, set auth_required immediately so App.jsx
+          // triggers the Browser.open login flow without waiting for further API calls.
+          if (isNative()) {
+            setAuthError({ type: 'auth_required', message: 'Authentication required' });
+          }
         }
         setIsLoadingPublicSettings(false);
       } catch (appError) {
