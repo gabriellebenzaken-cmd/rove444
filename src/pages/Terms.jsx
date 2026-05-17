@@ -25,7 +25,7 @@ export default function Terms() {
         <div className="mb-8">
           <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#C8A27C" }}>Legal</p>
           <h1 className="text-3xl font-bold tracking-tight">Terms of Service</h1>
-          <p className="text-sm text-muted-foreground mt-2">Effective Date: May 17, 2025</p>
+          <p className="text-sm text-muted-foreground mt-2">Effective Date: May 17, 2026</p>
         </div>
 
         <div className="space-y-6 text-sm leading-relaxed text-muted-foreground">
