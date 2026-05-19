@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 // Screens
 const SCREEN = {
@@ -170,6 +171,12 @@ export default function NativeLoginScreen({ onSuccess }) {
               style={{ background: '#C8A27C' }}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Account'}
             </button>
+            <p className="text-center text-[11px] leading-relaxed" style={{ color: '#9a8a7a' }}>
+              By creating an account, you agree to our{' '}
+              <Link to="/terms" className="underline" style={{ color: '#C8A27C' }}>Terms of Service</Link>,{' '}
+              <Link to="/guidelines" className="underline" style={{ color: '#C8A27C' }}>Community Guidelines</Link>, and{' '}
+              <Link to="/privacy" className="underline" style={{ color: '#C8A27C' }}>Privacy Policy</Link>.
+            </p>
           </form>
         )}
 

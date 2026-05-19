@@ -20,6 +20,7 @@ import TripDetail from './pages/TripDetail';
 import GroupDetail from './pages/GroupDetail';
 import JoinInvite from './pages/JoinInvite';
 import Privacy from './pages/Privacy';
+import Guidelines from './pages/Guidelines';
 import LegalConsentBanner from './components/LegalConsentBanner';
 import Terms from './pages/Terms';
 import Support from './pages/Support';
@@ -218,6 +219,7 @@ function App() {
             <Routes>
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
+              <Route path="/guidelines" element={<Guidelines />} />
               <Route path="/support" element={<Support />} />
               <Route path="*" element={<AuthenticatedApp />} />
             </Routes>

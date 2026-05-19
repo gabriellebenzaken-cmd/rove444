@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import MobileSelect from "@/components/MobileSelect";
 import { Link } from "react-router-dom";
-import { LogOut, Edit3, Save, X, Settings, Trash2, Shield, ChevronRight, Camera, Upload, Monitor, Sun, Moon, FileText } from "lucide-react";
+import { LogOut, Edit3, Save, X, Settings, Trash2, Shield, ChevronRight, Camera, Upload, Monitor, Sun, Moon, FileText, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { getThemePreference, setThemePreference } from "@/lib/theme";
 
@@ -372,6 +372,17 @@ export default function Profile() {
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>
+            <Link
+              to="/guidelines"
+              onClick={() => setShowSettings(false)}
+              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-muted transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Community Guidelines</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
             <a
               href="mailto:support@travelrovr.app"
               className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-muted transition-colors"
@@ -379,7 +390,7 @@ export default function Profile() {
             >
               <div className="flex items-center gap-3">
                 <Settings className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Contact Support</span>
+                <span className="text-sm">Contact Support / Report Safety Issue</span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </a>
