@@ -121,7 +121,7 @@ export default function GroupDetail() {
   const hasActivity = trips.length > 0 || members.length > 1;
 
   return (
-    <div className="px-5 pt-10">
+    <div className="px-5 pb-32" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 3.5rem)" }}>
       {isAdmin && <GroupPendingInvites group={group} isAdmin={isAdmin} onUpdate={loadData} />}
 
       {/* Header */}

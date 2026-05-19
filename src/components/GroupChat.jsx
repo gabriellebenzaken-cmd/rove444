@@ -62,6 +62,7 @@ export default function GroupChat({ group, user }) {
 
   async function sendMessage(e) {
     e?.preventDefault();
+    e?.stopPropagation();
     if (sending) return;
 
     if (mode === "poll") {
@@ -137,7 +138,7 @@ export default function GroupChat({ group, user }) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 320px)", minHeight: 400 }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 320px)", minHeight: 400, paddingBottom: 0 }}>
       {/* Messages */}
       <div style={{ flex: 1, overflowY: "auto", paddingRight: 2 }}>
         {messages.length === 0 ? (
@@ -263,7 +264,15 @@ export default function GroupChat({ group, user }) {
 
       {/* Input bar */}
       {mode === "text" && (
-        <form onSubmit={sendMessage} style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(200,162,124,0.1)" }}>
+        <form
+          onSubmit={sendMessage}
+          style={{
+            display: "flex", alignItems: "center", gap: 8,
+            marginTop: 12, paddingTop: 12,
+            paddingBottom: "env(safe-area-inset-bottom, 0px)",
+            borderTop: "1px solid rgba(200,162,124,0.1)",
+          }}
+        >
           <button type="button" onClick={() => setMode("poll")} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(200,162,124,0.1)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <BarChart2 size={15} color="#C8A27C" />
           </button>
@@ -272,9 +281,14 @@ export default function GroupChat({ group, user }) {
             onChange={e => setText(e.target.value)}
             placeholder="Send a message…"
             autoComplete="off"
+            enterKeyHint="send"
             style={{ flex: 1, borderRadius: 999, padding: "9px 16px", fontSize: 13, background: "rgba(255,255,255,0.8)", border: "1px solid rgba(200,162,124,0.18)", outline: "none", color: "#3A3028" }}
           />
-          <button type="submit" disabled={sending || !text.trim()} style={{ width: 36, height: 36, borderRadius: "50%", background: "#C8A27C", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, opacity: (sending || !text.trim()) ? 0.4 : 1 }}>
+          <button
+            type="submit"
+            disabled={sending || !text.trim()}
+            style={{ width: 36, height: 36, borderRadius: "50%", background: "#C8A27C", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, opacity: (sending || !text.trim()) ? 0.4 : 1 }}
+          >
             {sending
               ? <div style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
               : <Send size={15} color="white" />
