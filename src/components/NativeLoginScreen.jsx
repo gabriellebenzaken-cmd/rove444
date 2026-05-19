@@ -3,6 +3,17 @@ import { base44 } from '@/api/base44Client';
 import { Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+// Small inline legal link — works in both web and native (opens route in same view)
+const LegalLink = ({ to, children }) => (
+  <Link
+    to={to}
+    className="underline"
+    style={{ color: '#C8A27C', textDecoration: 'underline' }}
+  >
+    {children}
+  </Link>
+);
+
 // Screens
 const SCREEN = {
   LOGIN: 'login',
@@ -21,6 +32,7 @@ export default function NativeLoginScreen({ onSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const clearError = () => setError('');
 
@@ -130,6 +142,13 @@ export default function NativeLoginScreen({ onSuccess }) {
               style={{ background: '#C8A27C' }}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign In'}
             </button>
+            {/* Legal notice — login */}
+            <p className="text-center leading-relaxed" style={{ fontSize: 11, color: '#9a8a7a' }}>
+              By continuing, you agree to our{' '}
+              <LegalLink to="/terms">Terms of Service</LegalLink>,{' '}
+              <LegalLink to="/privacy">Privacy Policy</LegalLink>, and{' '}
+              <LegalLink to="/guidelines">Community Guidelines</LegalLink>.
+            </p>
             <button type="button" className="w-full text-xs text-[#C8A27C] text-center"
               onClick={() => { setScreen(SCREEN.FORGOT); clearError(); }}>
               Forgot password?
@@ -137,7 +156,7 @@ export default function NativeLoginScreen({ onSuccess }) {
             <div className="border-t border-[#e2d9ce] dark:border-[#2a2a3a] pt-4">
               <button type="button"
                 className="w-full py-3 rounded-xl font-semibold text-sm border border-[#C8A27C] text-[#C8A27C]"
-                onClick={() => { setScreen(SCREEN.REGISTER); clearError(); }}>
+                onClick={() => { setScreen(SCREEN.REGISTER); clearError(); setAgreedToTerms(false); }}>
                 Create account
               </button>
             </div>
@@ -166,17 +185,50 @@ export default function NativeLoginScreen({ onSuccess }) {
               </button>
             </div>
             {error && <p className="text-red-500 text-xs">{error}</p>}
-            <button type="submit" disabled={loading}
-              className="w-full py-3 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2"
-              style={{ background: '#C8A27C' }}>
+
+            {/* Required consent checkbox */}
+            <label
+              className="flex items-start gap-2.5 cursor-pointer select-none"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+              <div className="relative mt-0.5 shrink-0">
+                <input
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={e => setAgreedToTerms(e.target.checked)}
+                  className="sr-only"
+                />
+                <div
+                  onClick={() => setAgreedToTerms(v => !v)}
+                  className="w-4 h-4 rounded border flex items-center justify-center transition-colors"
+                  style={{
+                    borderColor: agreedToTerms ? '#C8A27C' : '#c0b0a0',
+                    background: agreedToTerms ? '#C8A27C' : 'transparent',
+                  }}
+                >
+                  {agreedToTerms && (
+                    <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                      <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+              <span style={{ fontSize: 11, color: '#9a8a7a', lineHeight: 1.5 }}>
+                I agree to the{' '}
+                <LegalLink to="/terms">Terms of Service</LegalLink>,{' '}
+                <LegalLink to="/privacy">Privacy Policy</LegalLink>, and{' '}
+                <LegalLink to="/guidelines">Community Guidelines</LegalLink>.
+              </span>
+            </label>
+
+            <button
+              type="submit"
+              disabled={loading || !agreedToTerms}
+              className="w-full py-3 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-opacity"
+              style={{ background: '#C8A27C', opacity: (!agreedToTerms || loading) ? 0.45 : 1 }}
+            >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Account'}
             </button>
-            <p className="text-center text-[11px] leading-relaxed" style={{ color: '#9a8a7a' }}>
-              By creating an account, you agree to our{' '}
-              <Link to="/terms" className="underline" style={{ color: '#C8A27C' }}>Terms of Service</Link>,{' '}
-              <Link to="/guidelines" className="underline" style={{ color: '#C8A27C' }}>Community Guidelines</Link>, and{' '}
-              <Link to="/privacy" className="underline" style={{ color: '#C8A27C' }}>Privacy Policy</Link>.
-            </p>
           </form>
         )}
 
