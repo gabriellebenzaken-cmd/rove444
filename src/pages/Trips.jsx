@@ -49,6 +49,7 @@ export default function Trips() {
   const [showCreate, setShowCreate] = useState(false);
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('upcoming');
+  const [debugInfo, setDebugInfo] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -60,17 +61,25 @@ export default function Trips() {
 
   async function loadData() {
     setLoading(true);
+    setDebugInfo(null);
     try {
       const me = await base44.auth.me();
       setUser(me);
 
-      // Fetch all trips sequentially to avoid any race condition between parallel queries
+      // Query 1: trips where user is admin
       const adminTrips = await base44.entities.Trip.filter({ admin_email: me.email }, "-created_date", 500);
+
+      // Query 2: trips where user is in member_emails array
       const memberTrips = await base44.entities.Trip.filter({ member_emails: me.email }, "-created_date", 500);
 
-      console.log("[Trips] adminTrips:", adminTrips.length, "memberTrips:", memberTrips.length, "user:", me.email);
+      // Query 3: fallback — fetch a large recent batch and client-filter for member_emails
+      // This catches any trips the array-contains filter may miss
+      const recentBatch = await base44.entities.Trip.list("-created_date", 500);
+      const clientMemberTrips = recentBatch.filter(
+        t => t.member_emails?.includes(me.email) && t.admin_email !== me.email
+      );
 
-      const combined = [...adminTrips, ...memberTrips];
+      const combined = [...adminTrips, ...memberTrips, ...clientMemberTrips];
       const seen = new Set();
       const uniqueTrips = [];
       for (const t of combined) {
@@ -81,10 +90,25 @@ export default function Trips() {
       }
       uniqueTrips.sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0));
 
-      console.log("[Trips] total unique trips:", uniqueTrips.length);
+      const today = new Date().toISOString().split("T")[0];
+      const active = uniqueTrips.filter(t => !t.end_date || t.end_date >= today);
+      const past = uniqueTrips.filter(t => t.end_date && t.end_date < today);
+
+      setDebugInfo({
+        email: me.email,
+        adminCount: adminTrips.length,
+        memberCount: memberTrips.length,
+        clientMemberCount: clientMemberTrips.length,
+        totalUnique: uniqueTrips.length,
+        activeCount: active.length,
+        pastCount: past.length,
+        tripNames: uniqueTrips.map(t => `${t.name} (${t.start_date || '?'} → ${t.end_date || '?'})`),
+      });
+
       setTrips(uniqueTrips);
     } catch (err) {
       console.error("[Trips] loadData failed:", err);
+      setDebugInfo({ error: err.message });
     } finally {
       setLoading(false);
       queryClient.invalidateQueries({ queryKey: ["trips"] });
@@ -92,12 +116,10 @@ export default function Trips() {
   }
 
   const today = new Date().toISOString().split("T")[0];
-  console.log("[Trips] today:", today, "total trips in state:", trips.length);
   const activeTrips = trips.filter((t) => !t.end_date || t.end_date >= today)
     .sort((a, b) => (a.start_date || "9999-12-31").localeCompare(b.start_date || "9999-12-31"));
   const pastTrips = trips.filter((t) => t.end_date && t.end_date < today)
     .sort((a, b) => (b.end_date || "0000-01-01").localeCompare(a.end_date || "0000-01-01"));
-  console.log("[Trips] activeTrips:", activeTrips.length, "pastTrips:", pastTrips.length);
 
   const coverImages = [
     "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80",
@@ -122,6 +144,27 @@ export default function Trips() {
           <Plus className="h-3.5 w-3.5" /> New Trip
         </button>
       </div>
+
+      {/* DEBUG PANEL — temporary, remove after diagnosis */}
+      {debugInfo && (
+        <div className="mb-4 p-3 rounded-xl text-[11px] font-mono" style={{ background: '#1a1a2e', color: '#00ff99', border: '1px solid #00ff99' }}>
+          <p style={{ color: '#ffcc00', fontWeight: 700, marginBottom: 4 }}>🔍 LIVE DEBUG (tap to dismiss)</p>
+          {debugInfo.error ? (
+            <p style={{ color: '#ff4444' }}>ERROR: {debugInfo.error}</p>
+          ) : (
+            <>
+              <p>📧 email: {debugInfo.email}</p>
+              <p>🔑 adminTrips: {debugInfo.adminCount}</p>
+              <p>👥 memberTrips (db filter): {debugInfo.memberCount}</p>
+              <p>🔍 memberTrips (client fallback): {debugInfo.clientMemberCount}</p>
+              <p>✅ totalUnique: {debugInfo.totalUnique}</p>
+              <p>📅 active: {debugInfo.activeCount} | past: {debugInfo.pastCount}</p>
+              <p style={{ marginTop: 6, color: '#aaffcc' }}>Trip names:</p>
+              {debugInfo.tripNames.map((n, i) => <p key={i} style={{ color: '#ccffee' }}>  {i+1}. {n}</p>)}
+            </>
+          )}
+        </div>
+      )}
 
       {/* Tabs */}
       {!loading && trips.length > 0 && (
