@@ -63,11 +63,14 @@ export default function Trips() {
     try {
       const me = await base44.auth.me();
       setUser(me);
-      const allTrips = await base44.entities.Trip.list("-created_date", 100);
-      const myTrips = allTrips.filter(
-        (t) => t.member_emails?.includes(me.email) || t.admin_email === me.email
-      );
-      setTrips(myTrips);
+      const [adminTrips, memberTrips] = await Promise.all([
+        base44.entities.Trip.filter({ admin_email: me.email }, "-created_date", 500),
+        base44.entities.Trip.filter({ member_emails: me.email }, "-created_date", 500),
+      ]);
+      const combined = [...adminTrips, ...memberTrips];
+      const uniqueTrips = Array.from(new Map(combined.map(t => [t.id, t])).values())
+        .sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0));
+      setTrips(uniqueTrips);
     } catch (err) {
       console.error("[Trips] loadData failed:", err);
       // Still clear loading so the user sees the empty state instead of a forever spinner

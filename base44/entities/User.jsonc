@@ -24,5 +24,10 @@
       "type": "boolean",
       "default": false
     }
-  }
+  },
+  "required": [
+    "username",
+    "bio",
+    "profile_photo"
+  ]
 }
