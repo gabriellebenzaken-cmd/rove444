@@ -63,17 +63,28 @@ export default function Trips() {
     try {
       const me = await base44.auth.me();
       setUser(me);
-      const [adminTrips, memberTrips] = await Promise.all([
-        base44.entities.Trip.filter({ admin_email: me.email }, "-created_date", 500),
-        base44.entities.Trip.filter({ member_emails: me.email }, "-created_date", 500),
-      ]);
+
+      // Fetch all trips sequentially to avoid any race condition between parallel queries
+      const adminTrips = await base44.entities.Trip.filter({ admin_email: me.email }, "-created_date", 500);
+      const memberTrips = await base44.entities.Trip.filter({ member_emails: me.email }, "-created_date", 500);
+
+      console.log("[Trips] adminTrips:", adminTrips.length, "memberTrips:", memberTrips.length, "user:", me.email);
+
       const combined = [...adminTrips, ...memberTrips];
-      const uniqueTrips = Array.from(new Map(combined.map(t => [t.id, t])).values())
-        .sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0));
+      const seen = new Set();
+      const uniqueTrips = [];
+      for (const t of combined) {
+        if (!seen.has(t.id)) {
+          seen.add(t.id);
+          uniqueTrips.push(t);
+        }
+      }
+      uniqueTrips.sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0));
+
+      console.log("[Trips] total unique trips:", uniqueTrips.length);
       setTrips(uniqueTrips);
     } catch (err) {
       console.error("[Trips] loadData failed:", err);
-      // Still clear loading so the user sees the empty state instead of a forever spinner
     } finally {
       setLoading(false);
       queryClient.invalidateQueries({ queryKey: ["trips"] });
@@ -81,10 +92,12 @@ export default function Trips() {
   }
 
   const today = new Date().toISOString().split("T")[0];
+  console.log("[Trips] today:", today, "total trips in state:", trips.length);
   const activeTrips = trips.filter((t) => !t.end_date || t.end_date >= today)
     .sort((a, b) => (a.start_date || "9999-12-31").localeCompare(b.start_date || "9999-12-31"));
   const pastTrips = trips.filter((t) => t.end_date && t.end_date < today)
     .sort((a, b) => (b.end_date || "0000-01-01").localeCompare(a.end_date || "0000-01-01"));
+  console.log("[Trips] activeTrips:", activeTrips.length, "pastTrips:", pastTrips.length);
 
   const coverImages = [
     "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80",
