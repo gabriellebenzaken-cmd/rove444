@@ -60,7 +60,11 @@ export default function Friends() {
       // Load all friend requests
       let reqs = [];
       try {
-        reqs = await base44.entities.FriendRequest.list("-created_date", 200) || [];
+        reqs = await base44.entities.FriendRequest.filter({ sender_email: me.email }, "-created_date", 500).then(async sent => {
+        const received = await base44.entities.FriendRequest.filter({ receiver_email: me.email }, "-created_date", 500);
+        const combined = [...sent, ...received];
+        return Array.from(new Map(combined.map(r => [r.id, r])).values());
+      }) || [];
         console.log("[Friends] FriendRequest.list() loaded:", reqs.length, "records");
       } catch (err) {
         console.error("[Friends] Failed to load FriendRequest:", err);
@@ -101,7 +105,7 @@ export default function Friends() {
       // Enrich friends with UserProfile data (username, bio, profile_photo)
       // This ensures we always have the latest profile info
       try {
-        const profiles = await base44.entities.UserProfile.list("-created_date", 200) || [];
+        const profiles = await base44.entities.UserProfile.list("-created_date", 1000) || [];
         console.log("[Friends] UserProfile.list() loaded:", profiles.length, "records");
 
         friendList = friendList.map((friend) => {
@@ -132,7 +136,7 @@ export default function Friends() {
       setReceivedRequests(reqs.filter((r) => (r.receiver_id === me.id || r.receiver_email === me.email) && r.status === "pending"));
 
       // Refresh profile map for fresh identity data
-      const profiles = await base44.entities.UserProfile.list("-created_date", 500).catch(() => []);
+      const profiles = await base44.entities.UserProfile.list("-created_date", 1000).catch(() => []);
       const map = {};
       profiles.forEach(p => {
         map[p.user_email] = p;

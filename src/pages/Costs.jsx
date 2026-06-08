@@ -23,25 +23,32 @@ export default function Costs() {
   async function loadData() {
     const me = await base44.auth.me();
     setUser(me);
-    const [allTrips, allExpenses, allPayments, allProfiles] = await Promise.all([
-      base44.entities.Trip.list("-created_date", 100),
-      base44.entities.Expense.list("-created_date", 500),
-      base44.entities.Payment.list("-created_date", 500),
-      base44.entities.UserProfile.list("-created_date", 200),
+    // Fetch only trips this user is part of (db-level filter, no global list)
+    const [adminTrips, memberTrips, allExpenses, allPayments, allProfiles] = await Promise.all([
+      base44.entities.Trip.filter({ admin_email: me.email }, "-created_date", 500),
+      base44.entities.Trip.filter({ member_emails: me.email }, "-created_date", 500),
+      base44.entities.Expense.filter({ paid_by: me.email }, "-created_date", 1000),
+      base44.entities.Payment.list("-created_date", 1000),
+      base44.entities.UserProfile.list("-created_date", 500),
     ]);
 
-    const activeMemberTripIds = new Set(
-      allTrips.filter(t => t.member_emails?.includes(me.email) || t.admin_email === me.email).map(t => t.id)
-    );
-    const involvedTripIds = new Set(
+    const combined = [...adminTrips, ...memberTrips];
+    const myTrips = Array.from(new Map(combined.map(t => [t.id, t])).values());
+
+    // Also include trips where user is involved in expenses but may not be in member_emails
+    const expenseInvolvedTripIds = new Set(
       allExpenses
         .filter(e => e.paid_by === me.email || e.split_among?.includes(me.email))
         .map(e => e.trip_id)
     );
-    const relevantTripIds = new Set([...activeMemberTripIds, ...involvedTripIds]);
-    const relevantTrips = allTrips.filter(t => relevantTripIds.has(t.id));
+    const myTripIds = new Set(myTrips.map(t => t.id));
+    const relevantTripIds = new Set([...myTripIds, ...expenseInvolvedTripIds]);
 
-    setTrips(relevantTrips);
+    if (relevantTripIds.size === 0) {
+      console.log("[Costs] No trips found for user:", me.email);
+    }
+
+    setTrips(myTrips);
     setExpenses(allExpenses.filter(e => relevantTripIds.has(e.trip_id)));
     setPayments(allPayments.filter(p => relevantTripIds.has(p.trip_id)));
 

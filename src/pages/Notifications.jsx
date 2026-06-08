@@ -67,10 +67,8 @@ export default function Notifications() {
 
   async function acceptFriendRequest(n) {
     try {
-      const allReqs = await base44.entities.FriendRequest.list("-created_date", 200);
-      const req = allReqs.find(
-        (r) => r.sender_email === n.related_user_email && r.receiver_email === user.email && r.status === "pending"
-      );
+      const allReqs = await base44.entities.FriendRequest.filter({ receiver_email: user.email, status: "pending" }, "-created_date", 50);
+      const req = allReqs.find(r => r.sender_email === n.related_user_email);
       if (!req) { toast.error("Request not found"); return; }
       await base44.entities.FriendRequest.update(req.id, { status: "accepted" });
       await base44.entities.Notification.delete(n.id);
@@ -83,10 +81,8 @@ export default function Notifications() {
 
   async function declineFriendRequest(n) {
     try {
-      const allReqs = await base44.entities.FriendRequest.list("-created_date", 200);
-      const req = allReqs.find(
-        (r) => r.sender_email === n.related_user_email && r.receiver_email === user.email && r.status === "pending"
-      );
+      const allReqs = await base44.entities.FriendRequest.filter({ receiver_email: user.email, status: "pending" }, "-created_date", 50);
+      const req = allReqs.find(r => r.sender_email === n.related_user_email);
       if (!req) { toast.error("Request not found"); return; }
       await base44.entities.FriendRequest.update(req.id, { status: "declined" });
       await base44.entities.Notification.delete(n.id);
@@ -99,8 +95,8 @@ export default function Notifications() {
 
   async function acceptTripInvite(n) {
     try {
-      const trips = await base44.entities.Trip.list("-created_date", 200);
-      const trip = trips.find(t => t.id === n.related_trip_id);
+      const trips = await base44.entities.Trip.filter({ id: n.related_trip_id }, "-created_date", 1);
+      const trip = trips[0];
       if (!trip) { toast.error("Trip not found"); return; }
       // Add to member_emails
       const already = trip.member_emails?.includes(user.email);
@@ -143,14 +139,12 @@ export default function Notifications() {
 
   async function acceptGroupInvite(n) {
     try {
-      const allInvites = await base44.entities.GroupInvite.list("-created_date", 200);
-      const inv = allInvites.find(
-        (i) => i.group_id === n.related_group_id && i.invitee_email === user.email && i.status === "pending"
-      );
+      const allInvites = await base44.entities.GroupInvite.filter({ group_id: n.related_group_id, invitee_email: user.email, status: "pending" }, "-created_date", 10);
+      const inv = allInvites[0];
       if (!inv) { toast.error("Invite not found"); return; }
       await base44.entities.GroupInvite.update(inv.id, { status: "accepted" });
-      const groups = await base44.entities.Group.list("-created_date", 200);
-      const group = groups.find(g => g.id === n.related_group_id);
+      const groups = await base44.entities.Group.filter({ id: n.related_group_id }, "-created_date", 1);
+      const group = groups[0];
       if (group) {
         const updated = [...new Set([...(group.member_emails || []), user.email])];
         await base44.entities.Group.update(group.id, { member_emails: updated });
@@ -167,11 +161,8 @@ export default function Notifications() {
 
   async function declineGroupInvite(n) {
     try {
-      const allInvites = await base44.entities.GroupInvite.list("-created_date", 200);
-      const inv = allInvites.find(
-        (i) => i.group_id === n.related_group_id && i.invitee_email === user.email && i.status === "pending"
-      );
-      if (inv) await base44.entities.GroupInvite.update(inv.id, { status: "declined" });
+      const allInvites = await base44.entities.GroupInvite.filter({ group_id: n.related_group_id, invitee_email: user.email, status: "pending" }, "-created_date", 10);
+      if (allInvites[0]) await base44.entities.GroupInvite.update(allInvites[0].id, { status: "declined" });
       await base44.entities.Notification.delete(n.id);
       removeNotif(n.id);
       toast.success("Invite declined");
@@ -182,18 +173,16 @@ export default function Notifications() {
 
   async function approveTripRequest(n) {
     try {
-      const allReqs = await base44.entities.TripJoinRequest.list("-created_date", 200);
-      const req = allReqs.find(
-        (r) => r.trip_id === n.related_trip_id && r.user_email === n.related_user_email && r.status === "pending"
-      );
+      const allReqs = await base44.entities.TripJoinRequest.filter({ trip_id: n.related_trip_id, user_email: n.related_user_email, status: "pending" }, "-created_date", 10);
+      const req = allReqs[0];
       if (!req) { toast.error("Request not found"); return; }
       
       // Update request status
       await base44.entities.TripJoinRequest.update(req.id, { status: "approved" });
       
       // Add user to trip
-      const trips = await base44.entities.Trip.list("-created_date", 200);
-      const trip = trips.find(t => t.id === n.related_trip_id);
+      const trips = await base44.entities.Trip.filter({ id: n.related_trip_id }, "-created_date", 1);
+      const trip = trips[0];
       if (trip) {
         const updated = [...new Set([...(trip.member_emails || []), n.related_user_email])];
         await base44.entities.Trip.update(trip.id, { member_emails: updated });
@@ -220,18 +209,16 @@ export default function Notifications() {
 
   async function declineTripRequest(n) {
     try {
-      const allReqs = await base44.entities.TripJoinRequest.list("-created_date", 200);
-      const req = allReqs.find(
-        (r) => r.trip_id === n.related_trip_id && r.user_email === n.related_user_email && r.status === "pending"
-      );
+      const allReqs = await base44.entities.TripJoinRequest.filter({ trip_id: n.related_trip_id, user_email: n.related_user_email, status: "pending" }, "-created_date", 10);
+      const req = allReqs[0];
       if (!req) { toast.error("Request not found"); return; }
       
       // Update request status
       await base44.entities.TripJoinRequest.update(req.id, { status: "denied" });
       
       // Notify user
-      const trips = await base44.entities.Trip.list("-created_date", 200);
-      const trip = trips.find(t => t.id === n.related_trip_id);
+      const trips = await base44.entities.Trip.filter({ id: n.related_trip_id }, "-created_date", 1);
+      const trip = trips[0];
       await base44.entities.Notification.create({
         user_email: n.related_user_email,
         type: "trip_denied",
@@ -252,18 +239,16 @@ export default function Notifications() {
 
   async function approveGroupJoinRequest(n) {
     try {
-      const allInvites = await base44.entities.GroupInvite.list("-created_date", 200);
-      const inv = allInvites.find(
-        (i) => i.group_id === n.related_group_id && i.invitee_email === n.related_user_email && i.status === "pending"
-      );
+      const allInvites = await base44.entities.GroupInvite.filter({ group_id: n.related_group_id, invitee_email: n.related_user_email, status: "pending" }, "-created_date", 10);
+      const inv = allInvites[0];
       if (!inv) { toast.error("Request not found"); return; }
       
       // Update invite status
       await base44.entities.GroupInvite.update(inv.id, { status: "accepted" });
       
       // Add user to group
-      const groups = await base44.entities.Group.list("-created_date", 200);
-      const group = groups.find(g => g.id === n.related_group_id);
+      const groups = await base44.entities.Group.filter({ id: n.related_group_id }, "-created_date", 1);
+      const group = groups[0];
       if (group) {
         const updated = [...new Set([...(group.member_emails || []), n.related_user_email])];
         await base44.entities.Group.update(group.id, { member_emails: updated });
@@ -290,11 +275,8 @@ export default function Notifications() {
 
   async function declineGroupJoinRequest(n) {
     try {
-      const allInvites = await base44.entities.GroupInvite.list("-created_date", 200);
-      const inv = allInvites.find(
-        (i) => i.group_id === n.related_group_id && i.invitee_email === n.related_user_email && i.status === "pending"
-      );
-      if (inv) await base44.entities.GroupInvite.update(inv.id, { status: "declined" });
+      const allInvites = await base44.entities.GroupInvite.filter({ group_id: n.related_group_id, invitee_email: n.related_user_email, status: "pending" }, "-created_date", 10);
+      if (allInvites[0]) await base44.entities.GroupInvite.update(allInvites[0].id, { status: "declined" });
       
       // Remove the request notification
       await base44.entities.Notification.delete(n.id);

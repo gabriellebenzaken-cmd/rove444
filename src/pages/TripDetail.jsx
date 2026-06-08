@@ -44,8 +44,10 @@ export default function TripDetail() {
   async function loadData() {
     const me = await base44.auth.me();
     setUser(me);
-    const allTrips = await base44.entities.Trip.list("-created_date", 200);
-    const t = allTrips.find((tr) => tr.id === id);
+    // Fetch the specific trip by ID directly — no global list needed
+    const trips = await base44.entities.Trip.filter({ id: id }, "-created_date", 1);
+    const t = trips[0] || null;
+    if (!t) console.warn("[TripDetail] Trip not found or not accessible. id:", id, "user:", me.email);
     setTrip(t);
     setLoading(false);
   }
