@@ -26,6 +26,15 @@ const MIAMI_USERS = [
   { user_id: `${DEMO_TAG}bri`,     user_email: "bri.santos@rove-demo.app",     username: "briellesantos", username_lower: "briellesantos", full_name: "Brielle Santos", display_name: "Bri",   bio: "yoga teacher / certified hot mess. will recommend crystals unprompted",               profile_photo: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&q=80", venmo: "@bri-santos",  instagram: "briellesantos", tiktok: "@briellesantos" },
 ];
 
+// ─── DESERT FEST 🌵 crew ──────────────────────────────────────────────────────
+const DESERT_USERS = [
+  { user_id: `${DEMO_TAG}mia_df`,    user_email: "mia.johnson@rove-demo.app",    username: "miajohnson",   username_lower: "miajohnson",   full_name: "Mia Johnson",   display_name: "Mia",    bio: "festival planner era. type a in the streets, pool girl on the weekends",              profile_photo: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&q=80", venmo: "@mia-j",      instagram: "miajohnson",  tiktok: "@miajohnson" },
+  { user_id: `${DEMO_TAG}ashley_df`, user_email: "ashley.chen@rove-demo.app",    username: "ashleychen",   username_lower: "ashleychen",   full_name: "Ashley Chen",   display_name: "Ashley", bio: "road trip queen. toyota highlander and a playlist ready. let's go",                  profile_photo: "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400&q=80", venmo: "@ashley-c",   instagram: "ashleychen", cashapp: "$ashleyc" },
+  { user_id: `${DEMO_TAG}ryan_df`,   user_email: "ryan.miller@rove-demo.app",    username: "ryanmiller",   username_lower: "ryanmiller",   full_name: "Ryan Miller",   display_name: "Ryan",   bio: "always has snacks. loves everyone. will find the nearest in-n-out",                  profile_photo: "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=400&q=80", venmo: "@ryan-mil",   cashapp: "$ryanm" },
+  { user_id: `${DEMO_TAG}jake_df`,   user_email: "jake.harris@rove-demo.app",    username: "jakeharris",   username_lower: "jakeharris",   full_name: "Jake Harris",   display_name: "Jake",   bio: "outdoor enthusiast. has been to the coachella valley 5x. crv packed and ready",      profile_photo: "https://images.unsplash.com/photo-1463453091185-61582044d556?w=400&q=80", venmo: "@jake-h",     cashapp: "$jakeh" },
+  { user_id: `${DEMO_TAG}sophie_df`, user_email: "sophie.lee@rove-demo.app",     username: "sophielee",    username_lower: "sophielee",    full_name: "Sophie Lee",    display_name: "Sophie", bio: "grocery run coordinator. will buy 3 types of sunscreen and not apologize",            profile_photo: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&q=80", venmo: "@sophie-l",   instagram: "sophielee" },
+];
+
 // ─── FESTIVAL trip crew ───────────────────────────────────────────────────────
 const FEST_USERS = [
   { user_id: `${DEMO_TAG}jake`,    user_email: "jake.morales@rove-demo.app",   username: "jakemor",      username_lower: "jakemor",      full_name: "Jake Morales",   display_name: "Jake",  bio: "outdoor enthusiast. been to coachella 4x and still can't find the stage",             profile_photo: "https://images.unsplash.com/photo-1463453091185-61582044d556?w=400&q=80", venmo: "@jake-mor",    cashapp: "$jakemor" },
@@ -40,7 +49,7 @@ const FEST_USERS = [
   { user_id: `${DEMO_TAG}dana`,    user_email: "dana.okafor@rove-demo.app",    username: "danaokafor",   username_lower: "danaokafor",   full_name: "Dana Okafor",    display_name: "Dana",  bio: "film student. documents everything. the designated trip photographer",                 profile_photo: "https://images.unsplash.com/photo-1546961342-ea5f62d5a27b?w=400&q=80", venmo: "@dana-ok",     instagram: "danaokafor",   tiktok: "@danaokafor" },
 ];
 
-const ALL_USERS = [...JAPAN_USERS, ...MIAMI_USERS, ...FEST_USERS];
+const ALL_USERS = [...JAPAN_USERS, ...MIAMI_USERS, ...DESERT_USERS, ...FEST_USERS];
 
 // ─── Demo display name for the real logged-in user (read-only, never written to DB) ───
 // The real user's UserProfile is NEVER modified by the seeder.
@@ -750,7 +759,252 @@ async function seedFest(log, me) {
   log("🎪 Desert Festival trip seeded!");
 }
 
+// ─── DESERT FEST 🌵 seeder ────────────────────────────────────────────────────
+async function seedDesertFest(log, me) {
+  const myEmail = me.email;
+  const myName = me.full_name || me.email.split("@")[0];
+  const INVITE_CODE = `${DEMO_TAG}DESERT27`;
+
+  const existingTrips = await base44.entities.Trip.filter({}, "-created_date", 200);
+  if (existingTrips.some((t) => t.invite_code === INVITE_CODE)) {
+    throw new Error("DESERT FEST trip already exists. Clear it first.");
+  }
+
+  log("Creating DESERT FEST profiles…");
+  await ensureProfiles(DESERT_USERS, log);
+
+  const dMia    = DESERT_USERS.find(u => u.username_lower === "miajohnson");
+  const dAshley = DESERT_USERS.find(u => u.username_lower === "ashleychen");
+  const dRyan   = DESERT_USERS.find(u => u.username_lower === "ryanmiller");
+  const dJake   = DESERT_USERS.find(u => u.username_lower === "jakeharris");
+  const dSophie = DESERT_USERS.find(u => u.username_lower === "sophielee");
+
+  const emD = (u) => u.user_email;
+  const nmD = (u) => u.full_name;
+
+  log("Creating DESERT FEST trip…");
+  const members = [emD(dMia), emD(dAshley), emD(dRyan), emD(dJake), emD(dSophie)];
+  const trip = await base44.entities.Trip.create({
+    name: "DESERT FEST 🌵",
+    destination: "Indio, California",
+    description: "Festival weekend with friends. Lodging, transportation, expenses, itinerary, polls, and trip details all locked in.",
+    start_date: "2027-04-17",
+    end_date: "2027-04-20",
+    admin_email: emD(dMia),
+    member_emails: members,
+    invite_code: INVITE_CODE,
+    invite_active: true,
+    cover_image: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&q=80",
+    theme_color: "#E8793A",
+  });
+  log("  ✓ Trip created");
+
+  log("Creating TripMembers…");
+  await Promise.all([
+    base44.entities.TripMember.create({ trip_id: trip.id, user_email: emD(dMia),    user_name: nmD(dMia),    role: "admin",  status: "active" }),
+    base44.entities.TripMember.create({ trip_id: trip.id, user_email: emD(dAshley), user_name: nmD(dAshley), role: "member", status: "active", invited_by_email: emD(dMia) }),
+    base44.entities.TripMember.create({ trip_id: trip.id, user_email: emD(dRyan),   user_name: nmD(dRyan),   role: "member", status: "active", invited_by_email: emD(dMia) }),
+    base44.entities.TripMember.create({ trip_id: trip.id, user_email: emD(dJake),   user_name: nmD(dJake),   role: "member", status: "active", invited_by_email: emD(dMia) }),
+    base44.entities.TripMember.create({ trip_id: trip.id, user_email: emD(dSophie), user_name: nmD(dSophie), role: "member", status: "active", invited_by_email: emD(dMia) }),
+  ]);
+  log("  ✓ TripMembers created");
+
+  log("Creating Arrivals…");
+  await Promise.all([
+    base44.entities.Arrival.create({ trip_id: trip.id, user_email: emD(dAshley), user_name: nmD(dAshley), travel_type: "Driving", is_round_trip: true, arrival_location: "Phoenix, AZ",     destination: "Indio, CA", arrival_date: "2027-04-17", arrival_time: "13:00", departure_date: "2027-04-20", departure_time: "11:00" }),
+    base44.entities.Arrival.create({ trip_id: trip.id, user_email: emD(dRyan),   user_name: nmD(dRyan),   travel_type: "Driving", is_round_trip: true, arrival_location: "Phoenix, AZ",     destination: "Indio, CA", arrival_date: "2027-04-17", arrival_time: "13:00", departure_date: "2027-04-20", departure_time: "11:00" }),
+    base44.entities.Arrival.create({ trip_id: trip.id, user_email: emD(dMia),    user_name: nmD(dMia),    travel_type: "Driving", is_round_trip: true, arrival_location: "Phoenix, AZ",     destination: "Indio, CA", arrival_date: "2027-04-17", arrival_time: "13:00", departure_date: "2027-04-20", departure_time: "11:00" }),
+    base44.entities.Arrival.create({ trip_id: trip.id, user_email: emD(dJake),   user_name: nmD(dJake),   travel_type: "Driving", is_round_trip: true, arrival_location: "Los Angeles, CA", destination: "Indio, CA", arrival_date: "2027-04-17", arrival_time: "13:00", departure_date: "2027-04-20", departure_time: "11:00" }),
+    base44.entities.Arrival.create({ trip_id: trip.id, user_email: emD(dSophie), user_name: nmD(dSophie), travel_type: "Driving", is_round_trip: true, arrival_location: "Los Angeles, CA", destination: "Indio, CA", arrival_date: "2027-04-17", arrival_time: "13:00", departure_date: "2027-04-20", departure_time: "11:00" }),
+  ]);
+  log("  ✓ Arrivals created");
+
+  log("Creating Lodging…");
+  await base44.entities.Lodging.create({
+    trip_id: trip.id,
+    name: "Desert Oasis House",
+    address: "81234 Desert Sage Drive, Indio, CA 92201",
+    price_per_night: 600,
+    check_in: "2027-04-17",
+    check_out: "2027-04-20",
+    notes: "Gate code: 4827. Quiet hours after midnight. Pool towels provided. Shuttle stop 8 minutes away. 4BR/3BA. Pool + Hot Tub + Outdoor Grill. Parking for 3 vehicles. Fast WiFi.",
+    guest_emails: members,
+    booking_url: "https://www.airbnb.com/",
+    image_url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80",
+  });
+  log("  ✓ Lodging created");
+
+  log("Creating Itinerary…");
+  const itinItems = [
+    // Day 1 – April 17
+    { date: "2027-04-17", time: "07:00", title: "Leave Phoenix 🚗",             location: "Phoenix, AZ",             notes: "Meet at Starbucks before departure. Bring portable chargers.", is_required: true },
+    { date: "2027-04-17", time: "11:30", title: "Lunch Stop 🌮",                location: "Blythe, CA",              notes: "Halfway point. Stretch, eat, fuel up.",                         is_required: false },
+    { date: "2027-04-17", time: "13:00", title: "Arrive at House 🏠",           location: "81234 Desert Sage Dr, Indio", notes: "Gate code: 4827. Park in driveway.",                        is_required: true },
+    { date: "2027-04-17", time: "14:00", title: "Check In 🔑",                  location: "Desert Oasis House",      notes: "Claim your rooms. Pool towels in the closet.",                  is_required: true },
+    { date: "2027-04-17", time: "16:00", title: "Pool Hangout ☀️",              location: "Desert Oasis House",      notes: "Floats inflated. Drinks ready. Decompress.",                   is_required: false },
+    { date: "2027-04-17", time: "18:00", title: "Festival Grounds 🎶",          location: "Empire Polo Club, Indio", notes: "Get there early to scope out the layout.",                      is_required: true },
+    { date: "2027-04-17", time: "20:00", title: "Main Stage 🎵",                location: "Main Stage, Empire Polo Club", notes: "Everyone together for this. No splitting up.",             is_required: true },
+    { date: "2027-04-17", time: "23:30", title: "Return to House 🏠",           location: "Desert Oasis House",      notes: "Hot tub time. No FOMO.",                                        is_required: false },
+    // Day 2 – April 18
+    { date: "2027-04-18", time: "10:00", title: "Brunch 🍳",                    location: "Desert Oasis House",      notes: "Ashley's making eggs. Ryan on coffee duty.",                   is_required: false },
+    { date: "2027-04-18", time: "12:00", title: "Pool Time 🏊",                 location: "Desert Oasis House",      notes: "Floaties, sunscreen, good vibes.",                              is_required: false },
+    { date: "2027-04-18", time: "15:00", title: "Get Ready 💅",                 location: "Desert Oasis House",      notes: "Outfits. Glow. Let's look amazing.",                           is_required: false },
+    { date: "2027-04-18", time: "17:00", title: "Shuttle Pickup 🚌",            location: "Shuttle Stop, Indio",     notes: "Shuttle stop is 8 min away. Don't be late.",                   is_required: true },
+    { date: "2027-04-18", time: "18:00", title: "Festival Grounds 🎶",          location: "Empire Polo Club, Indio", notes: "Full day sets. Dom has the lineup.",                            is_required: true },
+    // Day 3 – April 19
+    { date: "2027-04-19", time: "11:00", title: "Coffee Run ☕",                location: "Starbucks, Indio",        notes: "Iced everything. Gas station snacks.",                          is_required: false },
+    { date: "2027-04-19", time: "13:00", title: "Pool Day 🌊",                  location: "Desert Oasis House",      notes: "Last full pool day. Make it count.",                            is_required: false },
+    { date: "2027-04-19", time: "16:00", title: "Festival Prep 🎨",             location: "Desert Oasis House",      notes: "Glitter. Sunscreen. Charged phones.",                           is_required: false },
+    { date: "2027-04-19", time: "18:00", title: "Festival Grounds 🎶",          location: "Empire Polo Club, Indio", notes: "Final night. Make it legendary.",                               is_required: true },
+    // Day 4 – April 20
+    { date: "2027-04-20", time: "10:00", title: "Check Out 🧹",                 location: "Desert Oasis House",      notes: "Tidy up. Security deposit is $600. Let's not lose it.",        is_required: true },
+    { date: "2027-04-20", time: "11:00", title: "Drive Home 🚗",               location: "Indio, CA",               notes: "Gas costs split evenly. Safe travels everyone.",                is_required: true },
+  ];
+  for (const r of itinItems) {
+    await base44.entities.ItineraryItem.create({ trip_id: trip.id, ...r });
+    await delay(80);
+  }
+  log(`  ✓ ${itinItems.length} itinerary items created`);
+
+  log("Creating Expenses…");
+  const expenses = [
+    { description: "Airbnb Deposit",          amount: 1800,   paid_by: emD(dAshley), paid_by_name: nmD(dAshley), split_among: members, category: "lodging",   trip_wide: true,  is_settled: false },
+    { description: "Festival Parking Pass",   amount: 150,    paid_by: emD(dJake),   paid_by_name: nmD(dJake),   split_among: members, category: "transport", trip_wide: false, day_number: 1, is_settled: false },
+    { description: "Grocery Run",             amount: 214.87, paid_by: emD(dSophie), paid_by_name: nmD(dSophie), split_among: members, category: "food",      trip_wide: true,  is_settled: false },
+    { description: "Pool Floats & Supplies",  amount: 82.13,  paid_by: emD(dRyan),   paid_by_name: nmD(dRyan),   split_among: members, category: "other",     trip_wide: false, day_number: 1, is_settled: false },
+  ];
+  for (const r of expenses) {
+    await base44.entities.Expense.create({ trip_id: trip.id, ...r });
+    await delay(100);
+  }
+  log(`  ✓ ${expenses.length} expenses created`);
+
+  log("Creating Payments…");
+  await delay(500);
+  const allExpenses = await base44.entities.Expense.filter({ trip_id: trip.id }, "-created_date", 20);
+  const airbnbExp  = allExpenses.find(e => e.description.includes("Airbnb Deposit"));
+  const parkingExp = allExpenses.find(e => e.description.includes("Parking Pass"));
+  const groceryExp = allExpenses.find(e => e.description.includes("Grocery Run"));
+  const poolExp    = allExpenses.find(e => e.description.includes("Pool Floats"));
+
+  const paymentRecords = [];
+  if (airbnbExp) {
+    const share = 360;
+    paymentRecords.push(
+      { expense_id: airbnbExp.id, sender_email: emD(dRyan),   sender_name: nmD(dRyan),   receiver_email: emD(dAshley), receiver_name: nmD(dAshley), amount: share, payment_method: "venmo",   status: "unpaid" },
+      { expense_id: airbnbExp.id, sender_email: emD(dJake),   sender_name: nmD(dJake),   receiver_email: emD(dAshley), receiver_name: nmD(dAshley), amount: share, payment_method: "venmo",   status: "unpaid" },
+      { expense_id: airbnbExp.id, sender_email: emD(dSophie), sender_name: nmD(dSophie), receiver_email: emD(dAshley), receiver_name: nmD(dAshley), amount: share, payment_method: "cashapp", status: "unpaid" },
+      { expense_id: airbnbExp.id, sender_email: emD(dMia),    sender_name: nmD(dMia),    receiver_email: emD(dAshley), receiver_name: nmD(dAshley), amount: share, payment_method: "venmo",   status: "unpaid" },
+    );
+  }
+  if (parkingExp) {
+    const share = Math.round(150 / 5);
+    paymentRecords.push(
+      { expense_id: parkingExp.id, sender_email: emD(dAshley), sender_name: nmD(dAshley), receiver_email: emD(dJake), receiver_name: nmD(dJake), amount: share, payment_method: "venmo",   status: "pending" },
+      { expense_id: parkingExp.id, sender_email: emD(dMia),    sender_name: nmD(dMia),    receiver_email: emD(dJake), receiver_name: nmD(dJake), amount: share, payment_method: "venmo",   status: "unpaid" },
+      { expense_id: parkingExp.id, sender_email: emD(dRyan),   sender_name: nmD(dRyan),   receiver_email: emD(dJake), receiver_name: nmD(dJake), amount: share, payment_method: "cashapp", status: "unpaid" },
+      { expense_id: parkingExp.id, sender_email: emD(dSophie), sender_name: nmD(dSophie), receiver_email: emD(dJake), receiver_name: nmD(dJake), amount: share, payment_method: "venmo",   status: "confirmed" },
+    );
+  }
+  if (groceryExp) {
+    const share = Math.round(214.87 / 5);
+    paymentRecords.push(
+      { expense_id: groceryExp.id, sender_email: emD(dAshley), sender_name: nmD(dAshley), receiver_email: emD(dSophie), receiver_name: nmD(dSophie), amount: share, payment_method: "venmo", status: "unpaid" },
+      { expense_id: groceryExp.id, sender_email: emD(dMia),    sender_name: nmD(dMia),    receiver_email: emD(dSophie), receiver_name: nmD(dSophie), amount: share, payment_method: "venmo", status: "unpaid" },
+      { expense_id: groceryExp.id, sender_email: emD(dRyan),   sender_name: nmD(dRyan),   receiver_email: emD(dSophie), receiver_name: nmD(dSophie), amount: share, payment_method: "venmo", status: "confirmed" },
+      { expense_id: groceryExp.id, sender_email: emD(dJake),   sender_name: nmD(dJake),   receiver_email: emD(dSophie), receiver_name: nmD(dSophie), amount: share, payment_method: "cashapp", status: "unpaid" },
+    );
+  }
+  if (poolExp) {
+    const share = Math.round(82.13 / 5);
+    paymentRecords.push(
+      { expense_id: poolExp.id, sender_email: emD(dAshley), sender_name: nmD(dAshley), receiver_email: emD(dRyan), receiver_name: nmD(dRyan), amount: share, payment_method: "venmo", status: "unpaid" },
+      { expense_id: poolExp.id, sender_email: emD(dMia),    sender_name: nmD(dMia),    receiver_email: emD(dRyan), receiver_name: nmD(dRyan), amount: share, payment_method: "venmo", status: "unpaid" },
+      { expense_id: poolExp.id, sender_email: emD(dJake),   sender_name: nmD(dJake),   receiver_email: emD(dRyan), receiver_name: nmD(dRyan), amount: share, payment_method: "cashapp", status: "unpaid" },
+    );
+  }
+  let payCount = 0;
+  for (const r of paymentRecords) {
+    await base44.entities.Payment.create({ trip_id: trip.id, ...r });
+    payCount++;
+    await delay(150);
+  }
+  log(`  ✓ ${payCount} payments created`);
+
+  log("Creating Polls + votes…");
+  const pd1 = await base44.entities.TripPoll.create({ trip_id: trip.id, question: "Dinner Friday?", options: ["Tacos 🌮", "Pizza 🍕", "In-N-Out 🍔"], created_by_email: emD(dMia), created_by_name: nmD(dMia), is_closed: false });
+  const pd2 = await base44.entities.TripPoll.create({ trip_id: trip.id, question: "Pool Time?", options: ["11 AM", "1 PM", "3 PM"], created_by_email: emD(dAshley), created_by_name: nmD(dAshley), is_closed: false });
+  const pd3 = await base44.entities.TripPoll.create({ trip_id: trip.id, question: "Who Is Bringing A Speaker?", options: ["Ashley", "Ryan", "Jake", "Sophie"], created_by_email: emD(dRyan), created_by_name: nmD(dRyan), is_closed: false });
+  await Promise.all([
+    base44.entities.TripPollVote.create({ poll_id: pd1.id, trip_id: trip.id, voter_email: emD(dAshley), voter_name: nmD(dAshley), option_index: 0 }),
+    base44.entities.TripPollVote.create({ poll_id: pd1.id, trip_id: trip.id, voter_email: emD(dRyan),   voter_name: nmD(dRyan),   option_index: 2 }),
+    base44.entities.TripPollVote.create({ poll_id: pd1.id, trip_id: trip.id, voter_email: emD(dJake),   voter_name: nmD(dJake),   option_index: 2 }),
+    base44.entities.TripPollVote.create({ poll_id: pd2.id, trip_id: trip.id, voter_email: emD(dMia),    voter_name: nmD(dMia),    option_index: 1 }),
+    base44.entities.TripPollVote.create({ poll_id: pd2.id, trip_id: trip.id, voter_email: emD(dSophie), voter_name: nmD(dSophie), option_index: 1 }),
+    base44.entities.TripPollVote.create({ poll_id: pd2.id, trip_id: trip.id, voter_email: emD(dRyan),   voter_name: nmD(dRyan),   option_index: 0 }),
+    base44.entities.TripPollVote.create({ poll_id: pd3.id, trip_id: trip.id, voter_email: emD(dAshley), voter_name: nmD(dAshley), option_index: 0 }),
+    base44.entities.TripPollVote.create({ poll_id: pd3.id, trip_id: trip.id, voter_email: emD(dJake),   voter_name: nmD(dJake),   option_index: 2 }),
+    base44.entities.TripPollVote.create({ poll_id: pd3.id, trip_id: trip.id, voter_email: emD(dSophie), voter_name: nmD(dSophie), option_index: 0 }),
+  ]);
+  log("  ✓ Polls + votes created");
+
+  log("Creating Messages…");
+  const msgs = [
+    { sender_email: emD(dMia),    sender_name: nmD(dMia),    content: "DESERT FEST crew 🌵 everything is booked. airbnb confirmed. let's gooo" },
+    { sender_email: emD(dAshley), sender_name: nmD(dAshley), content: "highlander is gassed up and ready. leaving phoenix at 7am sharp. be at starbucks by 6:45" },
+    { sender_email: emD(dRyan),   sender_name: nmD(dRyan),   content: "i'll bring snacks for the drive. and i will NOT get the family size pringles this time" },
+    { sender_email: emD(dJake),   sender_name: nmD(dJake),   content: "sophie and i are taking the CRV from LA. we'll meet you at the house around 1" },
+    { sender_email: emD(dSophie), sender_name: nmD(dSophie), content: "i already made a grocery list. sending it in the notes. don't buy duplicates" },
+    { sender_email: emD(dMia),    sender_name: nmD(dMia),    content: "gate code is 4827. pool towels are in the hall closet. quiet hours after midnight just fyi" },
+    { sender_email: emD(dAshley), sender_name: nmD(dAshley), content: "ashley added the airbnb details to the lodging section 🏠" },
+    { sender_email: emD(dRyan),   sender_name: nmD(dRyan),   content: "i just checked the itinerary. looks perfect mia. day 1 pool hangout is non-negotiable" },
+    { sender_email: emD(dJake),   sender_name: nmD(dJake),   content: "updated our travel plan in the app. jake's CRV departing LA at 7am too. we'll convoy" },
+    { sender_email: emD(dSophie), sender_name: nmD(dSophie), content: "added the grocery run expense. $214.87 split 5 ways = $42.97 each. venmo me @sophie-l" },
+    { sender_email: emD(dMia),    sender_name: nmD(dMia),    content: "just updated the lodging info with all the house notes. everyone read it before we get there" },
+    { sender_email: emD(dAshley), sender_name: nmD(dAshley), content: "who still hasn't paid for the airbnb deposit. you know who you are 👀" },
+    { sender_email: emD(dRyan),   sender_name: nmD(dRyan),   content: "pool floats and supplies are handled. $82 ryan's got it. just venmo me back no rush" },
+    { sender_email: emD(dJake),   sender_name: nmD(dJake),   content: "parking pass is sorted. $150. i'll figure out reimbursement at the house" },
+    { sender_email: emD(dSophie), sender_name: nmD(dSophie), content: "bring portable chargers PLEASE. the polo fields drain your battery so fast" },
+  ];
+  for (const m of msgs) { await base44.entities.TripMessage.create({ trip_id: trip.id, ...m, message_type: "text" }); await delay(60); }
+  log(`  ✓ ${msgs.length} messages created`);
+
+  log("Creating Links + Notifications…");
+  await Promise.all([
+    base44.entities.TripLink.create({ trip_id: trip.id, url: "https://www.coachella.com/",           title: "Festival Website",           note: "Official lineup and set times",                                         category: "activity",  shared_by_email: emD(dMia),    shared_by_name: nmD(dMia) }),
+    base44.entities.TripLink.create({ trip_id: trip.id, url: "https://www.airbnb.com/",              title: "House Listing",              note: "Desert Oasis House – 4BR/3BA pool + hot tub",                          category: "hotel",     shared_by_email: emD(dAshley), shared_by_name: nmD(dAshley) }),
+    base44.entities.TripLink.create({ trip_id: trip.id, url: "https://maps.google.com/?q=Indio+CA",  title: "Google Maps – House Address", note: "81234 Desert Sage Dr, Indio CA 92201",                                 category: "other",     shared_by_email: emD(dMia),    shared_by_name: nmD(dMia) }),
+    base44.entities.TripLink.create({ trip_id: trip.id, url: "https://www.coachella.com/parking",    title: "Parking Information",        note: "Jake already got the pass. just for reference",                        category: "other",     shared_by_email: emD(dJake),   shared_by_name: nmD(dJake) }),
+    base44.entities.TripLink.create({ trip_id: trip.id, url: "https://www.coachella.com/map",        title: "Festival Map",               note: "stage locations, shuttle stops, exits. save it offline",               category: "activity",  shared_by_email: emD(dRyan),   shared_by_name: nmD(dRyan) }),
+    base44.entities.Notification.create({ user_email: emD(dAshley), type: "trip_added",  message: "Mia added you to DESERT FEST 🌵",       related_user_email: emD(dMia),    related_user_name: nmD(dMia),    related_trip_id: trip.id, is_read: true }),
+    base44.entities.Notification.create({ user_email: emD(dRyan),   type: "trip_added",  message: "Mia added you to DESERT FEST 🌵",       related_user_email: emD(dMia),    related_user_name: nmD(dMia),    related_trip_id: trip.id, is_read: true }),
+    base44.entities.Notification.create({ user_email: emD(dJake),   type: "trip_added",  message: "Mia added you to DESERT FEST 🌵",       related_user_email: emD(dMia),    related_user_name: nmD(dMia),    related_trip_id: trip.id, is_read: false }),
+    base44.entities.Notification.create({ user_email: emD(dSophie), type: "trip_added",  message: "Mia added you to DESERT FEST 🌵",       related_user_email: emD(dMia),    related_user_name: nmD(dMia),    related_trip_id: trip.id, is_read: false }),
+    base44.entities.Notification.create({ user_email: emD(dMia),    type: "trip_added",  message: "Ashley added the Airbnb details 🏠",     related_user_email: emD(dAshley), related_user_name: nmD(dAshley), related_trip_id: trip.id, is_read: false }),
+  ]);
+  log("  ✓ Links + notifications created");
+
+  log("Creating Friendships…");
+  await Promise.all([
+    base44.entities.Friendship.create({ user1_email: emD(dMia),    user2_email: emD(dAshley) }),
+    base44.entities.Friendship.create({ user1_email: emD(dMia),    user2_email: emD(dRyan) }),
+    base44.entities.Friendship.create({ user1_email: emD(dMia),    user2_email: emD(dJake) }),
+    base44.entities.Friendship.create({ user1_email: emD(dMia),    user2_email: emD(dSophie) }),
+    base44.entities.Friendship.create({ user1_email: emD(dAshley), user2_email: emD(dRyan) }),
+    base44.entities.Friendship.create({ user1_email: emD(dJake),   user2_email: emD(dSophie) }),
+  ]);
+  log("  ✓ Friendships created");
+
+  log("🌵 DESERT FEST trip seeded!");
+}
+
 // ─── Per-trip clear helpers ───────────────────────────────────────────────────
+async function clearDesertFest(log, me) {
+  log("Clearing DESERT FEST trip…");
+  await clearTripByCode(`${DEMO_TAG}DESERT27`, DESERT_USERS.map(u => u.user_id), log);
+  log("✓ DESERT FEST cleared.");
+}
+
 async function clearJapan(log, me) {
   log("Clearing Japan trip…");
   await clearTripByCode(`${DEMO_TAG}JAPAN26`, JAPAN_USERS.map(u => u.user_id), log);
@@ -769,9 +1023,10 @@ async function clearFest(log, me) {
 
 // ─── UI ───────────────────────────────────────────────────────────────────────
 const TRIPS = [
-  { key: "japan", label: "🍜 Japan",         seed: seedJapan, clear: clearJapan, color: "#E8426A" },
-  { key: "miami", label: "🌴 Miami",          seed: seedMiami, clear: clearMiami, color: "#FF7A45" },
-  { key: "fest",  label: "🎪 Desert Festival", seed: seedFest,  clear: clearFest,  color: "#7C3AED" },
+  { key: "japan",      label: "🍜 Japan",          seed: seedJapan,      clear: clearJapan,      color: "#E8426A" },
+  { key: "miami",      label: "🌴 Miami",           seed: seedMiami,      clear: clearMiami,      color: "#FF7A45" },
+  { key: "desertfest", label: "🌵 DESERT FEST",     seed: seedDesertFest, clear: clearDesertFest, color: "#E8793A" },
+  { key: "fest",       label: "🎪 Desert Festival", seed: seedFest,       clear: clearFest,       color: "#7C3AED" },
 ];
 
 export default function DemoSeed() {
